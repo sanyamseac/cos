@@ -1,0 +1,44 @@
+services:
+    db:
+        image: postgres
+        restart: always
+        ports:
+            - 5432:5432
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: mysecretpassword
+            POSTGRES_DB: local
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+    cos:
+        env_file: .env
+        build: 
+            context: .
+            dockerfile: dockerfile
+        image: cos-image
+        container_name: cos
+        restart: always
+        ports:
+            - 8000:8000
+        networks: app-network
+    webserver:
+        image: nginx:mainline-alpine
+        container_name: webserver
+        restart: unless-stopped
+        ports:
+            - '80:80' # HTTP
+            - '443:443' # HTTPS
+        volumes:
+            - /etc/ssl:/etc/ssl:ro # Mount SSL certificates
+            - ./deploy/nginx:/etc/nginx/conf.d # Mount Nginx config
+        depends_on:
+            - website
+        networks:
+            - app-network
+
+networks:
+    app-network:
+        driver: bridge
+
+volumes:
+    pgdata:
