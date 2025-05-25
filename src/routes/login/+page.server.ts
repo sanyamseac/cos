@@ -1,18 +1,91 @@
-import { redirect } from '@sveltejs/kit'
+import { redirect, fail } from '@sveltejs/kit'
 import { dev } from '$app/environment'
+import * as auth from '$lib/server/session'
 import type { PageServerLoad, Actions } from './$types'
 import { ORIGIN } from '$env/static/private'
 
 const cas = 'https://login.iiit.ac.in/cas'
 
 export const load: PageServerLoad = async (event) => {
-	const destination = event.url.searchParams.get('redirect') ?? '/'
-	if (event.locals.user) return redirect(302, destination)
-	else {
+	if (event.locals.user) {
+		return redirect(302, '/details')
+	}
+	return {}
+}
+
+export const actions: Actions = {
+	oauth: async (event) => {
+		const destination = event.url.searchParams.get('redirect') ?? '/'
+		if (event.locals.user) return redirect(302, destination)
+		else {
+			const destination = event.url.searchParams.get('redirect') ?? '/'
+			const service = (event.url.origin ?? ORIGIN) + `/auth?redirect=${destination}`
+			return redirect(302, `${cas}/login?service=${service}`)
+		}
+	},
+
+	login: async (event) => {
+		const formData = await event.request.formData()
+		const username = formData.get('username')
+		const password = formData.get('password')
+
+		if (!username || !password) {
+			return fail(400, { message: 'Username and password are required' })
+		}
+		if (typeof username !== 'string' || typeof password !== 'string') {
+			return fail(400, { message: 'Invalid username or password' })
+		}
+
+		const tgtResponse = await fetch(`${cas}/v1/tickets`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+		})
+
+		if (!tgtResponse.ok) {
+			console.error('Failed to obtain TGT:', await tgtResponse.text())
+			return fail(401, { message: 'Authentication failed' })
+		}
+
+		const tgtUrl = tgtResponse.headers.get('Location')
+		if (!tgtUrl) {
+			console.error('No TGT URL provided in response')
+			return fail(500, { message: 'Authentication system error' })
+		}
+
 		const destination = event.url.searchParams.get('redirect') ?? '/'
 		const service = (event.url.origin ?? ORIGIN) + `/auth?redirect=${destination}`
-		return redirect(302, `${cas}/login?service=${service}`)
-	}
+
+		const stResponse = await fetch(tgtUrl, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: `service=${encodeURIComponent(service)}`,
+		})
+
+		if (!stResponse.ok) {
+			console.error('Failed to obtain service ticket:', await stResponse.text())
+			return fail(401, { message: 'Failed to obtain service ticket' })
+		}
+
+		const serviceTicket = await stResponse.text()
+		console.log('Service Ticket:', serviceTicket)
+
+		return redirect(302, `${service}&ticket=${encodeURIComponent(serviceTicket)}`)
+	},
+
+	logout: async (event) => {
+		if (!event.locals.session) {
+			return fail(401)
+		}
+		await auth.invalidateSession(event.locals.session.id)
+		event.cookies.delete(auth.sessionCookieName, { path: '/' })
+
+		return redirect(302, '/login')
+	},
 }
 
 // import { hash, verify } from '@node-rs/argon2'

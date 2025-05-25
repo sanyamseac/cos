@@ -12,7 +12,7 @@ services:
             - pgdata:/var/lib/postgresql/data
     cos:
         env_file: .env
-        build: 
+        build:
             context: .
             dockerfile: dockerfile
         image: cos-image

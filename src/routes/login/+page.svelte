@@ -18,4 +18,7 @@
 	<button>Login</button>
 	<button formaction="?/register">Register</button>
 </form>
+<form method="post" action="?/oauth">
+	<button>CAS</button>
+</form>
 <p style="color: red">{form?.message ?? ''}</p>

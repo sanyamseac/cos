@@ -49,16 +49,15 @@ export const load: PageServerLoad = async (event) => {
 		await db.insert(schema.user).values(user)
 	} else user = existingUser
 
-    const token = auth.generateSessionToken()
+	const token = auth.generateSessionToken()
 	const session = await auth.createSession(token, user.id)
 	event.cookies.set(auth.sessionCookieName, token, {
-        path: '/',
-        sameSite: 'lax',
-        httpOnly: true,
-        expires: session.expiresAt,
-        secure: !dev,
-    })
+		path: '/',
+		sameSite: 'lax',
+		httpOnly: true,
+		expires: session.expiresAt,
+		secure: !dev,
+	})
 
 	return redirect(302, destination)
 }
-
