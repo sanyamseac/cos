@@ -6,6 +6,11 @@ import { sha256 } from '@oslojs/crypto/sha2'
 import { type User, type Session } from './db/schema'
 
 export const sessionCookieName = 'AuthorizationToken'
+export const ADMIN = ['admin']
+export const MEMBERS = ['member', 'admin']
+export const INSTITUTE = ['institute', 'admin']
+export const CANTEENS = ['canteen', 'admin']
+export const CONSUMER = ['consumer', 'admin', 'institute']
 
 export function generateSessionToken(): string {
 	const bytes = new Uint8Array(20)
