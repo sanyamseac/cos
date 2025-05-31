@@ -4,7 +4,6 @@ import * as auth from '$lib/server/session'
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const sessionId = event.cookies.get(auth.sessionCookieName)
-	console.log(`Session ID from cookies: ${sessionId}`)
 	if (!sessionId) {
 		event.locals.user = null
 		event.locals.session = null
@@ -13,7 +12,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	const { session, user } = await auth.validateSessionToken(sessionId)
 	if (session) {
-		console.log(`Session found for user ${user.id} with session ID ${session.id}`)
 		event.cookies.set(auth.sessionCookieName, sessionId, {
 			path: '/',
 			sameSite: 'lax',
@@ -22,7 +20,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 			secure: !dev,
 		})
 	} else {
-		console.log(`No valid session found for session ID ${sessionId}`)
 		event.cookies.delete(auth.sessionCookieName, { path: '/' })
 	}
 
