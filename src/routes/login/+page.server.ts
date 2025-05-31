@@ -21,7 +21,6 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	oauth: async (event) => {
 		const destination = event.url.searchParams.get('redirect') ?? '/'
-		console.log('Redirecting to CAS login:', destination)
 		if (event.locals.user) return redirect(302, destination)
 		else {
 			const service = (event.url.origin ?? ORIGIN) + `/auth?redirect=${destination}`
@@ -74,7 +73,6 @@ export const actions: Actions = {
 		}
 
 		const serviceTicket = await stResponse.text()
-		console.log('Service Ticket:', serviceTicket)
 
 		const validationUrl = `${cas}/serviceValidate?service=${event.url.origin}&ticket=${serviceTicket}&format=JSON`
 		const response = await fetch(validationUrl)

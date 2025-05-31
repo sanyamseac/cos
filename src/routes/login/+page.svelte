@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms'
 	import type { ActionData } from './$types'
-	import { page } from '$app/stores'
+	import { page } from '$app/state'
 
 	let { form }: { form: ActionData } = $props()
-	let redirectUrl = $page.url.searchParams.get('redirect') || '/'
+	let redirectUrl = page.url.searchParams.get('redirect') || '/'
 </script>
 
 <h1>Login/Register</h1>
