@@ -6,7 +6,7 @@ import * as auth from '$lib/server/session'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import type { Actions, PageServerLoad } from './$types'
-import { generateUserId } from '$lib/helper'
+import { generateId } from '$lib/helper'
 
 const cas = 'https://login.iiit.ac.in/cas'
 
@@ -45,7 +45,7 @@ export const load: PageServerLoad = async (event) => {
 
 	const existingUser = results.at(0)
 	if (!existingUser) {
-		user = { ...user, id: generateUserId() }
+		user = { ...user, id: generateId() }
 		await db.insert(schema.user).values(user)
 	} else user = existingUser
 

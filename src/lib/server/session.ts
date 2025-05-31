@@ -5,7 +5,7 @@ import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from '@oslojs/enco
 import { sha256 } from '@oslojs/crypto/sha2'
 import { type User, type Session } from './db/schema'
 
-export const sessionCookieName = 'auth-session'
+export const sessionCookieName = 'AuthorizationToken'
 
 export function generateSessionToken(): string {
 	const bytes = new Uint8Array(20)

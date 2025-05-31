@@ -6,7 +6,7 @@ import { ORIGIN } from '$env/static/private'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { generateUserId } from '$lib/helper'
+import { generateId } from '$lib/helper'
 
 const cas = 'https://login.iiit.ac.in/cas'
 
@@ -104,7 +104,7 @@ export const actions: Actions = {
 
 		const existingUser = results.at(0)
 		if (!existingUser) {
-			user = { ...user, id: generateUserId() }
+			user = { ...user, id: generateId() }
 			await db.insert(schema.user).values(user)
 		} else user = existingUser
 
