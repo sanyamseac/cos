@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, integer, boolean, numeric } from 'drizzle-orm/pg-core'
 
 export const user = pgTable('user', {
 	id: text('id').primaryKey(),
@@ -15,5 +15,25 @@ export const session = pgTable('session', {
 	expiresAt: timestamp('expires_at').notNull(),
 })
 
+export const canteens = pgTable('canteens', {
+	id: integer('id').primaryKey(),
+	name: text('name').notNull(),
+	timings: text('timings').notNull(),
+})
+
+export const menuItems = pgTable('menu_items', {
+	id: integer('id').primaryKey(),
+	canteenId: integer('canteenid')
+		.notNull()
+		.references(() => canteens.id, { onDelete: 'cascade' }),
+	category: text('category').notNull(),
+	name: text('name').notNull(),
+	price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+	isAvailable: boolean('is_available').notNull().default(true),
+	isNonVeg: boolean('is_nonveg').notNull().default(false),
+})
+
 export type Session = typeof session.$inferSelect
 export type User = typeof user.$inferSelect
+export type Canteen = typeof canteens.$inferSelect
+export type MenuItem = typeof menuItems.$inferSelect
