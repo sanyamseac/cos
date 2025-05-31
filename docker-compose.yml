@@ -2,6 +2,7 @@ services:
     db:
         image: postgres
         restart: always
+        container_name: db
         ports:
             - 5432:5432
         environment:
@@ -10,6 +11,8 @@ services:
             POSTGRES_DB: local
         volumes:
             - pgdata:/var/lib/postgresql/data
+        networks:
+            - app-network
     cos:
         env_file: .env
         build:
@@ -18,12 +21,15 @@ services:
         image: cos-image
         container_name: cos
         restart: always
+        depends_on:
+            - db
         ports:
-            - 8000:8000
-        networks: app-network
-    webserver:
+            - 3000:3000
+        networks: 
+            - app-network
+    server:
         image: nginx:mainline-alpine
-        container_name: webserver
+        container_name: server
         restart: unless-stopped
         ports:
             - '80:80' # HTTP
@@ -32,7 +38,7 @@ services:
             - /etc/ssl:/etc/ssl:ro # Mount SSL certificates
             - ./deploy/nginx:/etc/nginx/conf.d # Mount Nginx config
         depends_on:
-            - website
+            - cos
         networks:
             - app-network
 
