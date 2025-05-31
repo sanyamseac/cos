@@ -1,3 +1,20 @@
 @import 'tailwindcss';
-@plugin '@tailwindcss/forms';
-@plugin '@tailwindcss/typography';
+
+/* Custom color variables for Cerulean Blue theme */
+:root {
+    --cerulean-blue: #007BA7;
+    --cerulean-blue-light: #0095CC;
+    --cerulean-blue-dark: #005A7A;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    html {
+        color-scheme: dark;
+    }
+}
+
+/* Smooth transitions for theme switching */
+* {
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
