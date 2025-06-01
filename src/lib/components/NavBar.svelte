@@ -8,6 +8,8 @@
 	import CaretDoubleUp from "phosphor-svelte/lib/CaretDoubleUp";
 	import CaretDoubleDown from "phosphor-svelte/lib/CaretDoubleDown";
 	import Airplane from "phosphor-svelte/lib/Airplane";
+	import SignIn from "phosphor-svelte/lib/SignIn";
+	import { Utensils, History, ShoppingBasket, User, LogIn, CookingPot } from "lucide-svelte";
 
 	type ThemeMode = string;
 
@@ -19,15 +21,25 @@
 
 	const components: { title: string; href: string; img: any}[] = [
 		{
-			title: "Home",
-			href: "/",
-			img: Airplane
+			title: "Dashboard",
+			href: "/dashboard",
+			img: Utensils
 		},
 		{
 			title: "Menu",
 			href: "/menu",
-			img: Airplane
-		}
+			img: CookingPot
+		},
+		{
+			title: "Basket",
+			href: "/basket",
+			img: ShoppingBasket
+		},
+		{
+			title: "Orders",
+			href: "/orders",
+			img: History
+		},
 	];
 
 	let themeMode = $state<string>('system')
@@ -66,7 +78,7 @@
 	})
 </script>
 <nav
-	class="sticky bottom-0 md:top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-gray-800 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/60"
+	class="fixed bottom-0 md:top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-gray-800 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/60"
 >
 	<div class="mx-auto w-full px-4 md:px-6 lg:px-8">
 		<div class="flex h-16 items-center justify-between">
@@ -105,20 +117,22 @@
 								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-muted dark:data-[state=open]:bg-muted focus:outline-hidden group inline-flex h-8 w-max items-center justify-center rounded-[7px] bg-transparent px-4 py-2 text-md font-medium transition-colors hover:bg-white disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white"
 								href="/login"
 							>
-								<span> Login </span>
+								<LogIn />
+								<span class="hidden md:inline"> Login </span>
 							</NavigationMenu.Link>
 						</NavigationMenu.Item>
 					{:else}
 						<NavigationMenu.Item>
 							<NavigationMenu.Link
 								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-muted dark:data-[state=open]:bg-muted focus:outline-hidden group inline-flex h-8 w-max items-center justify-center rounded-[7px] bg-transparent px-4 py-2 text-md font-medium transition-colors hover:bg-white disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white"
-								href="/details"
+								href="/profile"
 							>
-								<span> Profile </span>
+								<User />
+								<span class="hidden md:inline"> Profile </span>
 							</NavigationMenu.Link>
 						</NavigationMenu.Item>
 					{/if}
-					<NavigationMenu.Item>
+					<!-- <NavigationMenu.Item>
 						<Select.Root type="single" onValueChange={(value) => updateTheme(value as ThemeMode)} items={themes} value={themeMode}>
 							<Select.Trigger
 								class="m-2 h-10 rounded-9px border-border-input bg-background data-placeholder:text-foreground-alt/50 inline-flex w-[120px] select-none items-center border px-[8px] text-md transition-colors"
@@ -160,7 +174,7 @@
 								</Select.Content>
 							</Select.Portal>
 						</Select.Root>
-					</NavigationMenu.Item>
+					</NavigationMenu.Item> -->
 					<NavigationMenu.Indicator
 					class="data-[state=hidden]:animate-fade-out data-[state=visible]:animate-fade-in top-full z-10 flex h-2.5 items-end justify-center overflow-hidden opacity-100 transition-[all,transform_250ms_ease] duration-200 data-[state=hidden]:opacity-0"
 					>
