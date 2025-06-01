@@ -44,6 +44,8 @@
 		"drizzle-orm": "^0.40.0",
 		"lucide-svelte": "^0.511.0",
 		"pg": "^8.16.0",
-		"postgres": "^3.4.5"
+		"phosphor-svelte": "^3.0.1",
+		"postgres": "^3.4.5",
+		"tailwindcss-animate": "^1.0.7"
 	}
 }

@@ -1,77 +1,82 @@
 <script lang="ts">
-	import { Moon, Sun, Menu, X, Monitor, ChevronDown } from 'lucide-svelte'
+	import { Select, NavigationMenu } from "bits-ui";
+	import { onMount } from "svelte";
+	import { page } from '$app/state';
+	import Check from "phosphor-svelte/lib/Check";
+	import Palette from "phosphor-svelte/lib/Palette";
+	import CaretUpDown from "phosphor-svelte/lib/CaretUpDown";
+	import CaretDoubleUp from "phosphor-svelte/lib/CaretDoubleUp";
+	import CaretDoubleDown from "phosphor-svelte/lib/CaretDoubleDown";
+	import Airplane from "phosphor-svelte/lib/Airplane";
 
-	type ThemeMode = 'system' | 'light' | 'dark'
-	let { themeMode = $bindable<ThemeMode>('system'), updateTheme } = $props<{
-		themeMode: ThemeMode
-		updateTheme: (mode: ThemeMode) => void
-	}>()
+	type ThemeMode = string;
 
-	let mobileMenuOpen = $state(false)
-	let themeDropdownOpen = $state(false)
-	let themeDropdownRef: HTMLDivElement
+	const themes = [
+		{ value: "light", label: "Light" },
+		{ value: "dark", label: "Dark" },
+		{ value: "system", label: "System" },
+	];
 
-	function handleThemeChange(mode: ThemeMode) {
-		updateTheme(mode)
-		themeDropdownOpen = false
-		mobileMenuOpen = false
-	}
+	const components: { title: string; href: string; img: any}[] = [
+		{
+			title: "Home",
+			href: "/",
+			img: Airplane
+		},
+		{
+			title: "Menu",
+			href: "/menu",
+			img: Airplane
+		}
+	];
 
-	function getThemeIcon(mode: ThemeMode) {
-		switch (mode) {
-			case 'light':
-				return Sun
-			case 'dark':
-				return Moon
-			case 'system':
-			default:
-				return Monitor
+	let themeMode = $state<string>('system')
+
+	function updateTheme(mode: string) {
+		themeMode = mode
+
+		if (mode === 'system') {
+			// Follow system preference
+			const isDarkSystem = window.matchMedia('(prefers-color-scheme: dark)').matches
+			if (isDarkSystem) {
+				document.documentElement.classList.add('dark')
+			} else {
+				document.documentElement.classList.remove('dark')
+			}
+		} else if (mode === 'dark') {
+			document.documentElement.classList.add('dark')
+		} else {
+			document.documentElement.classList.remove('dark')
 		}
 	}
 
 	function getThemeLabel(mode: ThemeMode) {
-		switch (mode) {
-			case 'light':
-				return 'Light'
-			case 'dark':
-				return 'Dark'
-			case 'system':
-			default:
-				return 'System'
-		}
+		return themes.find(theme => theme.value === mode)?.label || 'System';
 	}
 
-	function handleClickOutside(event: MouseEvent) {
-		if (themeDropdownRef && !themeDropdownRef.contains(event.target as Node)) {
-			themeDropdownOpen = false
-		}
-	}
+	const FullName = $derived(getThemeLabel(themeMode));
+
+	onMount(() => {
+		themeMode = localStorage.getItem('theme') as string
+		updateTheme(themeMode)
+	})
 
 	$effect(() => {
-		if (themeDropdownOpen) {
-			document.addEventListener('click', handleClickOutside)
-		} else {
-			document.removeEventListener('click', handleClickOutside)
-		}
-
-		return () => {
-			document.removeEventListener('click', handleClickOutside)
-		}
+		localStorage.setItem('theme', themeMode)
 	})
 </script>
-
 <nav
-	class="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-gray-800 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/60"
+	class="sticky bottom-0 md:top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-gray-800 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/60"
 >
-	<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+	<div class="mx-auto w-full px-4 md:px-6 lg:px-8">
 		<div class="flex h-16 items-center justify-between">
 			<!-- Logo -->
-			<div class="flex items-center">
+			<div class="hidden flex items-center md:inline">
 				<a href="/" class="flex items-center space-x-2">
 					<div
 						class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400"
 					>
-						<span class="text-sm font-bold text-white">C</span>
+						<span class="text-md font-bold text-white">C</span>
 					</div>
 					<span class="text-xl font-bold text-gray-900 dark:text-white"
 						>Canteen Ordering System</span
@@ -79,197 +84,92 @@
 				</a>
 			</div>
 
-			<!-- Desktop Navigation -->
-			<div class="hidden md:block">
-				<div class="ml-10 flex items-baseline space-x-4">
-					<a
-						href="/"
-						class="rounded-md px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-					>
-						Home
-					</a>
-					<a
-						href="/menu"
-						class="rounded-md px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-					>
-						Menu
-					</a>
-					<a
-						href="/orders"
-						class="rounded-md px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-					>
-						Orders
-					</a>
-					<a
-						href="/about"
-						class="rounded-md px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-					>
-						About
-					</a>
-				</div>
-			</div>
-
-			<!-- Right side buttons -->
-			<div class="hidden items-center space-x-4 md:flex">
-				<!-- Theme dropdown -->
-				<div class="relative" bind:this={themeDropdownRef}>
-					<button
-						class="flex items-center space-x-2 rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-						onclick={() => (themeDropdownOpen = !themeDropdownOpen)}
-					>
-						<svelte:component this={getThemeIcon(themeMode)} class="h-5 w-5" />
-						<span class="text-sm font-medium">{getThemeLabel(themeMode)}</span>
-						<ChevronDown class="h-4 w-4" />
-					</button>
-
-					{#if themeDropdownOpen}
-						<div
-							class="ring-opacity-5 absolute top-full right-0 z-50 mt-2 w-48 rounded-md border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black dark:border-gray-700 dark:bg-gray-800"
-						>
-							<button
-								class="flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-								onclick={() => handleThemeChange('system')}
-								class:bg-gray-100={themeMode === 'system'}
-								class:dark:bg-gray-700={themeMode === 'system'}
-							>
-								<Monitor class="h-4 w-4" />
-								<span>System</span>
-							</button>
-							<button
-								class="flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-								onclick={() => handleThemeChange('light')}
-								class:bg-gray-100={themeMode === 'light'}
-								class:dark:bg-gray-700={themeMode === 'light'}
-							>
-								<Sun class="h-4 w-4" />
-								<span>Light</span>
-							</button>
-							<button
-								class="flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-								onclick={() => handleThemeChange('dark')}
-								class:bg-gray-100={themeMode === 'dark'}
-								class:dark:bg-gray-700={themeMode === 'dark'}
-							>
-								<Moon class="h-4 w-4" />
-								<span>Dark</span>
-							</button>
-						</div>
-					{/if}
-				</div>
-
-				<!-- Auth buttons -->
-				<a
-					href="/login"
-					class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+			<NavigationMenu.Root class="relative w-full md:w-auto z-10 flex justify-between inline" orientation="vertical">
+				<NavigationMenu.List
+					class="group flex list-none items-center justify-between p-1"
 				>
-					Sign In
-				</a>
-			</div>
-
-			<!-- Mobile menu button -->
-			<div class="flex items-center space-x-2 md:hidden">
-				<!-- Theme toggle mobile -->
-				<button
-					class="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-					onclick={() => (themeDropdownOpen = !themeDropdownOpen)}
-				>
-					<svelte:component this={getThemeIcon(themeMode)} class="h-5 w-5" />
-				</button>
-
-				<button
-					class="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-					onclick={() => (mobileMenuOpen = !mobileMenuOpen)}
-				>
-					{#if mobileMenuOpen}
-						<X class="h-6 w-6" />
+					{#each components as component}
+						<NavigationMenu.Item>
+							<NavigationMenu.Link
+								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-muted dark:data-[state=open]:bg-muted focus:outline-hidden group inline-flex h-8 w-max items-center justify-center rounded-[7px] bg-transparent px-4 py-2 text-md font-medium transition-colors hover:bg-white disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white"
+								href={component.href}
+							>
+								<component.img class="md:hidden"/>
+								<span class="hidden md:inline"> {component.title} </span>
+							</NavigationMenu.Link>
+						</NavigationMenu.Item>
+					{/each}
+					{#if !page.data.user}
+						<NavigationMenu.Item>
+							<NavigationMenu.Link
+								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-muted dark:data-[state=open]:bg-muted focus:outline-hidden group inline-flex h-8 w-max items-center justify-center rounded-[7px] bg-transparent px-4 py-2 text-md font-medium transition-colors hover:bg-white disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white"
+								href="/login"
+							>
+								<span> Login </span>
+							</NavigationMenu.Link>
+						</NavigationMenu.Item>
 					{:else}
-						<Menu class="h-6 w-6" />
+						<NavigationMenu.Item>
+							<NavigationMenu.Link
+								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-muted dark:data-[state=open]:bg-muted focus:outline-hidden group inline-flex h-8 w-max items-center justify-center rounded-[7px] bg-transparent px-4 py-2 text-md font-medium transition-colors hover:bg-white disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white"
+								href="/details"
+							>
+								<span> Profile </span>
+							</NavigationMenu.Link>
+						</NavigationMenu.Item>
 					{/if}
-				</button>
-			</div>
+					<NavigationMenu.Item>
+						<Select.Root type="single" onValueChange={(value) => updateTheme(value as ThemeMode)} items={themes} value={themeMode}>
+							<Select.Trigger
+								class="m-2 h-10 rounded-9px border-border-input bg-background data-placeholder:text-foreground-alt/50 inline-flex w-[120px] select-none items-center border px-[8px] text-md transition-colors"
+								aria-label="Select a theme"
+							>
+								<Palette class="text-muted-foreground mr-[9px] size-5" />
+								{FullName}
+								<CaretUpDown class="text-muted-foreground ml-auto size-5" />
+							</Select.Trigger>
+							<Select.Portal>
+								<Select.Content
+								class="focus-override border-muted bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 outline-hidden z-50 h-38 max-h-[var(--bits-select-content-available-height)] w-[var(--bits-select-anchor-width)] min-w-[var(--bits-select-anchor-width)] select-none rounded-xl border px-1 py-3 data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1"
+								sideOffset={20}
+								>
+								<Select.ScrollUpButton class="flex w-full items-center justify-center">
+									<CaretDoubleUp class="size-3" />
+								</Select.ScrollUpButton>
+								<Select.Viewport class="p-1">
+									{#each themes as theme}
+									<Select.Item
+										class="rounded-button data-highlighted:bg-muted outline-hidden data-disabled:opacity-50 flex h-10 w-full select-none items-center py-3 pl-5 pr-1.5 text-md capitalize"
+										value={theme.value}
+										label={theme.label}
+									>
+										{#snippet children({ selected })}
+										{theme.label}
+										{#if selected}
+											<div class="ml-auto">
+											<Check aria-label="check" />
+											</div>
+										{/if}
+										{/snippet}
+									</Select.Item>
+									{/each}
+								</Select.Viewport>
+								<Select.ScrollDownButton class="flex w-full items-center justify-center">
+									<CaretDoubleDown class="size-3" />
+								</Select.ScrollDownButton>
+								</Select.Content>
+							</Select.Portal>
+						</Select.Root>
+					</NavigationMenu.Item>
+					<NavigationMenu.Indicator
+					class="data-[state=hidden]:animate-fade-out data-[state=visible]:animate-fade-in top-full z-10 flex h-2.5 items-end justify-center overflow-hidden opacity-100 transition-[all,transform_250ms_ease] duration-200 data-[state=hidden]:opacity-0"
+					>
+					<div
+						class="bg-border relative top-[70%] size-2.5 rotate-[45deg] rounded-tl-[2px]"
+					></div>
+					</NavigationMenu.Indicator>
+				</NavigationMenu.List>
+			</NavigationMenu.Root>
 		</div>
 	</div>
-
-	<!-- Mobile menu -->
-	{#if mobileMenuOpen}
-		<div class="md:hidden">
-			<div
-				class="space-y-1 border-t border-gray-200 bg-white px-2 pt-2 pb-3 sm:px-3 dark:border-gray-800 dark:bg-gray-900"
-			>
-				<a
-					href="/"
-					class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-				>
-					Home
-				</a>
-				<a
-					href="/menu"
-					class="block rounded-md px-3 py-2 text-base font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-				>
-					Menu
-				</a>
-				<a
-					href="/orders"
-					class="block rounded-md px-3 py-2 text-base font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-				>
-					Orders
-				</a>
-				<a
-					href="/about"
-					class="block rounded-md px-3 py-2 text-base font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-				>
-					About
-				</a>
-
-				<!-- Theme selection mobile -->
-				<div class="border-t border-gray-200 pt-4 dark:border-gray-700">
-					<p class="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">Theme</p>
-					<div class="mt-2 space-y-1">
-						<button
-							class="flex w-full items-center space-x-2 rounded-md px-3 py-2 text-base font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-							onclick={() => handleThemeChange('system')}
-							class:text-blue-600={themeMode === 'system'}
-							class:bg-blue-50={themeMode === 'system'}
-							class:dark:text-white={themeMode === 'system'}
-							class:dark:bg-gray-800={themeMode === 'system'}
-						>
-							<Monitor class="h-5 w-5" />
-							<span>System</span>
-						</button>
-						<button
-							class="flex w-full items-center space-x-2 rounded-md px-3 py-2 text-base font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-							onclick={() => handleThemeChange('light')}
-							class:text-blue-600={themeMode === 'light'}
-							class:bg-blue-50={themeMode === 'light'}
-							class:dark:text-white={themeMode === 'light'}
-							class:dark:bg-gray-800={themeMode === 'light'}
-						>
-							<Sun class="h-5 w-5" />
-							<span>Light</span>
-						</button>
-						<button
-							class="flex w-full items-center space-x-2 rounded-md px-3 py-2 text-base font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-							onclick={() => handleThemeChange('dark')}
-							class:text-blue-600={themeMode === 'dark'}
-							class:bg-blue-50={themeMode === 'dark'}
-							class:dark:text-white={themeMode === 'dark'}
-							class:dark:bg-gray-800={themeMode === 'dark'}
-						>
-							<Moon class="h-5 w-5" />
-							<span>Dark</span>
-						</button>
-					</div>
-				</div>
-
-				<div class="border-t border-gray-200 pt-4 dark:border-gray-700">
-					<a
-						href="/login"
-						class="block rounded-md bg-blue-600 px-3 py-2 text-center text-base font-medium text-white hover:bg-blue-700"
-					>
-						Sign In
-					</a>
-				</div>
-			</div>
-		</div>
-	{/if}
 </nav>
