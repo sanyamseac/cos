@@ -1,0 +1,44 @@
+<script lang="ts">
+interface CanteenStat {
+	name: string;
+	spent: number;
+	orders: number;
+	rating: number;
+}
+
+interface Props {
+	canteenStats: CanteenStat[];
+}
+
+let { canteenStats }: Props = $props();
+</script>
+
+<div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
+	<div class="flex items-center gap-3 mb-6">
+		<div class="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
+			<span class="text-white text-lg">📊</span>
+		</div>
+		<div>
+			<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Spending Overview</h3>
+			<p class="text-xs text-gray-500 dark:text-gray-400">By location</p>
+		</div>
+	</div>
+	
+	<div class="space-y-3">
+		{#each canteenStats as canteen}
+			<div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+				<div class="flex-1">
+					<p class="font-medium text-gray-800 dark:text-white text-sm">{canteen.name}</p>
+					<div class="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+						<span>{canteen.orders} orders</span>
+						<span>⭐ {canteen.rating}</span>
+					</div>
+				</div>
+				<div class="text-right">
+					<p class="font-bold text-gray-800 dark:text-white">${canteen.spent.toFixed(0)}</p>
+					<p class="text-xs text-gray-500 dark:text-gray-400">${(canteen.spent / canteen.orders).toFixed(2)}/avg</p>
+				</div>
+			</div>
+		{/each}
+	</div>
+</div>
