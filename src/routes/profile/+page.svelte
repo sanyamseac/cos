@@ -5,59 +5,15 @@
 	import { User, Mail, Shield, Bell, Eye, Lock, Palette, Globe, Camera, LogOut } from "lucide-svelte"
 	import ProfilePictureDialog from './components/ProfilePictureDialog.svelte'
 	import { onMount } from 'svelte';
-
 	import Check from "phosphor-svelte/lib/Check";
 	import CaretUpDown from "phosphor-svelte/lib/CaretUpDown";
 	import CaretDoubleUp from "phosphor-svelte/lib/CaretDoubleUp";
 	import CaretDoubleDown from "phosphor-svelte/lib/CaretDoubleDown";
 
-	type ThemeMode = string;
-	let themeMode = $state<string>('system')
-
-	const themes = [
-		{ value: "light", label: "Light" },
-		{ value: "dark", label: "Dark" },
-		{ value: "system", label: "System" },
-	];
-
-	function updateTheme(mode: string) {
-		themeMode = mode
-
-		if (mode === 'system') {
-			// Follow system preference
-			const isDarkSystem = window.matchMedia('(prefers-color-scheme: dark)').matches
-			if (isDarkSystem) {
-				document.documentElement.classList.add('dark')
-			} else {
-				document.documentElement.classList.remove('dark')
-			}
-		} else if (mode === 'dark') {
-			document.documentElement.classList.add('dark')
-		} else {
-			document.documentElement.classList.remove('dark')
-		}
-	}
-
-	function getThemeLabel(mode: ThemeMode) {
-		return themes.find(theme => theme.value === mode)?.label || 'System';
-	}
-
-	const FullName = $derived(getThemeLabel(themeMode));
-
-	onMount(() => {
-		themeMode = localStorage.getItem('theme') as string || 'system';
-		updateTheme(themeMode)
-	})
-
-	$effect(() => {
-		localStorage.setItem('theme', themeMode)
-	})
-
 	let { data }: { data: PageServerData } = $props()
 
 	let emailNotifs = $state(false)
 	let browserNotifs = $state(false)
-	let darkMode = $state(false)	
 	let profileVisibility = $state('private')
 	let isEditingPic = $state(false)
 
@@ -65,10 +21,6 @@
 		{ value: 'public', label: 'Public' },
 		{ value: 'private', label: 'Private' }
 	]
-
-	function handleDialogClose() {
-		isEditingPic = false
-	}
 
 	async function handleProfilePictureSave(profilePicUrl: string) {
 		try {
@@ -93,6 +45,42 @@
 		
 		isEditingPic = false
 	}
+
+	// Theme management
+	let themeMode = $state<string>('system')
+	const themes = [
+		{ value: "light", label: "Light" },
+		{ value: "dark", label: "Dark" },
+		{ value: "system", label: "System" },
+	];
+	function updateTheme(mode: string) {
+		themeMode = mode
+		if (mode === 'system') {
+			// Follow system preference
+			const isDarkSystem = window.matchMedia('(prefers-color-scheme: dark)').matches
+			if (isDarkSystem) {
+				document.documentElement.classList.add('dark')
+			} else {
+				document.documentElement.classList.remove('dark')
+			}
+		} else if (mode === 'dark') {
+			document.documentElement.classList.add('dark')
+		} else {
+			document.documentElement.classList.remove('dark')
+		}
+	}
+	function getThemeLabel(mode: string) {
+		return themes.find(theme => theme.value === mode)?.label || 'System';
+	}
+	const FullName = $derived(getThemeLabel(themeMode));
+	onMount(() => {
+		themeMode = localStorage.getItem('theme') as string || 'system';
+		updateTheme(themeMode)
+	})
+	$effect(() => {
+		localStorage.setItem('theme', themeMode)
+	})
+
 </script>
 
 <ProfilePictureDialog
@@ -201,26 +189,68 @@
 					<div class="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
 						<Lock class="w-5 h-5 text-white" />
 					</div>
-					<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Privacy & Security</h3>
+					<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Your Preferences</h3>
 				</div>
 				<div class="space-y-4">
 					<div class="space-y-2">
 						<p class="font-medium text-gray-800 dark:text-white">Profile Visibility</p>
-						<Select.Root value={profileVisibility} onValueChange={(v) => profileVisibility = v?.value || 'friends'}>
-							<Select.Trigger class="flex h-10 w-full items-center justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-								<Select.Value placeholder="Select visibility" />
-							</Select.Trigger>
-							<Select.Content class="relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-md">
-								{#each visibilityOptions as option}
-									<Select.Item value={option.value} label={option.label} class="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700">
-										{option.label}
-									</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-						<Select.Root type="single" onValueChange={(value) => updateTheme(value as ThemeMode)} items={themes} value={themeMode}>
+						<Select.Root type="single" bind:value={profileVisibility}>
 							<Select.Trigger
-								class="m-2 h-10 rounded-9px border-border-input bg-background data-placeholder:text-foreground-alt/50 inline-flex w-[120px] select-none items-center border px-[8px] text-md transition-colors"
+								class="h-10 rounded-9px border-border-input bg-background data-placeholder:text-foreground-alt/50 inline-flex w-full select-none items-center border px-[8px] text-md transition-colors"
+								aria-label="Select a visibility option"
+							>
+								<Palette class="text-muted-foreground mr-[9px] size-5" />
+								{profileVisibility == 'private' ? 'Private' : 'Public'}
+								<CaretUpDown class="text-muted-foreground ml-auto size-5" />
+							</Select.Trigger>
+							<Select.Portal>
+								<Select.Content
+								class="focus-override border-muted bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 outline-hidden z-50 h-28 max-h-[var(--bits-select-content-available-height)] w-[var(--bits-select-anchor-width)] min-w-[var(--bits-select-anchor-width)] select-none rounded-xl border px-1 py-3 data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1"
+								sideOffset={20}
+								>
+								<Select.ScrollUpButton class="flex w-full items-center justify-center">
+									<CaretDoubleUp class="size-3" />
+								</Select.ScrollUpButton>
+								<Select.Viewport class="p-1">
+									<Select.Item
+										class="rounded-button data-highlighted:bg-muted outline-hidden data-disabled:opacity-50 flex h-10 w-full select-none items-center py-3 pl-5 pr-1.5 text-md capitalize"
+										value="private"
+										label="Private"
+									>
+										{#snippet children({ selected })}
+										Private
+										{#if selected}
+											<div class="ml-auto">
+											<Check aria-label="check" />
+											</div>
+										{/if}
+										{/snippet}
+									</Select.Item>
+									<Select.Item
+										class="rounded-button data-highlighted:bg-muted outline-hidden data-disabled:opacity-50 flex h-10 w-full select-none items-center py-3 pl-5 pr-1.5 text-md capitalize"
+										value="public"
+										label="Public"
+									>
+										{#snippet children({ selected })}
+										Public
+										{#if selected}
+											<div class="ml-auto">
+											<Check aria-label="check" />
+											</div>
+										{/if}
+										{/snippet}
+									</Select.Item>
+								</Select.Viewport>
+								<Select.ScrollDownButton class="flex w-full items-center justify-center">
+									<CaretDoubleDown class="size-3" />
+								</Select.ScrollDownButton>
+								</Select.Content>
+							</Select.Portal>
+						</Select.Root>
+						<p class="font-medium text-gray-800 dark:text-white">Theme</p>
+						<Select.Root type="single" onValueChange={(value) => updateTheme(value as string)} items={themes} value={themeMode}>
+							<Select.Trigger
+								class="h-10 rounded-9px border-border-input bg-background data-placeholder:text-foreground-alt/50 inline-flex w-full select-none items-center border px-[8px] text-md transition-colors"
 								aria-label="Select a theme"
 							>
 								<Palette class="text-muted-foreground mr-[9px] size-5" />
@@ -266,21 +296,18 @@
 			<!-- Account Actions -->
 			<div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
 				<div class="flex items-center gap-3 mb-6">
-					<div class="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg">
-						<Globe class="w-5 h-5 text-white" />
+					<div class="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
+						<Lock class="w-5 h-5 text-white" />
 					</div>
-					<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Account Actions</h3>
+					<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Legal</h3>
 				</div>
 				<div class="space-y-3">
-					<Button.Root class="w-full justify-start border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-						Download My Data
-					</Button.Root>
-					<Button.Root class="w-full justify-start border-orange-200 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20">
-						Deactivate Account
-					</Button.Root>
-					<Button.Root class="w-full justify-start border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
-						Delete Account
-					</Button.Root>
+					<a href="/terms" class="block text-gray-700 dark:text-gray-300 hover:underline transition-all duration-200 font-medium">
+						Terms and Conditions
+					</a>
+					<a href="/privacy" class="block text-gray-700 dark:text-gray-300 hover:underline transition-all duration-200 font-medium">
+						Privacy Policy
+					</a>
 				</div>
 			</div>
 		</div>
