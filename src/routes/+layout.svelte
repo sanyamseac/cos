@@ -2,6 +2,7 @@
 	import '../app.css'
 	import NavBar from '$lib/components/NavBar.svelte'
 	import ScreenSize from '$lib/components/ScreenSize.svelte'
+	import { serviceWorkerManager } from '$lib/serviceWorkerManager'
 	import { onMount } from 'svelte'
 
 	let { children } = $props()
@@ -23,11 +24,18 @@
 		} else {
 			document.documentElement.classList.remove('dark')
 		}
-	}
-
-	onMount(() => {
+	}	onMount(() => {
 		themeMode = localStorage.getItem('theme') as string || 'system';
 		updateTheme(themeMode)
+		
+		// Initialize Service Worker for push notifications
+		if (typeof window !== 'undefined') {
+			serviceWorkerManager.initializeServiceWorker().then(() => {
+				console.log('Service Worker initialization completed in layout')
+			}).catch((error) => {
+				console.error('Service Worker initialization failed in layout:', error)
+			})
+		}
 	})
 </script>
 

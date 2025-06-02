@@ -15,6 +15,14 @@ export const session = pgTable('session', {
 	expiresAt: timestamp('expires_at').notNull(),
 })
 
+export const pushSubscriptionsTable = pgTable('push_subscriptions', {
+	endpoint: text('endpoint').primaryKey(),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	p256dh: text('p256dh').notNull(),
+	auth: text('auth').notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 export const canteens = pgTable('canteens', {
 	id: integer('id').primaryKey(),
 	name: text('name').notNull(),
@@ -37,3 +45,4 @@ export type Session = typeof session.$inferSelect
 export type User = typeof user.$inferSelect
 export type Canteen = typeof canteens.$inferSelect
 export type MenuItem = typeof menuItems.$inferSelect
+export type PushSubscription = typeof pushSubscriptionsTable.$inferSelect

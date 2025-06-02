@@ -5,22 +5,98 @@
 	import { User, Mail, Shield, Bell, Eye, Lock, Palette, Globe, Camera, LogOut } from "lucide-svelte"
 	import ProfilePictureDialog from './components/ProfilePictureDialog.svelte'
 	import { onMount } from 'svelte';
+	import { notificationService, requestNotificationPermission } from '$lib/notifications'
+	import { serviceWorkerManager } from '$lib/serviceWorkerManager'
 	import Check from "phosphor-svelte/lib/Check";
 	import CaretUpDown from "phosphor-svelte/lib/CaretUpDown";
 	import CaretDoubleUp from "phosphor-svelte/lib/CaretDoubleUp";
 	import CaretDoubleDown from "phosphor-svelte/lib/CaretDoubleDown";
-
 	let { data }: { data: PageServerData } = $props()
 
 	let emailNotifs = $state(false)
-	let browserNotifs = $state(false)
+	// let browserNotifs = $state(false) // Removed
 	let profileVisibility = $state('private')
 	let isEditingPic = $state(false)
-
+		// Notification permission state
+	let notificationPermission = $state<NotificationPermission>('default')
+	// let isRequestingPermission = $state(false) // Removed, or will be handled by isManagingPush
+	let pushNotifications = $state(false)
+	let isManagingPush = $state(false) // This will now also cover the initial permission request phase
 	const visibilityOptions = [
 		{ value: 'public', label: 'Public' },
 		{ value: 'private', label: 'Private' }
 	]
+	
+	// Removed handleBrowserNotificationToggle function
+
+	// Handle push notification toggle (Service Worker based)
+	async function handlePushNotificationToggle(enabled: boolean) {
+		isManagingPush = true
+		try {
+			if (enabled) {
+				// First ensure basic notification permission
+				if (notificationPermission !== 'granted') {
+					console.log('Requesting notification permission for push...')
+					const permission = await requestNotificationPermission()
+					notificationPermission = permission // Update status immediately
+					if (permission !== 'granted') {
+						pushNotifications = false
+						localStorage.setItem('pushNotifications', 'false')
+						console.log('Notification permission denied, cannot enable push.')
+						return
+					}
+					console.log('Notification permission granted.')
+				}
+
+				// Enable push notifications with Service Worker
+				console.log('Enabling push notifications...')
+				const success = await notificationService.enablePushNotifications(data.user.id)
+				if (success) {
+					pushNotifications = true
+					console.log('Push notifications enabled successfully')
+					// Optionally show a test push notification
+					setTimeout(() => {
+						notificationService.sendNotification({
+							title: '📱 Push Notifications Enabled!',
+							body: 'You\'ll now receive background updates.',
+							tag: 'push-notification-enabled'
+						})
+					}, 500)
+				} else {
+					pushNotifications = false
+					console.error('Failed to enable push notifications after permission grant.')
+				}
+			} else {
+				// Disable push notifications
+				console.log('Disabling push notifications...')
+				await notificationService.disablePushNotifications(data.user.id)
+				pushNotifications = false
+				console.log('Push notifications disabled')
+			}
+		} catch (error) {
+			console.error('Error managing push notifications:', error)
+			pushNotifications = false // Ensure state is false on error
+		} finally {
+			isManagingPush = false
+		}
+		
+		localStorage.setItem('pushNotifications', pushNotifications.toString())
+	}
+
+	// Check current push subscription status
+	async function checkPushSubscriptionStatus() {
+		try {
+			const subscription = await serviceWorkerManager.getPushSubscription()
+			if (subscription) {
+				pushNotifications = true
+			} else {
+				pushNotifications = false // Ensure it's false if no subscription
+			}
+		} catch (error) {
+			console.error('Error checking push subscription:', error)
+			pushNotifications = false
+		}
+	}
 
 	async function handleProfilePictureSave(profilePicUrl: string) {
 		try {
@@ -72,10 +148,33 @@
 	function getThemeLabel(mode: string) {
 		return themes.find(theme => theme.value === mode)?.label || 'System';
 	}
-	const FullName = $derived(getThemeLabel(themeMode));
-	onMount(() => {
+	const FullName = $derived(getThemeLabel(themeMode));	onMount(() => {
 		themeMode = localStorage.getItem('theme') as string || 'system';
 		updateTheme(themeMode)
+				// Load notification preferences
+		// const savedBrowserNotifs = localStorage.getItem('browserNotifications') // Removed
+		// if (savedBrowserNotifs !== null) { // Removed
+		// 	browserNotifs = savedBrowserNotifs === 'true' // Removed
+		// } // Removed
+		
+		const savedPushNotifs = localStorage.getItem('pushNotifications')
+		if (savedPushNotifs !== null) {
+			pushNotifications = savedPushNotifs === 'true'
+		}
+		
+		// Check current notification permission status
+		if (notificationService.isSupported) {
+			notificationPermission = notificationService.permissionStatus
+		}
+		
+		// Check push notification status if initially enabled and permission is granted
+		if (serviceWorkerManager.isSupported && pushNotifications && notificationPermission === 'granted') {
+			checkPushSubscriptionStatus()
+		} else if (notificationPermission !== 'granted') {
+			// If permission is not granted, push notifications should be considered off
+			pushNotifications = false;
+			localStorage.setItem('pushNotifications', 'false');
+		}
 	})
 	$effect(() => {
 		localStorage.setItem('theme', themeMode)
@@ -170,16 +269,46 @@
 						<Switch.Root bind:checked={emailNotifs} class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700">
 							<Switch.Thumb class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1" />
 						</Switch.Root>
-					</div>
+					</div>					
+					<!-- Browser Notifications Section Removed -->
+					
+					{#if serviceWorkerManager.isSupported}
 					<div class="flex items-center justify-between">
-						<div>
-							<p class="font-medium text-gray-800 dark:text-white">Browser Notifications</p>
-							<p class="text-sm text-gray-600 dark:text-gray-400">Receive order updates via browser</p>
+						<div class="flex-1">
+							<p class="font-medium text-gray-800 dark:text-white">Push Notifications</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">Background notifications for important updates.</p>
+							{#if notificationPermission === 'denied'}
+								<p class="text-xs text-red-600 dark:text-red-400 mt-1">
+									⚠️ Notification permission denied. Please enable in browser settings to use Push Notifications.
+								</p>
+							{:else if isManagingPush}
+								<p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+									{#if notificationPermission === 'default'}Requesting permission...{:else}Managing push notifications...{/if}
+								</p>
+							{:else if pushNotifications && notificationPermission === 'granted'}
+								<p class="text-xs text-green-600 dark:text-green-400 mt-1">
+									✅ Push notifications active
+								</p>
+							{:else if notificationPermission === 'granted' && !pushNotifications}
+								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+									Enable for background updates.
+								</p>
+							{:else if notificationPermission === 'default'}
+								<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+									Click to enable push notifications.
+								</p>
+							{/if}
 						</div>
-						<Switch.Root bind:checked={browserNotifs} class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700">
+						<Switch.Root 
+							checked={pushNotifications} 
+							onCheckedChange={handlePushNotificationToggle}
+							disabled={isManagingPush || notificationPermission === 'denied'}
+							class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700 disabled:opacity-50"
+						>
 							<Switch.Thumb class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1" />
 						</Switch.Root>
 					</div>
+					{/if}
 				</div>
 			</div>
 
