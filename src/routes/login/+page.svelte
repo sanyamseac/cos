@@ -14,21 +14,24 @@
 	<meta name="description" content="Sign in to your IIIT Canteen account to start ordering food." />
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-	<!-- Background decorative elements -->
-	<div class="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-blue-100 opacity-30 blur-3xl dark:bg-blue-900/20"></div>
-	<div class="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-cyan-100 opacity-30 blur-3xl dark:bg-cyan-900/20"></div>
+<div class="min-h-screen pb-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-8 sm:px-10 lg:px-20 relative overflow-hidden">
+	<!-- Decorative background elements -->
+	<div class="absolute inset-0 opacity-20">
+		<div class="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full blur-3xl"></div>
+		<div class="absolute top-1/3 right-20 w-48 h-48 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full blur-3xl"></div>
+		<div class="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full blur-3xl"></div>
+	</div>
 	
-	<div class="relative w-full max-w-md">
+	<div class="relative z-10 w-full max-w-md">
 		<!-- Login Card -->
-		<div class="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8">
+		<div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-8 shadow-sm">
 			<!-- Header -->
 			<div class="text-center mb-8">
-				<div class="mx-auto w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4">
+				<div class="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
 					<User class="w-8 h-8 text-white" />
 				</div>
-				<h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h1>
-				<p class="text-gray-600 dark:text-gray-300">Sign in to your canteen account</p>
+				<h1 class="text-4xl font-bold mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Welcome Back</h1>
+				<p class="text-lg text-gray-700 dark:text-gray-300">Sign in to your canteen account</p>
 			</div>
 
 			<!-- Error Message -->
@@ -36,20 +39,16 @@
 				<div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
 					<p class="text-red-600 dark:text-red-400 text-sm">{form.message}</p>
 				</div>
-			{/if}
-
-			<!-- CAS Login (Primary) -->
+			{/if}			<!-- CAS Login (Primary) -->
 			<form method="post" action="?/oauth&redirect={redirectUrl}" use:enhance>
 				<button 
 					type="submit"
-					class="w-full mb-6 flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl focus:ring-4 focus:ring-blue-600/25 focus:outline-none group"
+					class="w-full mb-6 flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl focus:ring-4 focus:ring-indigo-500/25 focus:outline-none group"
 				>
 					<Landmark class="w-5 h-5 group-hover:scale-110 transition-transform" />
 					Continue with IIIT CAS
 				</button>
-			</form>
-
-			<!-- Divider -->
+			</form>			<!-- Divider -->
 			<div class="relative my-6">
 				<div class="absolute inset-0 flex items-center">
 					<div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
