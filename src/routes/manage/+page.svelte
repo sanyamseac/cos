@@ -1,1120 +1,322 @@
 <script lang="ts">
 	import { Button } from 'bits-ui'
-	import { Plus, Edit2, Trash2, Settings, ChefHat, Package, Layers, Zap } from 'lucide-svelte'
-	import type { PageServerData } from './$types'
+	import {
+		Clock,
+		MapPin,
+		ChefHat,
+		Star,
+		ArrowRight,
+		Plus,
+		Edit,
+		Trash2,
+		Settings,
+		ArrowLeft,
+	} from 'lucide-svelte'
+	import type { PageData } from './$types'
+	import { enhance } from '$app/forms'
+	import CrudModal from '$lib/components/CrudModal.svelte'
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte'
+	import { fly, fade } from 'svelte/transition'
+	import { goto } from '$app/navigation'
 
-	let { data }: { data: PageServerData } = $props()
+	let { data }: { data: PageData } = $props()
 
-	// State for current tab
-	let activeTab = $state('canteens')
+	// Modal state
+	let showCrudModal = $state(false)
+	let editingCanteen = $state(false)
+	let selectedCanteen = $state(null)
+	let showDeleteDialog = $state(false)
+	let isLoading = $state(false)
 
-	// State for modals
-	let showCanteenModal = $state(false)
-	let showItemModal = $state(false)
-	let showAddonModal = $state(false)
-	let showVariantModal = $state(false)
+	// Success message state
+	let showSuccessMessage = $state(false)
+	let successMessage = $state('')
 
-	// State for editing
-	let editingCanteen = $state<any>(null)
-	let editingItem = $state<any>(null)
-	let editingAddon = $state<any>(null)
-	let editingVariant = $state<any>(null)
+	// Field definitions for CRUD modal
+	const canteenFields = [
+		{
+			name: 'name',
+			label: 'Name',
+			type: 'text' as const,
+			required: true,
+			placeholder: 'Enter canteen name',
+		},
+		{
+			name: 'acronym',
+			label: 'Acronym',
+			type: 'text' as const,
+			required: true,
+			placeholder: 'Enter canteen acronym (unique identifier)',
+		},
+		{
+			name: 'timings',
+			label: 'Timings',
+			type: 'text' as const,
+			required: true,
+			placeholder: 'e.g., 8:00 AM - 10:00 PM',
+		},
+		{
+			name: 'description',
+			label: 'Description',
+			type: 'textarea' as const,
+			required: true,
+			placeholder: 'Describe the canteen and its specialties',
+		},
+		{ name: 'open', label: 'Currently Open', type: 'switch' as const },
+		{ name: 'active', label: 'Active', type: 'switch' as const },
+	]
 
-	// Reactive data
-	let canteens = $state(data.canteens || [])
-	let menuItems = $state(data.menuItems || [])
-	let addons = $state(data.addons || [])
-	let variants = $state(data.variants || [])
-
-	// Form states
-	let canteenForm = $state({
-		name: '',
-		timings: '',
-		is_open: true,
-	})
-
-	let itemForm = $state({
-		canteenId: '',
-		category: '',
-		name: '',
-		price: '',
-		isAvailable: true,
-		isNonVeg: false,
-	})
-
-	let addonForm = $state({
-		itemId: '',
-		name: '',
-		price: '',
-	})
-
-	let variantForm = $state({
-		itemId: '',
-		name: '',
-		price: '',
-	})
-
-	// Helper functions
-	function resetForms() {
-		canteenForm = { name: '', timings: '', is_open: true }
-		itemForm = {
-			canteenId: '',
-			category: '',
-			name: '',
-			price: '',
-			isAvailable: true,
-			isNonVeg: false,
-		}
-		addonForm = { itemId: '', name: '', price: '' }
-		variantForm = { itemId: '', name: '', price: '' }
+	// Functions for modal handling
+	function handleAddCanteen() {
+		selectedCanteen = null
+		editingCanteen = false
+		showCrudModal = true
 	}
 
-	function openCanteenModal(canteen: any = null) {
-		editingCanteen = canteen
-		if (canteen) {
-			canteenForm = { ...canteen }
-		} else {
-			canteenForm = { name: '', timings: '', is_open: true }
-		}
-		showCanteenModal = true
+	function handleEditCanteen(canteen: any) {
+		selectedCanteen = canteen
+		editingCanteen = true
+		showCrudModal = true
 	}
 
-	function openItemModal(item: any = null) {
-		editingItem = item
-		if (item) {
-			itemForm = { ...item, canteenId: item.canteenId.toString(), price: item.price }
-		} else {
-			itemForm = {
-				canteenId: '',
-				category: '',
-				name: '',
-				price: '',
-				isAvailable: true,
-				isNonVeg: false,
-			}
-		}
-		showItemModal = true
+	function closeCrudModal() {
+		showCrudModal = false
+		selectedCanteen = null
+		editingCanteen = false
 	}
 
-	function openAddonModal(addon: any = null) {
-		editingAddon = addon
-		if (addon) {
-			addonForm = { ...addon, itemId: addon.itemId.toString(), price: addon.price }
-		} else {
-			addonForm = { itemId: '', name: '', price: '' }
-		}
-		showAddonModal = true
+	function showSuccess(message: string) {
+		successMessage = message
+		showSuccessMessage = true
+		setTimeout(() => {
+			showSuccessMessage = false
+		}, 3000)
 	}
 
-	function openVariantModal(variant: any = null) {
-		editingVariant = variant
-		if (variant) {
-			variantForm = { ...variant, itemId: variant.itemId.toString(), price: variant.price }
-		} else {
-			variantForm = { itemId: '', name: '', price: '' }
-		}
-		showVariantModal = true
-	}
-
-	// API functions
-	async function saveCanteen() {
-		try {
-			const url = '/api/canteens'
-			const method = editingCanteen ? 'PUT' : 'POST'
-			const body = editingCanteen ? { ...canteenForm, id: editingCanteen.id } : canteenForm
-
-			const response = await fetch(url, {
-				method,
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body),
-			})
-
-			if (response.ok) {
-				const result = await response.json()
-				if (editingCanteen) {
-					canteens = canteens.map((c) => (c.id === result.id ? result : c))
-				} else {
-					canteens = [...canteens, result]
+	// Function to get canteen status badge
+	function getStatusBadge(isOpen: boolean) {
+		return isOpen
+			? {
+					text: 'Open',
+					class: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
 				}
-				showCanteenModal = false
-				resetForms()
-			} else {
-				const error = await response.json()
-				alert(error.error || 'Failed to save canteen')
-			}
-		} catch (error) {
-			console.error('Error saving canteen:', error)
-			alert('Failed to save canteen')
-		}
+			: { text: 'Closed', class: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }
 	}
 
-	async function deleteCanteen(id: number) {
-		if (
-			!confirm(
-				'Are you sure you want to delete this canteen? This will also delete all associated menu items.',
-			)
-		) {
-			return
-		}
-
-		try {
-			const response = await fetch('/api/canteens', {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id }),
-			})
-
-			if (response.ok) {
-				canteens = canteens.filter((c) => c.id !== id)
-				menuItems = menuItems.filter((i) => i.canteenId !== id)
-			} else {
-				const error = await response.json()
-				alert(error.error || 'Failed to delete canteen')
-			}
-		} catch (error) {
-			console.error('Error deleting canteen:', error)
-			alert('Failed to delete canteen')
-		}
-	}
-
-	async function saveMenuItem() {
-		try {
-			const url = '/api/menu-items'
-			const method = editingItem ? 'PUT' : 'POST'
-			const body = editingItem ? { ...itemForm, id: editingItem.id } : itemForm
-
-			const response = await fetch(url, {
-				method,
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body),
-			})
-
-			if (response.ok) {
-				const result = await response.json()
-				if (editingItem) {
-					menuItems = menuItems.map((i) => (i.id === result.id ? result : i))
-				} else {
-					menuItems = [...menuItems, result]
-				}
-				showItemModal = false
-				resetForms()
-			} else {
-				const error = await response.json()
-				alert(error.error || 'Failed to save menu item')
-			}
-		} catch (error) {
-			console.error('Error saving menu item:', error)
-			alert('Failed to save menu item')
-		}
-	}
-
-	async function deleteMenuItem(id: number) {
-		if (
-			!confirm(
-				'Are you sure you want to delete this menu item? This will also delete all associated addons and variants.',
-			)
-		) {
-			return
-		}
-
-		try {
-			const response = await fetch('/api/menu-items', {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id }),
-			})
-
-			if (response.ok) {
-				menuItems = menuItems.filter((i) => i.id !== id)
-				addons = addons.filter((a) => a.itemId !== id)
-				variants = variants.filter((v) => v.itemId !== id)
-			} else {
-				const error = await response.json()
-				alert(error.error || 'Failed to delete menu item')
-			}
-		} catch (error) {
-			console.error('Error deleting menu item:', error)
-			alert('Failed to delete menu item')
-		}
-	}
-
-	async function saveAddon() {
-		try {
-			const url = '/api/addons'
-			const method = editingAddon ? 'PUT' : 'POST'
-			const body = editingAddon ? { ...addonForm, id: editingAddon.id } : addonForm
-
-			const response = await fetch(url, {
-				method,
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body),
-			})
-
-			if (response.ok) {
-				const result = await response.json()
-				if (editingAddon) {
-					addons = addons.map((a) => (a.id === result.id ? result : a))
-				} else {
-					addons = [...addons, result]
-				}
-				showAddonModal = false
-				resetForms()
-			} else {
-				const error = await response.json()
-				alert(error.error || 'Failed to save addon')
-			}
-		} catch (error) {
-			console.error('Error saving addon:', error)
-			alert('Failed to save addon')
-		}
-	}
-
-	async function deleteAddon(id: number) {
-		if (!confirm('Are you sure you want to delete this addon?')) {
-			return
-		}
-
-		try {
-			const response = await fetch('/api/addons', {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id }),
-			})
-
-			if (response.ok) {
-				addons = addons.filter((a) => a.id !== id)
-			} else {
-				const error = await response.json()
-				alert(error.error || 'Failed to delete addon')
-			}
-		} catch (error) {
-			console.error('Error deleting addon:', error)
-			alert('Failed to delete addon')
-		}
-	}
-
-	async function saveVariant() {
-		try {
-			const url = '/api/variants'
-			const method = editingVariant ? 'PUT' : 'POST'
-			const body = editingVariant ? { ...variantForm, id: editingVariant.id } : variantForm
-
-			const response = await fetch(url, {
-				method,
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body),
-			})
-
-			if (response.ok) {
-				const result = await response.json()
-				if (editingVariant) {
-					variants = variants.map((v) => (v.id === result.id ? result : v))
-				} else {
-					variants = [...variants, result]
-				}
-				showVariantModal = false
-				resetForms()
-			} else {
-				const error = await response.json()
-				alert(error.error || 'Failed to save variant')
-			}
-		} catch (error) {
-			console.error('Error saving variant:', error)
-			alert('Failed to save variant')
-		}
-	}
-
-	async function deleteVariant(id: number) {
-		if (!confirm('Are you sure you want to delete this variant?')) {
-			return
-		}
-
-		try {
-			const response = await fetch('/api/variants', {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id }),
-			})
-
-			if (response.ok) {
-				variants = variants.filter((v) => v.id !== id)
-			} else {
-				const error = await response.json()
-				alert(error.error || 'Failed to delete variant')
-			}
-		} catch (error) {
-			console.error('Error deleting variant:', error)
-			alert('Failed to delete variant')
-		}
-	}
-
-	function getCanteenName(canteenId: number) {
-		return canteens?.find((c) => c.id === canteenId)?.name || 'Unknown Canteen'
-	}
-
-	function getItemName(itemId: number) {
-		return menuItems?.find((i) => i.id === itemId)?.name || 'Unknown Item'
+	// Function to get canteen emoji/icon based on name
+	function getCanteenEmoji(name: string) {
+		if (name.toLowerCase().includes('main') || name.toLowerCase().includes('central'))
+			return '🍽️'
+		if (name.toLowerCase().includes('coffee') || name.toLowerCase().includes('cafe'))
+			return '☕'
+		if (name.toLowerCase().includes('juice') || name.toLowerCase().includes('smoothie'))
+			return '🥤'
+		if (name.toLowerCase().includes('snack')) return '🍿'
+		if (name.toLowerCase().includes('health')) return '🥗'
+		if (name.toLowerCase().includes('night') || name.toLowerCase().includes('late')) return '🌙'
+		return '🍴'
 	}
 </script>
 
 <svelte:head>
-	<title>Admin Management - IIIT Canteen Ordering System</title>
+	<title>Manage Canteens - IIIT Canteen Ordering System</title>
 	<meta
 		name="description"
-		content="Admin panel for managing canteens, menu items, addons, and variants."
+		content="Admin panel to manage canteens in the IIIT Canteen Ordering System."
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-	<!-- Header -->
-	<div class="border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-		<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-			<div class="flex h-16 items-center justify-between">
-				<div class="flex items-center gap-3">
-					<div class="rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 p-2">
-						<Settings class="text-white" size={20} />
-					</div>
-					<h1 class="text-xl font-semibold text-gray-900 dark:text-white">
-						Admin Management
-					</h1>
-				</div>
-				<p class="text-sm text-gray-600 dark:text-gray-400">Welcome, {data.user.name}</p>
-			</div>
-		</div>
+<div
+	class="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pb-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+>
+	<!-- Decorative background elements -->
+	<div class="absolute inset-0 opacity-20">
+		<div
+			class="absolute top-10 left-10 h-32 w-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 blur-3xl"
+		></div>
+		<div
+			class="absolute top-1/3 right-20 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 blur-3xl"
+		></div>
+		<div
+			class="absolute bottom-20 left-1/4 h-40 w-40 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 blur-3xl"
+		></div>
 	</div>
 
-	<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-		<!-- Tabs -->
-		<div class="mb-8 border-b border-gray-200 dark:border-gray-700">
-			<nav class="-mb-px flex space-x-8">
-				<button
-					onclick={() => (activeTab = 'canteens')}
-					class="border-b-2 px-1 py-2 text-sm font-medium {activeTab === 'canteens'
-						? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-				>
-					<div class="flex items-center gap-2">
-						<ChefHat size={16} />
-						Canteens ({canteens?.length || 0})
-					</div>
-				</button>
-				<button
-					onclick={() => (activeTab = 'items')}
-					class="border-b-2 px-1 py-2 text-sm font-medium {activeTab === 'items'
-						? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-				>
-					<div class="flex items-center gap-2">
-						<Package size={16} />
-						Menu Items ({menuItems?.length || 0})
-					</div>
-				</button>
-				<button
-					onclick={() => (activeTab = 'addons')}
-					class="border-b-2 px-1 py-2 text-sm font-medium {activeTab === 'addons'
-						? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-				>
-					<div class="flex items-center gap-2">
-						<Zap size={16} />
-						Addons ({addons?.length || 0})
-					</div>
-				</button>
-				<button
-					onclick={() => (activeTab = 'variants')}
-					class="border-b-2 px-1 py-2 text-sm font-medium {activeTab === 'variants'
-						? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-				>
-					<div class="flex items-center gap-2">
-						<Layers size={16} />
-						Variants ({variants?.length || 0})
-					</div>
-				</button>
-			</nav>
+	<div class="relative z-10 space-y-8 p-6">
+		<!-- Back Button -->
+		<div>
+			<Button.Root
+				class="flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+				onclick={() => goto('/dashboard')}
+			>
+				<ArrowLeft size={16} />
+				<span>Back to Dashboard</span>
+			</Button.Root>
 		</div>
 
-		<!-- Canteens Tab -->
-		{#if activeTab === 'canteens'}
-			<div class="space-y-6">
-				<div class="flex items-center justify-between">
-					<h2 class="text-lg font-medium text-gray-900 dark:text-white">
-						Manage Canteens
-					</h2>
-					<Button.Root onclick={() => openCanteenModal()} class="flex items-center gap-2">
-						<Plus size={16} />
-						Add Canteen
-					</Button.Root>
-				</div>
-
-				<div
-					class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+		<!-- Header Section -->
+		<div class="space-y-4 text-center">
+			<div class="mb-4 flex items-center justify-center gap-3">
+				<Settings size={32} class="text-indigo-600" />
+				<h1
+					class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent md:text-5xl"
 				>
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-							<thead class="bg-gray-50 dark:bg-gray-700">
-								<tr>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Name</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Timings</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Status</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Actions</th
-									>
-								</tr>
-							</thead>
-							<tbody
-								class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800"
-							>
-								{#each canteens || [] as canteen}
-									<tr>
-										<td
-											class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-											>{canteen.name}</td
-										>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
-											>{canteen.timings}</td
-										>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<span
-												class="inline-flex rounded-full px-2 py-1 text-xs font-semibold {canteen.is_open
-													? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-													: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}"
+					Manage Canteens
+				</h1>
+			</div>
+			<p class="mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-300">
+				Admin panel to manage all canteens, their details, and operational status.
+			</p>
+
+			<!-- Add Canteen Button -->
+			<div class="flex justify-center">
+				<Button.Root
+					onclick={handleAddCanteen}
+					class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-3 font-semibold text-white transition-all duration-300 hover:from-indigo-600 hover:to-purple-700"
+				>
+					<Plus size={20} />
+					<span>Add New Canteen</span>
+				</Button.Root>
+			</div>
+		</div>
+
+		<!-- Canteens Grid -->
+		<div class="mx-auto max-w-6xl">
+			{#if data.canteens && data.canteens.length > 0}
+				<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+					{#each data.canteens as canteen}
+						{@const status = getStatusBadge(canteen.open)}
+						<div
+							class="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
+						>
+							<!-- Canteen Header -->
+							<div class="p-6 pb-4">
+								<div class="mb-4 flex items-start justify-between">
+									<div class="flex items-center gap-3">
+										<div class="text-3xl">{getCanteenEmoji(canteen.name)}</div>
+										<div>
+											<h3
+												class="text-xl font-bold text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400"
 											>
-												{canteen.is_open ? 'Open' : 'Closed'}
-											</span>
-										</td>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
-										>
-											<div class="flex items-center gap-2">
-												<Button.Root
-													size="sm"
-													onclick={() => openCanteenModal(canteen)}
-													class="border border-gray-300 hover:bg-gray-50"
-												>
-													<Edit2 size={14} />
-												</Button.Root>
-												<Button.Root
-													size="sm"
-													onclick={() => deleteCanteen(canteen.id)}
-													class="border border-gray-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-												>
-													<Trash2 size={14} />
-												</Button.Root>
-											</div>
-										</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		{/if}
-
-		<!-- Menu Items Tab -->
-		{#if activeTab === 'items'}
-			<div class="space-y-6">
-				<div class="flex items-center justify-between">
-					<h2 class="text-lg font-medium text-gray-900 dark:text-white">
-						Manage Menu Items
-					</h2>
-					<Button.Root onclick={() => openItemModal()} class="flex items-center gap-2">
-						<Plus size={16} />
-						Add Menu Item
-					</Button.Root>
-				</div>
-
-				<div
-					class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
-				>
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-							<thead class="bg-gray-50 dark:bg-gray-700">
-								<tr>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Name</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Canteen</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Category</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Price</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Status</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Actions</th
-									>
-								</tr>
-							</thead>
-							<tbody
-								class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800"
-							>
-								{#each menuItems || [] as item}
-									<tr>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<div class="flex items-center gap-2">
-												<span
-													class="text-sm font-medium text-gray-900 dark:text-white"
-													>{item.name}</span
-												>
-												{#if item.isNonVeg}
-													<span
-														class="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-200"
-														>Non-Veg</span
-													>
-												{/if}
-											</div>
-										</td>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
-											>{getCanteenName(item.canteenId)}</td
-										>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
-											>{item.category}</td
-										>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
-											>₹{item.price}</td
-										>
-										<td class="px-6 py-4 whitespace-nowrap">
+												{canteen.name}
+											</h3>
 											<span
-												class="inline-flex rounded-full px-2 py-1 text-xs font-semibold {item.isAvailable
-													? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-													: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}"
+												class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {status.class}"
 											>
-												{item.isAvailable ? 'Available' : 'Unavailable'}
+												{status.text}
 											</span>
-										</td>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
+										</div>
+									</div>
+
+									<!-- Admin Action Buttons -->
+									<div class="flex gap-2">
+										<Button.Root
+											onclick={() => goto(`/manage/${canteen.acronym}`)}
+											class="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-green-600 transition-all hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800"
+											title="Manage menu"
 										>
-											<div class="flex items-center gap-2">
-												<Button.Root
-													size="sm"
-													onclick={() => openItemModal(item)}
-													class="border border-gray-300 hover:bg-gray-50"
-												>
-													<Edit2 size={14} />
-												</Button.Root>
-												<Button.Root
-													size="sm"
-													onclick={() => deleteMenuItem(item.id)}
-													class="border border-gray-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-												>
-													<Trash2 size={14} />
-												</Button.Root>
-											</div>
-										</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
+											<ChefHat size={14} />
+										</Button.Root>
+										<Button.Root
+											onclick={() => handleEditCanteen(canteen)}
+											class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-all hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
+											title="Edit canteen"
+										>
+											<Edit size={14} />
+										</Button.Root>
+									</div>
+								</div>
+
+								<!-- Admin Status Badges -->
+								<div class="mb-4 flex flex-wrap gap-2">
+									{#if !canteen.active}
+										<span
+											class="inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-200"
+										>
+											Inactive
+										</span>
+									{/if}
+									<span
+										class="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+									>
+										ID: {canteen.acronym}
+									</span>
+								</div>
+
+								<!-- Description -->
+								{#if canteen.description}
+									<p
+										class="mb-4 line-clamp-2 text-sm text-gray-600 dark:text-gray-300"
+									>
+										{canteen.description}
+									</p>
+								{/if}
+
+								<!-- Timings -->
+								<div
+									class="mb-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+								>
+									<Clock size={16} />
+									<span>{canteen.timings}</span>
+								</div>
+							</div>
+
+							<!-- Action Button -->
+							<div class="px-6 pb-6">
+								<Button.Root
+									class="group/btn w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-3 font-semibold text-white transition-all duration-300 hover:from-indigo-600 hover:to-purple-700"
+									onclick={() => goto(`/manage/${canteen.acronym}`)}
+								>
+									<div class="flex items-center justify-center gap-2">
+										<span>Manage Menu</span>
+										<ArrowRight
+											size={16}
+											class="transition-transform group-hover/btn:translate-x-1"
+										/>
+									</div>
+								</Button.Root>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<!-- Empty State -->
+				<div class="py-16 text-center">
+					<div
+						class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800"
+					>
+						<ChefHat size={32} class="text-gray-400" />
 					</div>
+					<h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
+						No Canteens Available
+					</h3>
+					<p class="mx-auto max-w-md text-gray-500 dark:text-gray-400">
+						No canteens have been set up yet. Add your first canteen to get started.
+					</p>
 				</div>
-			</div>
-		{/if}
-
-		<!-- Addons Tab -->
-		{#if activeTab === 'addons'}
-			<div class="space-y-6">
-				<div class="flex items-center justify-between">
-					<h2 class="text-lg font-medium text-gray-900 dark:text-white">Manage Addons</h2>
-					<Button.Root onclick={() => openAddonModal()} class="flex items-center gap-2">
-						<Plus size={16} />
-						Add Addon
-					</Button.Root>
-				</div>
-
-				<div
-					class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
-				>
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-							<thead class="bg-gray-50 dark:bg-gray-700">
-								<tr>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Name</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Menu Item</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Price</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Actions</th
-									>
-								</tr>
-							</thead>
-							<tbody
-								class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800"
-							>
-								{#each addons || [] as addon}
-									<tr>
-										<td
-											class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-											>{addon.name}</td
-										>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
-											>{getItemName(addon.itemId)}</td
-										>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
-											>₹{addon.price}</td
-										>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
-										>
-											<div class="flex items-center gap-2">
-												<Button.Root
-													size="sm"
-													onclick={() => openAddonModal(addon)}
-													class="border border-gray-300 hover:bg-gray-50"
-												>
-													<Edit2 size={14} />
-												</Button.Root>
-												<Button.Root
-													size="sm"
-													onclick={() => deleteAddon(addon.id)}
-													class="border border-gray-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-												>
-													<Trash2 size={14} />
-												</Button.Root>
-											</div>
-										</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		{/if}
-
-		<!-- Variants Tab -->
-		{#if activeTab === 'variants'}
-			<div class="space-y-6">
-				<div class="flex items-center justify-between">
-					<h2 class="text-lg font-medium text-gray-900 dark:text-white">
-						Manage Variants
-					</h2>
-					<Button.Root onclick={() => openVariantModal()} class="flex items-center gap-2">
-						<Plus size={16} />
-						Add Variant
-					</Button.Root>
-				</div>
-
-				<div
-					class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
-				>
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-							<thead class="bg-gray-50 dark:bg-gray-700">
-								<tr>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Name</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Menu Item</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Price</th
-									>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
-										>Actions</th
-									>
-								</tr>
-							</thead>
-							<tbody
-								class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800"
-							>
-								{#each variants || [] as variant}
-									<tr>
-										<td
-											class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-											>{variant.name}</td
-										>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
-											>{getItemName(variant.itemId)}</td
-										>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
-											>₹{variant.price}</td
-										>
-										<td
-											class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
-										>
-											<div class="flex items-center gap-2">
-												<Button.Root
-													size="sm"
-													onclick={() => openVariantModal(variant)}
-													class="border border-gray-300 hover:bg-gray-50"
-												>
-													<Edit2 size={14} />
-												</Button.Root>
-												<Button.Root
-													size="sm"
-													onclick={() => deleteVariant(variant.id)}
-													class="border border-gray-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-												>
-													<Trash2 size={14} />
-												</Button.Root>
-											</div>
-										</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 </div>
 
-<!-- Canteen Modal -->
-{#if showCanteenModal}
-	<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-800">
-			<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-				{editingCanteen ? 'Edit Canteen' : 'Add New Canteen'}
-			</h3>
+<!-- CRUD Modal -->
+<CrudModal
+	bind:open={showCrudModal}
+	editing={editingCanteen}
+	entityName="Canteen"
+	item={selectedCanteen}
+	fields={canteenFields}
+	addAction="?/addCanteen"
+	updateAction="?/updateCanteen"
+	onClose={closeCrudModal}
+/>
 
-			<form
-				onsubmit={(e) => {
-					e.preventDefault()
-					saveCanteen()
-				}}
-				class="space-y-4"
-			>
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Name</label
-					>
-					<input
-						type="text"
-						bind:value={canteenForm.name}
-						required
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					/>
-				</div>
-
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Timings</label
-					>
-					<input
-						type="text"
-						bind:value={canteenForm.timings}
-						required
-						placeholder="e.g. 9:00 AM - 10:00 PM"
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					/>
-				</div>
-
-				<div class="flex items-center">
-					<input type="checkbox" bind:checked={canteenForm.is_open} class="mr-2" />
-					<label class="text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Currently Open</label
-					>
-				</div>
-
-				<div class="flex gap-3 pt-4">
-					<Button.Root type="submit" class="flex-1">
-						{editingCanteen ? 'Update' : 'Create'}
-					</Button.Root>
-					<Button.Root
-						onclick={() => (showCanteenModal = false)}
-						class="flex-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-					>
-						Cancel
-					</Button.Root>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-<!-- Menu Item Modal -->
-{#if showItemModal}
-	<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-800">
-			<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-				{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
-			</h3>
-
-			<form
-				onsubmit={(e) => {
-					e.preventDefault()
-					saveMenuItem()
-				}}
-				class="space-y-4"
-			>
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Canteen</label
-					>
-					<select
-						bind:value={itemForm.canteenId}
-						required
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					>
-						<option value="">Select a canteen</option>
-						{#each canteens || [] as canteen}
-							<option value={canteen.id.toString()}>{canteen.name}</option>
-						{/each}
-					</select>
-				</div>
-
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Name</label
-					>
-					<input
-						type="text"
-						bind:value={itemForm.name}
-						required
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					/>
-				</div>
-
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Category</label
-					>
-					<input
-						type="text"
-						bind:value={itemForm.category}
-						required
-						placeholder="e.g. Main Course, Beverages, Snacks"
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					/>
-				</div>
-
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Price (₹)</label
-					>
-					<input
-						type="number"
-						step="0.01"
-						bind:value={itemForm.price}
-						required
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					/>
-				</div>
-
-				<div class="flex items-center space-x-4">
-					<div class="flex items-center">
-						<input type="checkbox" bind:checked={itemForm.isAvailable} class="mr-2" />
-						<label class="text-sm font-medium text-gray-700 dark:text-gray-300"
-							>Available</label
-						>
-					</div>
-
-					<div class="flex items-center">
-						<input type="checkbox" bind:checked={itemForm.isNonVeg} class="mr-2" />
-						<label class="text-sm font-medium text-gray-700 dark:text-gray-300"
-							>Non-Vegetarian</label
-						>
-					</div>
-				</div>
-
-				<div class="flex gap-3 pt-4">
-					<Button.Root type="submit" class="flex-1">
-						{editingItem ? 'Update' : 'Create'}
-					</Button.Root>
-					<Button.Root
-						onclick={() => (showItemModal = false)}
-						class="flex-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-					>
-						Cancel
-					</Button.Root>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-<!-- Addon Modal -->
-{#if showAddonModal}
-	<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-800">
-			<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-				{editingAddon ? 'Edit Addon' : 'Add New Addon'}
-			</h3>
-
-			<form
-				onsubmit={(e) => {
-					e.preventDefault()
-					saveAddon()
-				}}
-				class="space-y-4"
-			>
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Menu Item</label
-					>
-					<select
-						bind:value={addonForm.itemId}
-						required
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					>
-						<option value="">Select a menu item</option>
-						{#each menuItems || [] as item}
-							<option value={item.id.toString()}
-								>{item.name} ({getCanteenName(item.canteenId)})</option
-							>
-						{/each}
-					</select>
-				</div>
-
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Name</label
-					>
-					<input
-						type="text"
-						bind:value={addonForm.name}
-						required
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					/>
-				</div>
-
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Price (₹)</label
-					>
-					<input
-						type="number"
-						step="0.01"
-						bind:value={addonForm.price}
-						required
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					/>
-				</div>
-
-				<div class="flex gap-3 pt-4">
-					<Button.Root type="submit" class="flex-1">
-						{editingAddon ? 'Update' : 'Create'}
-					</Button.Root>
-					<Button.Root
-						onclick={() => (showAddonModal = false)}
-						class="flex-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-					>
-						Cancel
-					</Button.Root>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-<!-- Variant Modal -->
-{#if showVariantModal}
-	<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-800">
-			<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-				{editingVariant ? 'Edit Variant' : 'Add New Variant'}
-			</h3>
-
-			<form
-				onsubmit={(e) => {
-					e.preventDefault()
-					saveVariant()
-				}}
-				class="space-y-4"
-			>
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Menu Item</label
-					>
-					<select
-						bind:value={variantForm.itemId}
-						required
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					>
-						<option value="">Select a menu item</option>
-						{#each menuItems || [] as item}
-							<option value={item.id.toString()}
-								>{item.name} ({getCanteenName(item.canteenId)})</option
-							>
-						{/each}
-					</select>
-				</div>
-
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Name</label
-					>
-					<input
-						type="text"
-						bind:value={variantForm.name}
-						required
-						placeholder="e.g. Small, Medium, Large"
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					/>
-				</div>
-
-				<div>
-					<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-						>Price (₹)</label
-					>
-					<input
-						type="number"
-						step="0.01"
-						bind:value={variantForm.price}
-						required
-						class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-					/>
-				</div>
-
-				<div class="flex gap-3 pt-4">
-					<Button.Root type="submit" class="flex-1">
-						{editingVariant ? 'Update' : 'Create'}
-					</Button.Root>
-					<Button.Root
-						onclick={() => (showVariantModal = false)}
-						class="flex-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-					>
-						Cancel
-					</Button.Root>
-				</div>
-			</form>
-		</div>
+<!-- Success Message -->
+{#if showSuccessMessage && successMessage}
+	<div
+		transition:fade={{ duration: 300 }}
+		class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 transform rounded-full bg-green-600 px-6 py-3 text-center text-white shadow-lg"
+	>
+		<span>{successMessage}</span>
 	</div>
 {/if}
