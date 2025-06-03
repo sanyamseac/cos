@@ -13,9 +13,9 @@ npm run dev
 
 ## Command Reference
 
-| Command | When to run |
-|---------|-------------|
-| `npm i` | When package.json dependencies change |
+| Command            | When to run                                  |
+| ------------------ | -------------------------------------------- |
+| `npm i`            | When package.json dependencies change        |
 | `npm run db:start` | When Docker database container isn't running |
-| `npm run db:push` | When you modify your database schema |
-| `npm run dev` | Start development server |
+| `npm run db:push`  | When you modify your database schema         |
+| `npm run dev`      | Start development server                     |

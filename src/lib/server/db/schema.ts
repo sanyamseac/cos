@@ -17,7 +17,9 @@ export const session = pgTable('session', {
 
 export const pushSubscriptionsTable = pgTable('push_subscriptions', {
 	endpoint: text('endpoint').primaryKey(),
-	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
 	p256dh: text('p256dh').notNull(),
 	auth: text('auth').notNull(),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -26,8 +28,11 @@ export const pushSubscriptionsTable = pgTable('push_subscriptions', {
 export const canteens = pgTable('canteens', {
 	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
 	name: text('name').notNull(),
+	acronym: text('acronym').notNull().unique(),
+	description: text('description').notNull(),
 	timings: text('timings').notNull(),
-	is_open: boolean('is_open').notNull().default(true),
+	open: boolean('is_open').notNull().default(true),
+	active: boolean('active').notNull().default(true),
 })
 
 export const menuItems = pgTable('menu_items', {
@@ -37,9 +42,11 @@ export const menuItems = pgTable('menu_items', {
 		.references(() => canteens.id, { onDelete: 'cascade' }),
 	category: text('category').notNull(),
 	name: text('name').notNull(),
+	description: text('description'),
 	price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-	isAvailable: boolean('is_available').notNull().default(true),
-	isNonVeg: boolean('is_nonveg').notNull().default(false),
+	available: boolean('is_available').notNull().default(true),
+	type: text('type').notNull().default('veg'),
+	active: boolean('active').notNull().default(true),
 })
 
 export const variants = pgTable('variants', {
@@ -49,6 +56,8 @@ export const variants = pgTable('variants', {
 	itemId: integer('item_id')
 		.notNull()
 		.references(() => menuItems.id, { onDelete: 'cascade' }),
+	active: boolean('active').notNull().default(true),
+	available: boolean('available').notNull().default(true),
 })
 
 export const addons = pgTable('addons', {
@@ -58,6 +67,9 @@ export const addons = pgTable('addons', {
 	itemId: integer('item_id')
 		.notNull()
 		.references(() => menuItems.id, { onDelete: 'cascade' }),
+	type: text('type').notNull().default('veg'),
+	active: boolean('active').notNull().default(true),
+	available: boolean('available').notNull().default(true),
 })
 
 export type Session = typeof session.$inferSelect

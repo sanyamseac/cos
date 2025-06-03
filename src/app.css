@@ -1,5 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 @tailwindcss 'forms';
 @tailwindcss 'typography';
@@ -8,11 +8,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @font-face {
-	font-family: "Cal Sans";
+	font-family: 'Cal Sans';
 	font-style: normal;
 	font-weight: 600;
 	font-display: swap;
-	src: url("/CalSans-SemiBold.woff2") format("woff2");
+	src: url('/CalSans-SemiBold.woff2') format('woff2');
 }
 
 :root {
@@ -49,9 +49,9 @@
 	--shadow-card: 0px 2px 0px 1px rgba(0, 0, 0, 0.04);
 	--shadow-date-field-focus: 0px 0px 0px 3px rgba(24, 24, 27, 0.17);
 
-    --cerulean-blue: #007BA7;
-    --cerulean-blue-light: #0095CC;
-    --cerulean-blue-dark: #005A7A;
+	--cerulean-blue: #007ba7;
+	--cerulean-blue-light: #0095cc;
+	--cerulean-blue-dark: #005a7a;
 }
 
 .dark {
@@ -147,10 +147,10 @@
 	--animate-exit-to-left: exit-to-left 0.2s ease;
 	--animate-exit-to-right: exit-to-right 0.2s ease;
 
-	--font-sans: "Inter", "sans-serif";
-	--font-mono: "Source Code Pro", "monospace";
-	--font-alt: "Courier", "sans-serif";
-	--font-display: "Cal Sans", "sans-serif";
+	--font-sans: 'Inter', 'sans-serif';
+	--font-mono: 'Source Code Pro', 'monospace';
+	--font-alt: 'Courier', 'sans-serif';
+	--font-display: 'Cal Sans', 'sans-serif';
 
 	@keyframes accordion-down {
 		from {
@@ -288,8 +288,8 @@
 	body {
 		@apply bg-background text-foreground;
 		font-feature-settings:
-			"rlig" 1,
-			"calt" 1;
+			'rlig' 1,
+			'calt' 1;
 	}
 
 	::selection {
@@ -302,16 +302,17 @@
 	*:not(body):not(.focus-override) {
 		outline: none !important;
 		&:focus-visible {
-			@apply focus-visible:ring-foreground focus-visible:ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1;
+			@apply focus-visible:ring-foreground focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-hidden;
 		}
 	}
 
 	.link {
-		@apply hover:text-foreground/80 focus-visible:ring-foreground focus-visible:ring-offset-background rounded-xs focus-visible:outline-hidden inline-flex items-center gap-1 font-medium underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-offset-2;
+		@apply hover:text-foreground/80 focus-visible:ring-foreground focus-visible:ring-offset-background inline-flex items-center gap-1 rounded-xs font-medium underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden;
 	}
 }
 
-
 * {
-    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+	transition:
+		background-color 0.2s ease-in-out,
+		border-color 0.2s ease-in-out;
 }

@@ -46,12 +46,12 @@ class NotificationService {
 
 		try {
 			this.permission = await Notification.requestPermission()
-			
+
 			// If permission granted and service worker is available, try to enable push notifications
 			if (this.permission === 'granted' && this.useServiceWorker) {
 				await serviceWorkerManager.initializeServiceWorker()
 			}
-			
+
 			return this.permission
 		} catch (error) {
 			console.error('Error requesting notification permission:', error)
@@ -138,7 +138,7 @@ class NotificationService {
 						tag: payload.tag,
 						data: payload.data,
 						requireInteraction: payload.requireInteraction || false,
-						actions: payload.actions
+						actions: payload.actions,
 					})
 					return null // Service Worker notifications don't return Notification objects
 				}
@@ -151,19 +151,19 @@ class NotificationService {
 				badge: payload.badge || '/favicon.png',
 				tag: payload.tag,
 				data: payload.data,
-				requireInteraction: payload.requireInteraction || false
+				requireInteraction: payload.requireInteraction || false,
 			})
 
 			// Handle notification click
 			notification.onclick = (event) => {
 				event.preventDefault()
 				window.focus()
-				
+
 				// Navigate to relevant page if data contains a URL
 				if (payload.data?.url) {
 					window.location.href = payload.data.url
 				}
-				
+
 				notification.close()
 			}
 
@@ -184,7 +184,9 @@ class NotificationService {
 	/**
 	 * Send an order-specific notification
 	 */
-	async sendOrderNotification(orderNotification: OrderNotification): Promise<Notification | null> {
+	async sendOrderNotification(
+		orderNotification: OrderNotification,
+	): Promise<Notification | null> {
 		const { orderId, orderStatus, estimatedTime, ...payload } = orderNotification
 
 		// Customize notification based on order status
@@ -195,7 +197,9 @@ class NotificationService {
 		switch (orderStatus) {
 			case 'preparing':
 				title = title || '🍳 Order Being Prepared'
-				body = body || `Your order #${orderId} is being prepared${estimatedTime ? ` (ETA: ${estimatedTime} min)` : ''}`
+				body =
+					body ||
+					`Your order #${orderId} is being prepared${estimatedTime ? ` (ETA: ${estimatedTime} min)` : ''}`
 				break
 			case 'ready':
 				title = title || '🔔 Order Ready for Pickup!'
@@ -223,8 +227,8 @@ class NotificationService {
 				orderId,
 				orderStatus,
 				url: `/orders?highlight=${orderId}`,
-				...payload.data
-			}
+				...payload.data,
+			},
 		})
 	}
 
@@ -238,8 +242,8 @@ class NotificationService {
 
 		const registration = serviceWorkerManager.getState().registration
 		if (registration) {
-			registration.getNotifications({ tag }).then(notifications => {
-				notifications.forEach(notification => notification.close())
+			registration.getNotifications({ tag }).then((notifications) => {
+				notifications.forEach((notification) => notification.close())
 			})
 		}
 	}
@@ -256,7 +260,7 @@ export const sendOrderReadyNotification = (orderId: string, customMessage?: stri
 		orderId,
 		orderStatus: 'ready',
 		title: '🔔 Order Ready!',
-		body: customMessage || `Your order #${orderId} is ready for pickup!`
+		body: customMessage || `Your order #${orderId} is ready for pickup!`,
 	})
 }
 
@@ -266,7 +270,7 @@ export const sendOrderPreparingNotification = (orderId: string, estimatedTime?: 
 		orderStatus: 'preparing',
 		estimatedTime,
 		title: '🍳 Order Being Prepared',
-		body: `Your order #${orderId} is being prepared${estimatedTime ? ` (ETA: ${estimatedTime} min)` : ''}`
+		body: `Your order #${orderId} is being prepared${estimatedTime ? ` (ETA: ${estimatedTime} min)` : ''}`,
 	})
 }
 
@@ -275,7 +279,7 @@ export const sendOrderCompletedNotification = (orderId: string) => {
 		orderId,
 		orderStatus: 'completed',
 		title: '✅ Order Completed',
-		body: `Thank you! Order #${orderId} has been completed`
+		body: `Thank you! Order #${orderId} has been completed`,
 	})
 }
 
@@ -284,6 +288,8 @@ export const sendOrderCancelledNotification = (orderId: string, reason?: string)
 		orderId,
 		orderStatus: 'cancelled',
 		title: '❌ Order Cancelled',
-		body: reason ? `Order #${orderId} cancelled: ${reason}` : `Order #${orderId} has been cancelled`
+		body: reason
+			? `Order #${orderId} cancelled: ${reason}`
+			: `Order #${orderId} has been cancelled`,
 	})
 }

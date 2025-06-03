@@ -20,25 +20,25 @@ class ServiceWorkerManager {
 	private registration: ServiceWorkerRegistration | null = null
 	private vapidPublicKey: string = '' // Will be fetched from server
 	private isInitializing: boolean = false
-	
+
 	constructor() {
 		// Don't initialize here - let it be called explicitly
 	}
-	
+
 	/**
 	 * Check if Service Worker is supported
 	 */
 	get isSupported(): boolean {
 		return typeof window !== 'undefined' && 'serviceWorker' in navigator
 	}
-	
+
 	/**
 	 * Check if Push API is supported
 	 */
 	get isPushSupported(): boolean {
 		return typeof window !== 'undefined' && 'PushManager' in window
 	}
-	
+
 	/**
 	 * Get current state
 	 */
@@ -48,10 +48,10 @@ class ServiceWorkerManager {
 			isRegistered: !!this.registration,
 			isPushSupported: this.isPushSupported,
 			subscription: null, // Will be updated when subscription is retrieved
-			registration: this.registration
+			registration: this.registration,
 		}
 	}
-		/**
+	/**
 	 * Initialize Service Worker
 	 */
 	async initializeServiceWorker(): Promise<ServiceWorkerRegistration | null> {
@@ -73,37 +73,37 @@ class ServiceWorkerManager {
 		}
 
 		this.isInitializing = true
-				try {
+		try {
 			console.log('Registering Service Worker...')
-			
+
 			this.registration = await navigator.serviceWorker.register('/sw.js', {
-				scope: '/'
+				scope: '/',
 			})
-			
+
 			console.log('Service Worker registered successfully:', this.registration)
 			console.log('Service Worker registration details:', {
 				active: !!this.registration.active,
 				installing: !!this.registration.installing,
 				waiting: !!this.registration.waiting,
 				scope: this.registration.scope,
-				updateViaCache: this.registration.updateViaCache
+				updateViaCache: this.registration.updateViaCache,
 			})
-			
+
 			// Wait a moment for the Service Worker to potentially activate
-			await new Promise(resolve => setTimeout(resolve, 1000))
-			
+			await new Promise((resolve) => setTimeout(resolve, 1000))
+
 			console.log('Service Worker state after 1 second:', {
 				active: !!this.registration.active,
 				installing: !!this.registration.installing,
 				waiting: !!this.registration.waiting,
-				controller: !!navigator.serviceWorker.controller
+				controller: !!navigator.serviceWorker.controller,
 			})
-			
+
 			// Listen for updates
 			this.registration.addEventListener('updatefound', () => {
 				console.log('Service Worker update found')
 				const newWorker = this.registration?.installing
-				
+
 				if (newWorker) {
 					newWorker.addEventListener('statechange', () => {
 						console.log('New Service Worker state:', newWorker.state)
@@ -114,10 +114,10 @@ class ServiceWorkerManager {
 					})
 				}
 			})
-			
+
 			// Fetch VAPID public key from server
 			await this.fetchVapidKey()
-			
+
 			return this.registration
 		} catch (error) {
 			console.error('Service Worker registration failed:', error)
@@ -126,7 +126,7 @@ class ServiceWorkerManager {
 			this.isInitializing = false
 		}
 	}
-	
+
 	/**
 	 * Fetch VAPID public key from server
 	 */
@@ -153,18 +153,18 @@ class ServiceWorkerManager {
 			if (!this.registration) {
 				await this.initializeServiceWorker()
 			}
-			
+
 			if (!this.registration || !this.isPushSupported || !this.vapidPublicKey) {
 				console.error('Cannot subscribe to push: requirements not met', {
 					registration: !!this.registration,
 					pushSupported: this.isPushSupported,
-					vapidKey: !!this.vapidPublicKey
+					vapidKey: !!this.vapidPublicKey,
 				})
 				return null
 			}
-			
+
 			console.log('Subscribing to push notifications...')
-			
+
 			// Check if already subscribed
 			const existingSubscription = await this.registration.pushManager.getSubscription()
 			if (existingSubscription) {
@@ -172,60 +172,63 @@ class ServiceWorkerManager {
 				await this.sendSubscriptionToServer(existingSubscription, userId)
 				return existingSubscription
 			}
-					// Try to ensure Service Worker is active, but don't fail if it times out
-		try {
-			await this.ensureServiceWorkerActive()
-		} catch (activationError) {
-			console.warn('Service Worker activation check failed, but attempting push subscription anyway:', activationError)
-		}
-		
-		// Even if activation check failed, try the subscription if we have a registration
-		if (!this.registration) {
-			throw new Error('No Service Worker registration available')
-		}
-			
+			// Try to ensure Service Worker is active, but don't fail if it times out
+			try {
+				await this.ensureServiceWorkerActive()
+			} catch (activationError) {
+				console.warn(
+					'Service Worker activation check failed, but attempting push subscription anyway:',
+					activationError,
+				)
+			}
+
+			// Even if activation check failed, try the subscription if we have a registration
+			if (!this.registration) {
+				throw new Error('No Service Worker registration available')
+			}
+
 			// Subscribe to push notifications
 			const subscription = await this.registration.pushManager.subscribe({
 				userVisibleOnly: true,
-				applicationServerKey: this.urlB64ToUint8Array(this.vapidPublicKey)
+				applicationServerKey: this.urlB64ToUint8Array(this.vapidPublicKey),
 			})
-			
+
 			console.log('Push subscription created:', subscription)
-			
+
 			// Send subscription to server
 			await this.sendSubscriptionToServer(subscription, userId)
-			
+
 			return subscription
 		} catch (error) {
 			console.error('Failed to subscribe to push notifications:', error)
 			return null
 		}
-	}/**
+	} /**
 	 * Ensure Service Worker is active and ready
 	 */
 	private async ensureServiceWorkerActive(): Promise<void> {
 		if (!this.registration) {
 			await this.initializeServiceWorker()
 		}
-		
+
 		if (!this.registration) {
 			throw new Error('Service Worker registration failed')
 		}
-		
+
 		console.log('Service Worker registration state:', {
 			active: !!this.registration.active,
 			installing: !!this.registration.installing,
 			waiting: !!this.registration.waiting,
-			controller: !!navigator.serviceWorker.controller
+			controller: !!navigator.serviceWorker.controller,
 		})
-				// If we have an active Service Worker or a controller, we're good to go
+		// If we have an active Service Worker or a controller, we're good to go
 		if (this.registration.active || navigator.serviceWorker.controller) {
 			console.log('Service Worker is ready for push subscription')
 			return
 		}
-		
+
 		console.log('Waiting for Service Worker to become active...')
-		
+
 		// Try a simple approach: wait a short time and then proceed
 		await new Promise<void>((resolve) => {
 			// Give it 2 seconds to activate, then just continue
@@ -234,31 +237,35 @@ class ServiceWorkerManager {
 					active: !!this.registration!.active,
 					installing: !!this.registration!.installing,
 					waiting: !!this.registration!.waiting,
-					controller: !!navigator.serviceWorker.controller
+					controller: !!navigator.serviceWorker.controller,
 				}
 				console.log('Service Worker activation timeout. Current state:', finalState)
 				// Don't reject, just resolve and let the subscription attempt proceed
 				resolve()
 			}, 2000)
-			
+
 			// If there's a waiting worker, try to activate it
 			if (this.registration!.waiting) {
 				console.log('Found waiting Service Worker, activating it...')
 				this.registration!.waiting.postMessage({ type: 'SKIP_WAITING' })
 			}
-			
+
 			// Check for changes periodically
 			let checkCount = 0
 			const checkInterval = setInterval(() => {
 				checkCount++
-				if (this.registration!.active || navigator.serviceWorker.controller || checkCount > 20) {
+				if (
+					this.registration!.active ||
+					navigator.serviceWorker.controller ||
+					checkCount > 20
+				) {
 					clearInterval(checkInterval)
 					resolve()
 				}
 			}, 100)
 		})
 	}
-	
+
 	/**
 	 * Unsubscribe from push notifications
 	 */
@@ -266,13 +273,13 @@ class ServiceWorkerManager {
 		if (!this.registration) {
 			return false
 		}
-		
+
 		try {
 			const subscription = await this.registration.pushManager.getSubscription()
 			if (subscription) {
 				// Remove from server first
 				await this.removeSubscriptionFromServer(subscription, userId)
-				
+
 				// Unsubscribe locally
 				const success = await subscription.unsubscribe()
 				console.log('Unsubscribed from push notifications:', success)
@@ -284,7 +291,7 @@ class ServiceWorkerManager {
 			return false
 		}
 	}
-	
+
 	/**
 	 * Get current push subscription
 	 */
@@ -292,7 +299,7 @@ class ServiceWorkerManager {
 		if (!this.registration) {
 			return null
 		}
-		
+
 		try {
 			return await this.registration.pushManager.getSubscription()
 		} catch (error) {
@@ -300,35 +307,38 @@ class ServiceWorkerManager {
 			return null
 		}
 	}
-		/**
+	/**
 	 * Send subscription to server
 	 */
-	private async sendSubscriptionToServer(subscription: PushSubscription, userId: string): Promise<void> {
+	private async sendSubscriptionToServer(
+		subscription: PushSubscription,
+		userId: string,
+	): Promise<void> {
 		try {
 			const p256dhKey = subscription.getKey('p256dh')
 			const authKey = subscription.getKey('auth')
-			
+
 			if (!p256dhKey || !authKey) {
 				throw new Error('Failed to get subscription keys')
 			}
-			
+
 			const subscriptionData: PushSubscriptionData = {
 				endpoint: subscription.endpoint,
 				keys: {
 					p256dh: btoa(String.fromCharCode(...new Uint8Array(p256dhKey))),
-					auth: btoa(String.fromCharCode(...new Uint8Array(authKey)))
+					auth: btoa(String.fromCharCode(...new Uint8Array(authKey))),
 				},
-				userId
+				userId,
 			}
-			
+
 			const response = await fetch('/api/push/subscribe', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify(subscriptionData)
+				body: JSON.stringify(subscriptionData),
 			})
-			
+
 			if (response.ok) {
 				console.log('Subscription sent to server successfully')
 			} else {
@@ -338,23 +348,26 @@ class ServiceWorkerManager {
 			console.error('Error sending subscription to server:', error)
 		}
 	}
-	
+
 	/**
 	 * Remove subscription from server
 	 */
-	private async removeSubscriptionFromServer(subscription: PushSubscription, userId: string): Promise<void> {
+	private async removeSubscriptionFromServer(
+		subscription: PushSubscription,
+		userId: string,
+	): Promise<void> {
 		try {
 			const response = await fetch('/api/push/unsubscribe', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					endpoint: subscription.endpoint,
-					userId
-				})
+					userId,
+				}),
 			})
-			
+
 			if (response.ok) {
 				console.log('Subscription removed from server successfully')
 			} else {
@@ -364,7 +377,7 @@ class ServiceWorkerManager {
 			console.error('Error removing subscription from server:', error)
 		}
 	}
-	
+
 	/**
 	 * Request persistent notification permission
 	 */
@@ -373,7 +386,7 @@ class ServiceWorkerManager {
 			console.warn('This browser does not support notifications')
 			return 'denied'
 		}
-		
+
 		try {
 			const permission = await Notification.requestPermission()
 			console.log('Notification permission result:', permission)
@@ -383,7 +396,7 @@ class ServiceWorkerManager {
 			return 'denied'
 		}
 	}
-	
+
 	/**
 	 * Show a test notification
 	 */
@@ -392,37 +405,35 @@ class ServiceWorkerManager {
 			console.error('Service Worker not registered')
 			return
 		}
-				try {
+		try {
 			await this.registration.showNotification('Canteen Notifications Enabled', {
 				body: 'You will now receive order updates even when the browser is closed.',
 				icon: '/favicon.png',
 				badge: '/favicon.png',
 				tag: 'test-notification',
-				requireInteraction: false
+				requireInteraction: false,
 			})
 		} catch (error) {
 			console.error('Failed to show test notification:', error)
 		}
 	}
-	
+
 	/**
 	 * Utility to convert VAPID key
 	 */
 	private urlB64ToUint8Array(base64String: string): Uint8Array {
 		const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-		const base64 = (base64String + padding)
-			.replace(/-/g, '+')
-			.replace(/_/g, '/')
-		
+		const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+
 		const rawData = window.atob(base64)
 		const outputArray = new Uint8Array(rawData.length)
-		
+
 		for (let i = 0; i < rawData.length; ++i) {
 			outputArray[i] = rawData.charCodeAt(i)
 		}
 		return outputArray
 	}
-	
+
 	/**
 	 * Send message to Service Worker
 	 */
@@ -430,13 +441,13 @@ class ServiceWorkerManager {
 		if (!this.registration || !this.registration.active) {
 			return null
 		}
-		
+
 		return new Promise((resolve) => {
 			const messageChannel = new MessageChannel()
 			messageChannel.port1.onmessage = (event) => {
 				resolve(event.data)
 			}
-			
+
 			this.registration!.active!.postMessage(message, [messageChannel.port2])
 		})
 	}

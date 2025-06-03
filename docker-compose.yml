@@ -25,7 +25,7 @@ services:
             - db
         ports:
             - 3000:3000
-        networks: 
+        networks:
             - app-network
     server:
         image: nginx:mainline-alpine

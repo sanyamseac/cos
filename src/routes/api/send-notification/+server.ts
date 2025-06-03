@@ -1,52 +1,63 @@
 // Clean API endpoint for sending notifications
 import type { RequestHandler } from './$types'
-import { sendToUser, broadcast, sendOrderNotification, type NotificationPayload } from '$lib/server/notificationService'
+import {
+	sendToUser,
+	broadcast,
+	sendOrderNotification,
+	type NotificationPayload,
+} from '$lib/server/notificationService'
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {
 		return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 			status: 401,
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
 		})
 	}
-	
+
 	try {
 		const data = await request.json()
 		const { type, userId, broadcast: isBroadcast, ...notificationData } = data
-		
+
 		// Handle both type='broadcast' and broadcast=true formats for backward compatibility
 		const shouldBroadcast = type === 'broadcast' || isBroadcast === true
-		
+
 		// Special handling for order notifications
 		if (type === 'order' && notificationData.orderId && notificationData.status) {
 			if (!userId) {
-				return new Response(JSON.stringify({ 
-					error: 'userId is required for order notifications' 
-				}), {
-					status: 400,
-					headers: { 'Content-Type': 'application/json' }
-				})
+				return new Response(
+					JSON.stringify({
+						error: 'userId is required for order notifications',
+					}),
+					{
+						status: 400,
+						headers: { 'Content-Type': 'application/json' },
+					},
+				)
 			}
-			
+
 			const result = await sendOrderNotification(
-				userId, 
-				notificationData.orderId, 
-				notificationData.status, 
-				notificationData.customMessage
+				userId,
+				notificationData.orderId,
+				notificationData.status,
+				notificationData.customMessage,
 			)
-			
-			return new Response(JSON.stringify({
-				success: result.success,
-				message: 'Order notification sent successfully',
-				stats: {
-					sent: result.sent,
-					failed: result.failed
-				}
-			}), {
-				headers: { 'Content-Type': 'application/json' }
-			})
+
+			return new Response(
+				JSON.stringify({
+					success: result.success,
+					message: 'Order notification sent successfully',
+					stats: {
+						sent: result.sent,
+						failed: result.failed,
+					},
+				}),
+				{
+					headers: { 'Content-Type': 'application/json' },
+				},
+			)
 		}
-		
+
 		// Create standard notification payload
 		const payload: NotificationPayload = {
 			title: notificationData.title || 'Canteen Notification',
@@ -61,17 +72,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				{
 					action: 'view',
 					title: 'View',
-					icon: '/favicon.png'
+					icon: '/favicon.png',
 				},
 				{
 					action: 'dismiss',
-					title: 'Dismiss'
-				}
-			]
+					title: 'Dismiss',
+				},
+			],
 		}
-		
+
 		let result
-		
+
 		if (shouldBroadcast) {
 			// Broadcast to all users
 			result = await broadcast(payload)
@@ -79,33 +90,41 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			// Send to specific user
 			result = await sendToUser(userId, payload)
 		} else {
-			return new Response(JSON.stringify({ 
-				error: 'Either specify userId for targeted notification or use broadcast=true/type=broadcast for broadcast' 
-			}), {
-				status: 400,
-				headers: { 'Content-Type': 'application/json' }
-			})
+			return new Response(
+				JSON.stringify({
+					error: 'Either specify userId for targeted notification or use broadcast=true/type=broadcast for broadcast',
+				}),
+				{
+					status: 400,
+					headers: { 'Content-Type': 'application/json' },
+				},
+			)
 		}
-		
-		return new Response(JSON.stringify({
-			success: result.success,
-			message: `Notification ${shouldBroadcast ? 'broadcast' : 'sent'} successfully`,
-			stats: {
-				sent: result.sent,
-				failed: result.failed
-			}
-		}), {
-			headers: { 'Content-Type': 'application/json' }
-		})
-		
+
+		return new Response(
+			JSON.stringify({
+				success: result.success,
+				message: `Notification ${shouldBroadcast ? 'broadcast' : 'sent'} successfully`,
+				stats: {
+					sent: result.sent,
+					failed: result.failed,
+				},
+			}),
+			{
+				headers: { 'Content-Type': 'application/json' },
+			},
+		)
 	} catch (error) {
 		console.error('Error sending notification:', error)
-		return new Response(JSON.stringify({
-			error: 'Failed to send notification',
-			details: error instanceof Error ? error.message : 'Unknown error'
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		})
+		return new Response(
+			JSON.stringify({
+				error: 'Failed to send notification',
+				details: error instanceof Error ? error.message : 'Unknown error',
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' },
+			},
+		)
 	}
 }
