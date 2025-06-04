@@ -77,22 +77,6 @@
 							</NavigationMenu.Link>
 						</NavigationMenu.Item>
 					{/each}
-					{#if page.data.user && page.data.user.role === 'admin'}
-						<NavigationMenu.Item>
-							<NavigationMenu.Link
-								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-muted dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] bg-transparent px-4 py-2 py-6 font-medium transition-colors hover:bg-white focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
-									.url.pathname === '/manage'
-									? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
-									: ''}"
-								href="/manage"
-							>
-								<div class="flex flex-col items-center justify-center">
-									<Settings class="md:hidden" />
-									<span class="text-[9px] md:text-sm"> Manage </span>
-								</div>
-							</NavigationMenu.Link>
-						</NavigationMenu.Item>
-					{/if}
 					{#if !page.data.user}
 						<NavigationMenu.Item>
 							<NavigationMenu.Link

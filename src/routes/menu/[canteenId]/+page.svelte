@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation'
 	import { fade } from 'svelte/transition'
 	import ItemDialog from './components/ItemDialog.svelte'
+	import { enhance } from '$app/forms'
 
 	// Import page data
 	let { data }: { data: PageData } = $props()
@@ -46,47 +47,54 @@
 		if (itemVariants.length > 0 || itemAddons.length > 0) {
 			isDialogOpen = true
 		} else {
-			addToCart(selectedItem)
+			addToCartDirectly(selectedItem)
 		}
 	}
 
-	// Function to handle adding item to cart
-	async function addToCart(item: any) {
+	// Function to handle adding item to cart directly (without dialog)
+	async function addToCartDirectly(item: any) {
+		const form = document.createElement('form')
+		form.method = 'POST'
+		form.action = '?/addToBasket'
+		
+		const menuItemIdInput = document.createElement('input')
+		menuItemIdInput.type = 'hidden'
+		menuItemIdInput.name = 'menuItemId'
+		menuItemIdInput.value = item.id.toString()
+		form.appendChild(menuItemIdInput)
+		
+		const quantityInput = document.createElement('input')
+		quantityInput.type = 'hidden'
+		quantityInput.name = 'quantity'
+		quantityInput.value = item.quantity.toString()
+		form.appendChild(quantityInput)
+		
+		document.body.appendChild(form)
 		addingToCart = true
-		cartUpdateMessage = ''
-
+		
 		try {
-			// Demo API call for adding to cart
-			// In a real implementation, this would be connected to a proper API
-			const response = await fetch('/api/basket/add', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					itemId: item.id,
-					quantity: item.quantity,
-					variantId: item.selectedVariant?.id,
-					addons: item.selectedAddons.map((a: any) => a.id),
-				}),
-			})
-
-			// For demo purposes, simulate a successful response
-			await new Promise((resolve) => setTimeout(resolve, 800))
-
-			// Close dialog and show success message
-			isDialogOpen = false
-			cartUpdateMessage = `${item.name} added to cart!`
+			form.submit()
+			cartUpdateMessage = `${item.name} added to basket!`
 			showCartMessage = true
 			setTimeout(() => {
 				showCartMessage = false
 			}, 3000)
 		} catch (error) {
 			console.error('Error adding to cart:', error)
-			cartUpdateMessage = 'Failed to add item to cart. Please try again.'
+			cartUpdateMessage = 'Failed to add item to basket. Please try again.'
+			showCartMessage = true
+			setTimeout(() => {
+				showCartMessage = false
+			}, 3000)
 		} finally {
 			addingToCart = false
+			document.body.removeChild(form)
 		}
+	}
+
+	function closeDialog() {
+		isDialogOpen = false
+		selectedItem = null
 	}
 
 	// Get food type icon
@@ -272,9 +280,9 @@
 				{#if selectedItem}
 					<ItemDialog
 						item={selectedItem}
-						onAddToCart={addToCart}
 						{addingToCart}
 						{getFoodTypeIcon}
+						onClose={closeDialog}
 					/>
 				{/if}
 			</Dialog.Content>

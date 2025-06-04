@@ -1,25 +1,27 @@
 <script lang="ts">
 	import { Button, Dialog } from 'bits-ui'
 	import { Minus, Plus, X as Close, ShoppingCart } from 'lucide-svelte'
+	import { enhance } from '$app/forms'
 
-	// Define props
-	export let item: any
-	export let onAddToCart: (item: any) => void
-	export let addingToCart: boolean = false
-	export let getFoodTypeIcon: (type: string) => string
+	let { item, addingToCart, getFoodTypeIcon, onClose }: {
+		item: any,
+		addingToCart?: boolean,
+		getFoodTypeIcon: (type: string) => string,
+		onClose: () => void
+	} = $props()
 
-	// Format price calculations
-	$: basePrice = Number(item.price)
+	let submitting = $state(false)
 
-	$: variantPrice = item.selectedVariant ? Number(item.selectedVariant.price) : 0
-
-	$: addonsPrice =
+	// Format price calculations using $derived
+	const basePrice = $derived(Number(item.price))
+	const variantPrice = $derived(item.selectedVariant ? Number(item.selectedVariant.price) : 0)
+	const addonsPrice = $derived(
 		item.selectedAddons.length > 0
 			? item.selectedAddons.reduce((sum: number, addon: any) => sum + Number(addon.price), 0)
 			: 0
-
-	$: totalPrice = (basePrice + variantPrice + addonsPrice) * item.quantity
-	$: formattedTotalPrice = totalPrice.toFixed(2)
+	)
+	const totalPrice = $derived((basePrice + variantPrice + addonsPrice) * item.quantity)
+	const formattedTotalPrice = $derived(totalPrice.toFixed(2))
 
 	// Handle variant selection
 	function selectVariant(variant: any) {
@@ -98,7 +100,7 @@
 									name="variant"
 									value={variant.id}
 									checked={item.selectedVariant?.id === variant.id}
-									on:change={() => selectVariant(variant)}
+									onchange={() => selectVariant(variant)}
 									class="h-4 w-4 accent-indigo-600"
 								/>
 								<span class="text-gray-900 dark:text-white">
@@ -127,7 +129,7 @@
 								<input
 									type="checkbox"
 									checked={isAddonSelected(addon)}
-									on:change={() => toggleAddon(addon)}
+									onchange={() => toggleAddon(addon)}
 									class="h-4 w-4 accent-indigo-600"
 								/>
 								<span class="mr-1">{getFoodTypeIcon(addon.type)}</span>
@@ -181,21 +183,45 @@
 				<span>₹{formattedTotalPrice}</span>
 			</div>
 
-			<Button.Root
-				class="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 font-medium text-white shadow-sm transition-all hover:bg-indigo-700 disabled:opacity-70"
-				onclick={() => onAddToCart(item)}
-				disabled={addingToCart}
+			<form 
+				method="POST" 
+				action="?/addToBasket"
+				use:enhance={() => {
+					submitting = true
+					return async ({ result, update }) => {
+						submitting = false
+						if (result.type === 'success') {
+							onClose()
+						}
+						await update()
+					}
+				}}
 			>
-				{#if addingToCart}
-					<div
-						class="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
-					></div>
-					Adding...
-				{:else}
-					<ShoppingCart size={18} />
-					Add to Cart
+				<input type="hidden" name="menuItemId" value={item.id} />
+				<input type="hidden" name="quantity" value={item.quantity} />
+				{#if item.selectedVariant}
+					<input type="hidden" name="variantId" value={item.selectedVariant.id} />
 				{/if}
-			</Button.Root>
+				{#each item.selectedAddons as addon}
+					<input type="hidden" name="addonIds" value={addon.id} />
+				{/each}
+
+				<Button.Root
+					type="submit"
+					class="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 font-medium text-white shadow-sm transition-all hover:bg-indigo-700 disabled:opacity-70"
+					disabled={submitting || addingToCart}
+				>
+					{#if submitting || addingToCart}
+						<div
+							class="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
+						></div>
+						Adding...
+					{:else}
+						<ShoppingCart size={18} />
+						Add to Cart
+					{/if}
+				</Button.Root>
+			</form>
 		</div>
 	</div>
 </div>

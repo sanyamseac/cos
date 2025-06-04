@@ -72,6 +72,122 @@ export const addons = pgTable('addons', {
 	available: boolean('available').notNull().default(true),
 })
 
+export const baskets = pgTable('baskets', {
+	id: text('id').primaryKey(),
+	name: text('name'),
+	canteenId: integer('canteen_id')
+		.notNull()
+		.references(() => canteens.id, { onDelete: 'cascade' }),
+	isShared: boolean('is_shared').notNull().default(false),
+	createdBy: text('created_by')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const basketUsers = pgTable('basket_users', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	basketId: text('basket_id')
+		.notNull()
+		.references(() => baskets.id, { onDelete: 'cascade' }),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	joinedAt: timestamp('joined_at').notNull().defaultNow(),
+})
+
+export const basketItems = pgTable('basket_items', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	basketId: text('basket_id')
+		.notNull()
+		.references(() => baskets.id, { onDelete: 'cascade' }),
+	menuItemId: integer('menu_item_id')
+		.notNull()
+		.references(() => menuItems.id, { onDelete: 'cascade' }),
+	variantId: integer('variant_id')
+		.references(() => variants.id, { onDelete: 'cascade' }),
+	quantity: integer('quantity').notNull().default(1),
+	addedBy: text('added_by')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+})
+
+export const basketAddons = pgTable('basket_addons', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	basketItemId: integer('basket_item_id')
+		.notNull()
+		.references(() => basketItems.id, { onDelete: 'cascade' }),
+	addonId: integer('addon_id')
+		.notNull()
+		.references(() => addons.id, { onDelete: 'cascade' }),
+})
+
+export const orders = pgTable('orders', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	orderNumber: text('order_number').notNull().unique(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	canteenId: integer('canteen_id')
+		.notNull()
+		.references(() => canteens.id, { onDelete: 'cascade' }),
+	status: text('status')
+		.notNull()
+		.default('pending'), // pending, confirmed, preparing, ready, completed, cancelled
+	totalAmount: numeric('total_amount', { precision: 10, scale: 2 }).notNull(),
+	notes: text('notes'),
+	prepaid: boolean('prepaid').notNull().default(false),
+	otp: text('otp').notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	confirmedAt: timestamp('confirmed_at'),
+	preparedAt: timestamp('prepared_at'),
+	readyAt: timestamp('ready_at'),
+	completedAt: timestamp('completed_at'),
+	cancelledAt: timestamp('cancelled_at'),
+})
+
+export const orderItems = pgTable('order_items', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	orderId: integer('order_id')
+		.notNull()
+		.references(() => orders.id, { onDelete: 'cascade' }),
+	menuItemId: integer('menu_item_id')
+		.notNull()
+		.references(() => menuItems.id, { onDelete: 'cascade' }),
+	variantId: integer('variant_id')
+		.references(() => variants.id, { onDelete: 'cascade' }),
+	quantity: integer('quantity').notNull().default(1),
+	unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
+	variantPrice: numeric('variant_price', { precision: 10, scale: 2 }).default('0.00'),
+	subtotal: numeric('subtotal', { precision: 10, scale: 2 }).notNull(), // (unitPrice + variantPrice + addons) * quantity
+})
+
+export const orderAddons = pgTable('order_addons', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	orderItemId: integer('order_item_id')
+		.notNull()
+		.references(() => orderItems.id, { onDelete: 'cascade' }),
+	addonId: integer('addon_id')
+		.notNull()
+		.references(() => addons.id, { onDelete: 'cascade' }),
+	unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
+})
+
+export const orderStatusHistory = pgTable('order_status_history', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	orderId: integer('order_id')
+		.notNull()
+		.references(() => orders.id, { onDelete: 'cascade' }),
+	notes: text('notes'),
+	confirmedAt: timestamp('confirmed_at'),
+	preparedAt: timestamp('prepared_at'),
+	readyAt: timestamp('ready_at'),
+	completedAt: timestamp('completed_at'),
+	cancelledAt: timestamp('cancelled_at'),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 export type Session = typeof session.$inferSelect
 export type User = typeof user.$inferSelect
 export type Canteen = typeof canteens.$inferSelect
@@ -79,3 +195,11 @@ export type MenuItem = typeof menuItems.$inferSelect
 export type PushSubscription = typeof pushSubscriptionsTable.$inferSelect
 export type Variant = typeof variants.$inferSelect
 export type Addon = typeof addons.$inferSelect
+export type Basket = typeof baskets.$inferSelect
+export type BasketUser = typeof basketUsers.$inferSelect
+export type BasketItem = typeof basketItems.$inferSelect
+export type BasketAddon = typeof basketAddons.$inferSelect
+export type Order = typeof orders.$inferSelect
+export type OrderItem = typeof orderItems.$inferSelect
+export type OrderAddon = typeof orderAddons.$inferSelect
+export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect
