@@ -40,6 +40,17 @@
 			total + calculateBasketTotal(basket.items), 0
 		)
 	})
+
+	// Get wallet balance for a canteen
+	function getWalletBalance(canteenId: number) {
+		const wallet = data.wallets?.find(w => w.wallet.canteenId === canteenId)
+		return wallet ? parseFloat(wallet.wallet.balance) : 0
+	}
+
+	// Check if user has sufficient balance for a basket
+	function hasSufficientBalance(canteenId: number, basketTotal: number) {
+		return getWalletBalance(canteenId) >= basketTotal
+	}
 </script>
 
 <svelte:head>
@@ -106,6 +117,16 @@
 								<p class="text-sm text-gray-600 dark:text-gray-300">
 									{basket.items.length} item{basket.items.length !== 1 ? 's' : ''}
 								</p>
+								<div class="mt-2 flex items-center gap-4">
+									<span class="text-sm text-gray-600 dark:text-gray-300">
+										Wallet Balance: <span class="font-medium text-green-600">₹{getWalletBalance(basket.canteen.id).toFixed(2)}</span>
+									</span>
+									{#if !hasSufficientBalance(basket.canteen.id, calculateBasketTotal(basket.items))}
+										<span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded dark:bg-red-900 dark:text-red-300">
+											Insufficient balance
+										</span>
+									{/if}
+								</div>
 							</div>
 							<div class="flex items-center gap-2">
 								<span class="text-lg font-semibold text-gray-900 dark:text-white">

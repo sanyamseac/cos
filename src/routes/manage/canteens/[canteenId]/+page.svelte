@@ -250,7 +250,7 @@
 		<div class="flex items-center justify-between">
 			<Button.Root
 				class="flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-				onclick={() => goto('/manage')}
+				onclick={() => goto('/manage/canteens')}
 			>
 				<ArrowLeft size={16} />
 				<span>Back to Manage</span>

@@ -3,7 +3,7 @@ import * as auth from '$lib/server/session'
 import type { PageServerLoad, Actions } from './$types'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -86,9 +86,24 @@ export const load: PageServerLoad = async (event) => {
 		// Filter out canteens with empty baskets
 		const basketsWithItems = basketsByCanteen.filter(basket => basket.items.length > 0)
 
+		// Get wallet balances for all canteens that have items in basket
+		const canteenIds = basketsWithItems.map(b => b.canteen.id)
+		const wallets = await db
+			.select({
+				wallet: schema.wallets,
+				canteen: schema.canteens,
+			})
+			.from(schema.wallets)
+			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
+			.where(and(
+				eq(schema.wallets.userId, event.locals.user.id),
+				inArray(schema.wallets.canteenId, canteenIds.length > 0 ? canteenIds : [0])
+			))
+
 		return { 
 			user: event.locals.user,
-			baskets: basketsWithItems
+			baskets: basketsWithItems,
+			wallets
 		}
 	} catch (err) {
 		console.error('Error loading basket:', err)

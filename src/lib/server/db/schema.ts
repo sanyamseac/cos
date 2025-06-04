@@ -188,6 +188,32 @@ export const orderStatusHistory = pgTable('order_status_history', {
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
+export const wallets = pgTable('wallets', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	canteenId: integer('canteen_id')
+		.notNull()
+		.references(() => canteens.id, { onDelete: 'cascade' }),
+	balance: numeric('balance', { precision: 10, scale: 2 }).notNull().default('0.00'),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const walletTransactions = pgTable('wallet_transactions', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	walletId: integer('wallet_id')
+		.notNull()
+		.references(() => wallets.id, { onDelete: 'cascade' }),
+	amount: numeric('amount', { precision: 10, scale: 2 }).notNull(), // positive for credit, negative for debit
+	reference: text('reference'), // Order ID, admin reference, etc.
+	performedBy: text('performed_by')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 export type Session = typeof session.$inferSelect
 export type User = typeof user.$inferSelect
 export type Canteen = typeof canteens.$inferSelect
@@ -203,3 +229,5 @@ export type Order = typeof orders.$inferSelect
 export type OrderItem = typeof orderItems.$inferSelect
 export type OrderAddon = typeof orderAddons.$inferSelect
 export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect
+export type Wallet = typeof wallets.$inferSelect
+export type WalletTransaction = typeof walletTransactions.$inferSelect

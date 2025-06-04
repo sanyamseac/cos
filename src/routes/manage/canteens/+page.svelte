@@ -12,7 +12,7 @@
 		Settings,
 		ArrowLeft,
 	} from 'lucide-svelte'
-	import type { PageData } from './$types'
+	import type { PageData } from '../$types'
 	import { enhance } from '$app/forms'
 	import CrudModal from '$lib/components/CrudModal.svelte'
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte'
@@ -147,10 +147,10 @@
 		<div>
 			<Button.Root
 				class="flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-				onclick={() => goto('/dashboard')}
+				onclick={() => goto('/manage')}
 			>
 				<ArrowLeft size={16} />
-				<span>Back to Dashboard</span>
+				<span>Back to Manage</span>
 			</Button.Root>
 		</div>
 
@@ -209,22 +209,13 @@
 									</div>
 
 									<!-- Admin Action Buttons -->
-									<div class="flex gap-2">
-										<Button.Root
-											onclick={() => goto(`/manage/${canteen.acronym}`)}
-											class="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-green-600 transition-all hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800"
-											title="Manage menu"
-										>
-											<ChefHat size={14} />
-										</Button.Root>
-										<Button.Root
-											onclick={() => handleEditCanteen(canteen)}
-											class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-all hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
-											title="Edit canteen"
-										>
-											<Edit size={14} />
-										</Button.Root>
-									</div>
+									<Button.Root
+										onclick={() => handleEditCanteen(canteen)}
+										class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-all hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
+										title="Edit canteen"
+									>
+										<Edit size={14} />
+									</Button.Root>
 								</div>
 
 								<!-- Admin Status Badges -->
@@ -265,7 +256,7 @@
 							<div class="px-6 pb-6">
 								<Button.Root
 									class="group/btn w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-3 font-semibold text-white transition-all duration-300 hover:from-indigo-600 hover:to-purple-700"
-									onclick={() => goto(`/manage/${canteen.acronym}`)}
+									onclick={() => goto(`/manage/canteens/${canteen.acronym}`)}
 								>
 									<div class="flex items-center justify-center gap-2">
 										<span>Manage Menu</span>

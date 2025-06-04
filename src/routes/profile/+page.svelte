@@ -298,241 +298,350 @@
 			</div>
 		</div>
 
-		<!-- Settings Sections -->
-		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-			<!-- Notification Settings -->
-			<div
-				class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-			>
-				<div class="mb-6 flex items-center gap-3">
-					<div class="rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 p-2">
-						<Bell class="h-5 w-5 text-white" />
-					</div>
-					<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-						Notifications
-					</h3>
+		<!-- Notification Settings -->
+		<div
+			class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+		>
+			<div class="mb-6 flex items-center gap-3">
+				<div class="rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 p-2">
+					<Bell class="h-5 w-5 text-white" />
 				</div>
-				<div class="space-y-4">
+				<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+					Notifications
+				</h3>
+			</div>
+			<div class="space-y-4">
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="font-medium text-gray-800 dark:text-white">
+							Email Notifications
+						</p>
+						<p class="text-sm text-gray-600 dark:text-gray-400">
+							Receive order updates via email
+						</p>
+					</div>
+					<Switch.Root
+						bind:checked={emailNotifs}
+						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700"
+					>
+						<Switch.Thumb
+							class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1"
+						/>
+					</Switch.Root>
+				</div>
+				<!-- Browser Notifications Section Removed -->
+
+				{#if serviceWorkerManager.isSupported}
 					<div class="flex items-center justify-between">
-						<div>
+						<div class="flex-1">
 							<p class="font-medium text-gray-800 dark:text-white">
-								Email Notifications
+								Push Notifications
 							</p>
 							<p class="text-sm text-gray-600 dark:text-gray-400">
-								Receive order updates via email
+								Background notifications for important updates.
 							</p>
+							{#if notificationPermission === 'denied'}
+								<p class="mt-1 text-xs text-red-600 dark:text-red-400">
+									⚠️ Notification permission denied. Please enable in browser
+									settings to use Push Notifications.
+								</p>
+							{:else if isManagingPush}
+								<p class="mt-1 text-xs text-blue-600 dark:text-blue-400">
+									{#if notificationPermission === 'default'}Requesting
+										permission...{:else}Managing push notifications...{/if}
+								</p>
+							{:else if pushNotifications && notificationPermission === 'granted'}
+								<p class="mt-1 text-xs text-green-600 dark:text-green-400">
+									✅ Push notifications active
+								</p>
+							{:else if notificationPermission === 'granted' && !pushNotifications}
+								<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+									Enable for background updates.
+								</p>
+							{:else if notificationPermission === 'default'}
+								<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+									Click to enable push notifications.
+								</p>
+							{/if}
 						</div>
 						<Switch.Root
-							bind:checked={emailNotifs}
-							class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700"
+							checked={pushNotifications}
+							onCheckedChange={handlePushNotificationToggle}
+							disabled={isManagingPush || notificationPermission === 'denied'}
+							class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:opacity-50 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700"
 						>
 							<Switch.Thumb
 								class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1"
 							/>
 						</Switch.Root>
 					</div>
-					<!-- Browser Notifications Section Removed -->
+				{/if}
+			</div>
+		</div>
 
-					{#if serviceWorkerManager.isSupported}
-						<div class="flex items-center justify-between">
-							<div class="flex-1">
-								<p class="font-medium text-gray-800 dark:text-white">
-									Push Notifications
-								</p>
-								<p class="text-sm text-gray-600 dark:text-gray-400">
-									Background notifications for important updates.
-								</p>
-								{#if notificationPermission === 'denied'}
-									<p class="mt-1 text-xs text-red-600 dark:text-red-400">
-										⚠️ Notification permission denied. Please enable in browser
-										settings to use Push Notifications.
-									</p>
-								{:else if isManagingPush}
-									<p class="mt-1 text-xs text-blue-600 dark:text-blue-400">
-										{#if notificationPermission === 'default'}Requesting
-											permission...{:else}Managing push notifications...{/if}
-									</p>
-								{:else if pushNotifications && notificationPermission === 'granted'}
-									<p class="mt-1 text-xs text-green-600 dark:text-green-400">
-										✅ Push notifications active
-									</p>
-								{:else if notificationPermission === 'granted' && !pushNotifications}
-									<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-										Enable for background updates.
-									</p>
-								{:else if notificationPermission === 'default'}
-									<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-										Click to enable push notifications.
-									</p>
-								{/if}
-							</div>
-							<Switch.Root
-								checked={pushNotifications}
-								onCheckedChange={handlePushNotificationToggle}
-								disabled={isManagingPush || notificationPermission === 'denied'}
-								class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:opacity-50 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700"
+		<!-- Privacy & Security -->
+		<div
+			class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+		>
+			<div class="mb-6 flex items-center gap-3">
+				<div class="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-2">
+					<Lock class="h-5 w-5 text-white" />
+				</div>
+				<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+					Your Preferences
+				</h3>
+			</div>
+			<div class="space-y-4">
+				<div class="space-y-2">
+					<p class="font-medium text-gray-800 dark:text-white">Profile Visibility</p>
+					<Select.Root type="single" bind:value={profileVisibility}>
+						<Select.Trigger
+							class="rounded-9px border-border-input bg-background data-placeholder:text-foreground-alt/50 text-md inline-flex h-10 w-full items-center border px-[8px] transition-colors select-none"
+							aria-label="Select a visibility option"
+						>
+							<Palette class="text-muted-foreground mr-[9px] size-5" />
+							{profileVisibility == 'private' ? 'Private' : 'Public'}
+							<CaretUpDown class="text-muted-foreground ml-auto size-5" />
+						</Select.Trigger>
+						<Select.Portal>
+							<Select.Content
+								class="focus-override border-muted bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 h-28 max-h-[var(--bits-select-content-available-height)] w-[var(--bits-select-anchor-width)] min-w-[var(--bits-select-anchor-width)] rounded-xl border px-1 py-3 outline-hidden select-none data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1"
+								sideOffset={20}
 							>
-								<Switch.Thumb
-									class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1"
-								/>
-							</Switch.Root>
+								<Select.ScrollUpButton
+									class="flex w-full items-center justify-center"
+								>
+									<CaretDoubleUp class="size-3" />
+								</Select.ScrollUpButton>
+								<Select.Viewport class="p-1">
+									<Select.Item
+										class="rounded-button data-highlighted:bg-muted text-md flex h-10 w-full items-center py-3 pr-1.5 pl-5 capitalize outline-hidden select-none data-disabled:opacity-50"
+										value="private"
+										label="Private"
+									>
+										{#snippet children({ selected })}
+											Private
+											{#if selected}
+												<div class="ml-auto">
+													<Check aria-label="check" />
+												</div>
+											{/if}
+										{/snippet}
+									</Select.Item>
+									<Select.Item
+										class="rounded-button data-highlighted:bg-muted text-md flex h-10 w-full items-center py-3 pr-1.5 pl-5 capitalize outline-hidden select-none data-disabled:opacity-50"
+										value="public"
+										label="Public"
+									>
+										{#snippet children({ selected })}
+											Public
+											{#if selected}
+												<div class="ml-auto">
+													<Check aria-label="check" />
+												</div>
+											{/if}
+										{/snippet}
+									</Select.Item>
+								</Select.Viewport>
+								<Select.ScrollDownButton
+									class="flex w-full items-center justify-center"
+								>
+									<CaretDoubleDown class="size-3" />
+								</Select.ScrollDownButton>
+							</Select.Content>
+						</Select.Portal>
+					</Select.Root>
+					<p class="font-medium text-gray-800 dark:text-white">Theme</p>
+					<Select.Root
+						type="single"
+						onValueChange={(value) => updateTheme(value as string)}
+						items={themes}
+						value={themeMode}
+					>
+						<Select.Trigger
+							class="rounded-9px border-border-input bg-background data-placeholder:text-foreground-alt/50 text-md inline-flex h-10 w-full items-center border px-[8px] transition-colors select-none"
+							aria-label="Select a theme"
+						>
+							<Palette class="text-muted-foreground mr-[9px] size-5" />
+							{FullName}
+							<CaretUpDown class="text-muted-foreground ml-auto size-5" />
+						</Select.Trigger>
+						<Select.Portal>
+							<Select.Content
+								class="focus-override border-muted bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 h-38 max-h-[var(--bits-select-content-available-height)] w-[var(--bits-select-anchor-width)] min-w-[var(--bits-select-anchor-width)] rounded-xl border px-1 py-3 outline-hidden select-none data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1"
+								sideOffset={20}
+							>
+								<Select.ScrollUpButton
+									class="flex w-full items-center justify-center"
+								>
+									<CaretDoubleUp class="size-3" />
+								</Select.ScrollUpButton>
+								<Select.Viewport class="p-1">
+									{#each themes as theme}
+										<Select.Item
+											class="rounded-button data-highlighted:bg-muted text-md flex h-10 w-full items-center py-3 pr-1.5 pl-5 capitalize outline-hidden select-none data-disabled:opacity-50"
+											value={theme.value}
+											label={theme.label}
+										>
+											{#snippet children({ selected })}
+												{theme.label}
+												{#if selected}
+													<div class="ml-auto">
+														<Check aria-label="check" />
+													</div>
+												{/if}
+											{/snippet}
+										</Select.Item>
+									{/each}
+								</Select.Viewport>
+								<Select.ScrollDownButton
+									class="flex w-full items-center justify-center"
+								>
+									<CaretDoubleDown class="size-3" />
+								</Select.ScrollDownButton>
+							</Select.Content>
+						</Select.Portal>
+					</Select.Root>
+				</div>
+			</div>
+		</div>
+
+		<!-- Account Actions -->
+		<div
+			class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+		>
+			<div class="mb-6 flex items-center gap-3">
+				<div class="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-2">
+					<Lock class="h-5 w-5 text-white" />
+				</div>
+				<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Legal</h3>
+			</div>
+			<div class="space-y-3">
+				<a
+					href="/terms"
+					class="block font-medium text-gray-700 transition-all duration-200 hover:underline dark:text-gray-300"
+				>
+					Terms and Conditions
+				</a>
+				<a
+					href="/privacy"
+					class="block font-medium text-gray-700 transition-all duration-200 hover:underline dark:text-gray-300"
+				>
+					Privacy Policy
+				</a>
+			</div>
+		</div>
+
+		<!-- Wallet Information Section -->
+		{#if data.wallets && data.wallets.length > 0}
+			<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+				<!-- Wallet Balances -->
+				<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+					<div class="mb-6 flex items-center gap-3">
+						<div class="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-2">
+							<div class="h-5 w-5 text-white font-bold">₹</div>
+						</div>
+						<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+							Wallet Balances
+						</h3>
+					</div>
+					<div class="space-y-3">
+						{#each data.wallets as { wallet, canteen }}
+							<div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+								<div>
+									<p class="font-medium text-gray-800 dark:text-white">
+										{canteen?.name || 'Unknown Canteen'}
+									</p>
+									<p class="text-sm text-gray-600 dark:text-gray-400">
+										{canteen?.acronym || ''}
+									</p>
+								</div>
+								<div class="text-right">
+									<p class="font-bold text-green-600 dark:text-green-400">
+										₹{parseFloat(wallet.balance).toFixed(2)}
+									</p>
+									<p class="text-xs text-gray-500">
+										Updated: {new Date(wallet.updatedAt).toLocaleDateString()}
+									</p>
+								</div>
+							</div>
+						{/each}
+						<div class="mt-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900">
+							<div class="flex items-center justify-between">
+								<span class="font-medium text-blue-800 dark:text-blue-200">Total Balance</span>
+								<span class="font-bold text-xl text-blue-800 dark:text-blue-200">
+									₹{data.wallets.reduce((sum, w) => sum + parseFloat(w.wallet.balance), 0).toFixed(2)}
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Recent Transactions -->
+				<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+					<div class="mb-6 flex items-center gap-3">
+						<div class="rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 p-2">
+							<svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+							</svg>
+						</div>
+						<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+							Recent Transactions
+						</h3>
+					</div>
+					{#if data.recentTransactions && data.recentTransactions.length > 0}
+						<div class="space-y-3 max-h-80 overflow-y-auto">
+							{#each data.recentTransactions as { transaction, canteen, performedBy }}
+								<div class="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-600">
+									<div class="flex-1">
+										<p class="font-medium text-gray-800 dark:text-white">
+											{canteen?.name || 'Unknown Canteen'}
+										</p>
+										<p class="text-sm text-gray-600 dark:text-gray-400">
+											{transaction.reference || 'No reference'}
+										</p>
+										<p class="text-xs text-gray-500">
+											{new Date(transaction.createdAt).toLocaleDateString('en-IN', {
+												year: 'numeric',
+												month: 'short',
+												day: 'numeric',
+												hour: '2-digit',
+												minute: '2-digit'
+											})}
+										</p>
+									</div>
+									<div class="text-right">
+										<p class="font-bold {parseFloat(transaction.amount) > 0 ? 'text-green-600' : 'text-red-600'}">
+											{parseFloat(transaction.amount) > 0 ? '+' : ''}₹{Math.abs(parseFloat(transaction.amount)).toFixed(2)}
+										</p>
+										<p class="text-xs text-gray-500">
+											by {performedBy?.name || 'System'}
+										</p>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<div class="text-center py-8 text-gray-500">
+							<p>No transactions found</p>
 						</div>
 					{/if}
 				</div>
 			</div>
-
-			<!-- Privacy & Security -->
-			<div
-				class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-			>
-				<div class="mb-6 flex items-center gap-3">
-					<div class="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-2">
-						<Lock class="h-5 w-5 text-white" />
+		{:else}
+			<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+				<div class="text-center py-8">
+					<div class="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-3 mx-auto w-fit mb-4">
+						<div class="h-6 w-6 text-white font-bold">₹</div>
 					</div>
-					<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-						Your Preferences
+					<h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+						No Wallet Found
 					</h3>
-				</div>
-				<div class="space-y-4">
-					<div class="space-y-2">
-						<p class="font-medium text-gray-800 dark:text-white">Profile Visibility</p>
-						<Select.Root type="single" bind:value={profileVisibility}>
-							<Select.Trigger
-								class="rounded-9px border-border-input bg-background data-placeholder:text-foreground-alt/50 text-md inline-flex h-10 w-full items-center border px-[8px] transition-colors select-none"
-								aria-label="Select a visibility option"
-							>
-								<Palette class="text-muted-foreground mr-[9px] size-5" />
-								{profileVisibility == 'private' ? 'Private' : 'Public'}
-								<CaretUpDown class="text-muted-foreground ml-auto size-5" />
-							</Select.Trigger>
-							<Select.Portal>
-								<Select.Content
-									class="focus-override border-muted bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 h-28 max-h-[var(--bits-select-content-available-height)] w-[var(--bits-select-anchor-width)] min-w-[var(--bits-select-anchor-width)] rounded-xl border px-1 py-3 outline-hidden select-none data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1"
-									sideOffset={20}
-								>
-									<Select.ScrollUpButton
-										class="flex w-full items-center justify-center"
-									>
-										<CaretDoubleUp class="size-3" />
-									</Select.ScrollUpButton>
-									<Select.Viewport class="p-1">
-										<Select.Item
-											class="rounded-button data-highlighted:bg-muted text-md flex h-10 w-full items-center py-3 pr-1.5 pl-5 capitalize outline-hidden select-none data-disabled:opacity-50"
-											value="private"
-											label="Private"
-										>
-											{#snippet children({ selected })}
-												Private
-												{#if selected}
-													<div class="ml-auto">
-														<Check aria-label="check" />
-													</div>
-												{/if}
-											{/snippet}
-										</Select.Item>
-										<Select.Item
-											class="rounded-button data-highlighted:bg-muted text-md flex h-10 w-full items-center py-3 pr-1.5 pl-5 capitalize outline-hidden select-none data-disabled:opacity-50"
-											value="public"
-											label="Public"
-										>
-											{#snippet children({ selected })}
-												Public
-												{#if selected}
-													<div class="ml-auto">
-														<Check aria-label="check" />
-													</div>
-												{/if}
-											{/snippet}
-										</Select.Item>
-									</Select.Viewport>
-									<Select.ScrollDownButton
-										class="flex w-full items-center justify-center"
-									>
-										<CaretDoubleDown class="size-3" />
-									</Select.ScrollDownButton>
-								</Select.Content>
-							</Select.Portal>
-						</Select.Root>
-						<p class="font-medium text-gray-800 dark:text-white">Theme</p>
-						<Select.Root
-							type="single"
-							onValueChange={(value) => updateTheme(value as string)}
-							items={themes}
-							value={themeMode}
-						>
-							<Select.Trigger
-								class="rounded-9px border-border-input bg-background data-placeholder:text-foreground-alt/50 text-md inline-flex h-10 w-full items-center border px-[8px] transition-colors select-none"
-								aria-label="Select a theme"
-							>
-								<Palette class="text-muted-foreground mr-[9px] size-5" />
-								{FullName}
-								<CaretUpDown class="text-muted-foreground ml-auto size-5" />
-							</Select.Trigger>
-							<Select.Portal>
-								<Select.Content
-									class="focus-override border-muted bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 h-38 max-h-[var(--bits-select-content-available-height)] w-[var(--bits-select-anchor-width)] min-w-[var(--bits-select-anchor-width)] rounded-xl border px-1 py-3 outline-hidden select-none data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1"
-									sideOffset={20}
-								>
-									<Select.ScrollUpButton
-										class="flex w-full items-center justify-center"
-									>
-										<CaretDoubleUp class="size-3" />
-									</Select.ScrollUpButton>
-									<Select.Viewport class="p-1">
-										{#each themes as theme}
-											<Select.Item
-												class="rounded-button data-highlighted:bg-muted text-md flex h-10 w-full items-center py-3 pr-1.5 pl-5 capitalize outline-hidden select-none data-disabled:opacity-50"
-												value={theme.value}
-												label={theme.label}
-											>
-												{#snippet children({ selected })}
-													{theme.label}
-													{#if selected}
-														<div class="ml-auto">
-															<Check aria-label="check" />
-														</div>
-													{/if}
-												{/snippet}
-											</Select.Item>
-										{/each}
-									</Select.Viewport>
-									<Select.ScrollDownButton
-										class="flex w-full items-center justify-center"
-									>
-										<CaretDoubleDown class="size-3" />
-									</Select.ScrollDownButton>
-								</Select.Content>
-							</Select.Portal>
-						</Select.Root>
-					</div>
+					<p class="text-gray-600 dark:text-gray-400">
+						Your wallet will be created when you make your first transaction.
+					</p>
 				</div>
 			</div>
-
-			<!-- Account Actions -->
-			<div
-				class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-			>
-				<div class="mb-6 flex items-center gap-3">
-					<div class="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-2">
-						<Lock class="h-5 w-5 text-white" />
-					</div>
-					<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Legal</h3>
-				</div>
-				<div class="space-y-3">
-					<a
-						href="/terms"
-						class="block font-medium text-gray-700 transition-all duration-200 hover:underline dark:text-gray-300"
-					>
-						Terms and Conditions
-					</a>
-					<a
-						href="/privacy"
-						class="block font-medium text-gray-700 transition-all duration-200 hover:underline dark:text-gray-300"
-					>
-						Privacy Policy
-					</a>
-				</div>
-			</div>
-		</div>
+		{/if}
 	</div>
 </div>
