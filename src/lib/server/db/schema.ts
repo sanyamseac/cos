@@ -33,6 +33,7 @@ export const canteens = pgTable('canteens', {
 	timings: text('timings').notNull(),
 	open: boolean('is_open').notNull().default(true),
 	active: boolean('active').notNull().default(true),
+	orderCounter: integer('order_counter').notNull().default(0),
 })
 
 export const menuItems = pgTable('menu_items', {
@@ -125,7 +126,7 @@ export const basketAddons = pgTable('basket_addons', {
 
 export const orders = pgTable('orders', {
 	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-	orderNumber: text('order_number').notNull().unique(),
+	orderNumber: text('order_number').notNull(),
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
@@ -145,6 +146,8 @@ export const orders = pgTable('orders', {
 	readyAt: timestamp('ready_at'),
 	completedAt: timestamp('completed_at'),
 	cancelledAt: timestamp('cancelled_at'),
+	cancelledBy: text('cancelled_by')
+		.references(() => user.id, { onDelete: 'set null' }),
 })
 
 export const orderItems = pgTable('order_items', {
@@ -172,20 +175,6 @@ export const orderAddons = pgTable('order_addons', {
 		.notNull()
 		.references(() => addons.id, { onDelete: 'cascade' }),
 	unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
-})
-
-export const orderStatusHistory = pgTable('order_status_history', {
-	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-	orderId: integer('order_id')
-		.notNull()
-		.references(() => orders.id, { onDelete: 'cascade' }),
-	notes: text('notes'),
-	confirmedAt: timestamp('confirmed_at'),
-	preparedAt: timestamp('prepared_at'),
-	readyAt: timestamp('ready_at'),
-	completedAt: timestamp('completed_at'),
-	cancelledAt: timestamp('cancelled_at'),
-	createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
 export const wallets = pgTable('wallets', {

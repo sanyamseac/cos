@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button } from 'bits-ui'
-	import { ShoppingCart, Minus, Plus, Trash2, ArrowLeft } from 'lucide-svelte'
+	import { Button, Switch } from 'bits-ui'
+	import { ShoppingCart, Minus, Plus, Trash2, ArrowLeft, CreditCard, Wallet } from 'lucide-svelte'
 	import type { PageData } from './$types'
 	import { goto } from '$app/navigation'
 	import { enhance } from '$app/forms'
@@ -10,6 +10,7 @@
 	// Calculate total for a basket
 	function calculateBasketTotal(items: any[]) {
 		return items.reduce((total, item) => {
+			if (!item.menuItem) return total
 			const basePrice = Number(item.menuItem.price)
 			const variantPrice = item.variant ? Number(item.variant.price) : 0
 			const addonsPrice = item.addons.reduce((sum: number, addon: any) => sum + Number(addon.price), 0)
@@ -19,6 +20,7 @@
 
 	// Calculate item total
 	function calculateItemTotal(item: any) {
+		if (!item.menuItem) return 0
 		const basePrice = Number(item.menuItem.price)
 		const variantPrice = item.variant ? Number(item.variant.price) : 0
 		const addonsPrice = item.addons.reduce((sum: number, addon: any) => sum + Number(addon.price), 0)
@@ -34,7 +36,7 @@
 	}
 
 	// Calculate grand total
-	let grandTotal = 0
+	let grandTotal = $state(0)
 	$effect(() => {
 		grandTotal = data.baskets.reduce((total, basket) => 
 			total + calculateBasketTotal(basket.items), 0
@@ -50,6 +52,27 @@
 	// Check if user has sufficient balance for a basket
 	function hasSufficientBalance(canteenId: number, basketTotal: number) {
 		return getWalletBalance(canteenId) >= basketTotal
+	}
+
+	let paymentMethods: Record<number, boolean> = $state({})
+    data.baskets.forEach(basket => {
+        // Always set a default value to avoid undefined
+        paymentMethods[basket.canteen.id] = false
+    })
+
+	// Check if order can be placed (either sufficient wallet balance for prepaid or postpaid selected)
+	function canPlaceOrder(canteenId: number, basketTotal: number) {
+		const isWalletPayment = paymentMethods[canteenId] ?? false
+		return !isWalletPayment || (isWalletPayment && hasSufficientBalance(canteenId, basketTotal))
+	}
+
+	// Get payment method display text
+	function getPaymentMethodText(canteenId: number, basketTotal: number) {
+		const isWalletPayment = paymentMethods[canteenId] ?? false
+		if (!isWalletPayment) {
+			return 'Place Order (Pay Later)'
+		}
+		return hasSufficientBalance(canteenId, basketTotal) ? 'Place Order (Wallet)' : 'Insufficient Balance'
 	}
 </script>
 
@@ -152,9 +175,9 @@
 									<div class="flex-1">
 										<!-- Item Name and Type -->
 										<div class="mb-2 flex items-center gap-2">
-											<span class="text-sm">{getFoodTypeIcon(item.menuItem.type)}</span>
+											<span class="text-sm">{item.menuItem ? getFoodTypeIcon(item.menuItem.type) : ''}</span>
 											<h3 class="font-medium text-gray-900 dark:text-white">
-												{item.menuItem.name}
+												{item.menuItem?.name || 'Unknown Item'}
 											</h3>
 										</div>
 
@@ -174,7 +197,7 @@
 
 										<!-- Price breakdown -->
 										<div class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-											<div>Base: ₹{Number(item.menuItem.price).toFixed(2)}</div>
+											<div>Base: ₹{item.menuItem ? Number(item.menuItem.price).toFixed(2) : '0.00'}</div>
 											{#if item.variant}
 												<div>Variant: +₹{Number(item.variant.price).toFixed(2)}</div>
 											{/if}
@@ -236,28 +259,102 @@
 								</div>
 							{/each}
 						</div>
+
+						<!-- Place Order Button for this canteen -->
+						<div class="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
+							<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+								<div class="flex-1">
+									<p class="text-sm text-gray-600 dark:text-gray-300">
+										Total for {basket.canteen.name}
+									</p>
+									<p class="text-xl font-bold text-gray-900 dark:text-white">
+										₹{calculateBasketTotal(basket.items).toFixed(2)}
+									</p>
+								</div>
+
+								<!-- Payment Method Switch -->
+								<div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+									<div class="flex flex-col gap-1">
+										<label class="text-xs font-medium text-gray-600 dark:text-gray-300">
+											Payment Method
+										</label>
+										{#if paymentMethods[basket.canteen.id] !== undefined}
+											<div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-800">
+												<div class="flex items-center gap-2 text-sm {paymentMethods[basket.canteen.id] ? 'text-gray-400' : 'text-gray-900 dark:text-white'}">
+													<CreditCard size={16} />
+													<span>Pay Later</span>
+												</div>
+												<Switch.Root
+													bind:checked={paymentMethods[basket.canteen.id]}
+													class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 data-[state=checked]:bg-green-600"
+												>
+													<Switch.Thumb class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out data-[state=checked]:translate-x-4" />
+												</Switch.Root>
+												<div class="flex items-center gap-2 text-sm {paymentMethods[basket.canteen.id] ? 'text-gray-900 dark:text-white' : 'text-gray-400'}">
+													<Wallet size={16} />
+													<span>Wallet</span>
+													<span class="text-xs text-green-600">
+														(₹{getWalletBalance(basket.canteen.id).toFixed(2)})
+													</span>
+												</div>
+											</div>
+										{/if}
+									</div>
+
+									<!-- Place Order Button -->
+										<form method="POST" action="?/placeOrder" use:enhance={({ formData, submitter }) => {
+											return async ({ result, update }) => {
+												if (result.type === 'success') {
+													// Redirect to orders page on successful order placement
+													goto('/orders')
+												} else {
+													await update()
+												}
+											}
+										}}>
+											<input type="hidden" name="canteenId" value={basket.canteen.id} />
+											<input type="hidden" name="paymentMethod" value={paymentMethods[basket.canteen.id]} />
+											<Button.Root
+												type="submit"
+												disabled={!canPlaceOrder(basket.canteen.id, calculateBasketTotal(basket.items))}
+												class="w-full rounded-lg bg-green-600 px-6 py-3 font-medium text-white transition-all hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
+											>
+												{getPaymentMethodText(basket.canteen.id, calculateBasketTotal(basket.items))}
+											</Button.Root>
+										</form>
+								</div>
+							</div>
+
+							<!-- Payment method info -->
+								{#if paymentMethods[basket.canteen.id] && !hasSufficientBalance(basket.canteen.id, calculateBasketTotal(basket.items))}
+									<div class="mt-3 rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
+										<p class="text-sm text-red-600 dark:text-red-400">
+											Insufficient wallet balance. Current balance: ₹{getWalletBalance(basket.canteen.id).toFixed(2)} | Required: ₹{calculateBasketTotal(basket.items).toFixed(2)}
+										</p>
+									</div>
+								{:else if !paymentMethods[basket.canteen.id]}
+									<div class="mt-3 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+										<p class="text-sm text-blue-600 dark:text-blue-400">
+											<CreditCard size={16} class="inline mr-1" />
+											Payment will be collected when you collect your order.
+										</p>
+									</div>
+								{/if}
+						</div>
 					</div>
 				{/each}
 
-				<!-- Grand Total and Checkout -->
+				<!-- Grand Total Display -->
 				{#if grandTotal > 0}
-					<div class="sticky bottom-4 rounded-xl bg-white p-6 shadow-lg dark:bg-gray-800">
-						<div class="flex items-center justify-between">
-							<div>
-								<p class="text-sm text-gray-600 dark:text-gray-300">Total Amount</p>
-								<p class="text-2xl font-bold text-gray-900 dark:text-white">
-									₹{grandTotal.toFixed(2)}
-								</p>
-							</div>
-							<Button.Root
-								class="rounded-lg bg-indigo-600 px-8 py-3 font-medium text-white transition-all hover:bg-indigo-700"
-								onclick={() => {
-									// TODO: Implement checkout functionality
-									alert('Checkout functionality coming soon!')
-								}}
-							>
-								Proceed to Checkout
-							</Button.Root>
+					<div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+						<div class="text-center">
+							<p class="text-sm text-gray-600 dark:text-gray-300">Grand Total Across All Canteens</p>
+							<p class="text-2xl font-bold text-gray-900 dark:text-white">
+								₹{grandTotal.toFixed(2)}
+							</p>
+							<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+								Place orders individually for each canteen above
+							</p>
 						</div>
 					</div>
 				{/if}
