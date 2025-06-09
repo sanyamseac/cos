@@ -7,14 +7,12 @@ import { eq, and } from 'drizzle-orm'
 import type { Actions } from '@sveltejs/kit'
 
 export const load: PageServerLoad = async (event) => {
-	// Check authentication and role
 	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
 	if (!auth.ADMIN.includes(event.locals.user.role)) throw error(403, 'Access denied - Admin only')
 
 	const canteenAcronym = event.params.canteenId
 	try {
-		// Get canteen info
 		const canteen = await db
 			.select()
 			.from(schema.canteens)
@@ -29,20 +27,33 @@ export const load: PageServerLoad = async (event) => {
 
 		const canteenId = canteen.id
 
-		// Get menu items for the canteen (including inactive ones for admin)
-		const menuItems = await db
-			.select()
-			.from(schema.menuItems)
-			.where(eq(schema.menuItems.canteenId, canteenId))
+		const [menuItems, variants, addons] = await Promise.all([
+			db
+				.select()
+				.from(schema.menuItems)
+				.where(eq(schema.menuItems.canteenId, canteenId)),
+			db.select().from(schema.variants),
+			db.select().from(schema.addons)
+		])
 
-		// Get all variants for the menu items (including inactive ones for admin)
-		const variants = await db.select().from(schema.variants)
+		const variantsByItem: Record<number, any[]> = {}
+		for (const v of variants) {
+			if (!variantsByItem[v.itemId]) variantsByItem[v.itemId] = []
+			variantsByItem[v.itemId].push(v)
+		}
+		const addonsByItem: Record<number, any[]> = {}
+		for (const a of addons) {
+			if (!addonsByItem[a.itemId]) addonsByItem[a.itemId] = []
+			addonsByItem[a.itemId].push(a)
+		}
 
-		// Get all addons for the menu items (including inactive ones for admin)
-		const addons = await db.select().from(schema.addons)
+		const menuItemsWithDetails = menuItems.map((item) => ({
+			...item,
+			variants: variantsByItem[item.id] || [],
+			addons: addonsByItem[item.id] || [],
+		}))
 
-		// Organize menu items by category
-		const menuCategories = menuItems.reduce((acc: Record<string, typeof menuItems>, item) => {
+		const menuCategories = menuItemsWithDetails.reduce((acc: Record<string, typeof menuItemsWithDetails>, item) => {
 			if (!acc[item.category]) {
 				acc[item.category] = []
 			}
@@ -54,9 +65,6 @@ export const load: PageServerLoad = async (event) => {
 			user: event.locals.user,
 			canteen,
 			menuCategories,
-			variants,
-			addons,
-			menuItems,
 		}
 	} catch (err) {
 		console.error('Error fetching canteen data:', err)
@@ -80,18 +88,6 @@ export const actions: Actions = {
 			const type = body.get('type')?.toString() || 'veg'
 			const activeValue = body.get('active')?.toString()
 
-			console.log('Raw form data received:', {
-				canteenIdStr,
-				canteenId,
-				category,
-				name,
-				price,
-				available: availableValue,
-				active: activeValue,
-				type,
-				description,
-			})
-
 			if (!canteenIdStr || isNaN(canteenId) || !category || !name || !price) {
 				console.log('Validation failed:', {
 					hasCanteenIdStr: !!canteenIdStr,
@@ -103,7 +99,6 @@ export const actions: Actions = {
 				return fail(400, { error: 'CanteenId, category, name, and price are required' })
 			}
 
-			// Handle boolean values properly
 			const available =
 				availableValue === 'true' || availableValue === 'on' || (!availableValue && true)
 			const active = activeValue === 'true' || activeValue === 'on' || (!activeValue && true)

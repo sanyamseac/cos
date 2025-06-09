@@ -9,6 +9,7 @@ const config = {
 			checkOrigin: false,
 		},
 	},
+	runes: true,
 }
 
 export default config
