@@ -6,7 +6,7 @@ import { ORIGIN } from '$env/static/private'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { generateId } from '$lib/helper'
+import { generateId, getRandomDefaultAvatar } from '$lib/helper'
 
 const cas = 'https://login.iiit.ac.in/cas'
 
@@ -88,7 +88,7 @@ export const actions: Actions = {
 			else error(401, 'Failed to parse CAS response.')
 		}
 
-		let user = {
+		let user: any = {
 			name: details['Name'][0],
 			email: details['E-Mail'][0],
 		}
@@ -98,15 +98,25 @@ export const actions: Actions = {
 				id: schema.user.id,
 				name: schema.user.name,
 				email: schema.user.email,
+				role: schema.user.role,
+				profilePicture: schema.user.profilePicture,
 			})
 			.from(schema.user)
 			.where(eq(schema.user.email, user.email))
 
 		const existingUser = results.at(0)
 		if (!existingUser) {
-			user = { ...user, id: generateId() }
-			await db.insert(schema.user).values(user)
-		} else user = existingUser
+			const newUser = {
+				...user,
+				id: generateId(),
+				role: 'consumer',
+				profilePicture: getRandomDefaultAvatar()
+			}
+			await db.insert(schema.user).values(newUser)
+			user = newUser
+		} else {
+			user = existingUser
+		}
 
 		const token = auth.generateSessionToken()
 		const session = await auth.createSession(token, user.id)

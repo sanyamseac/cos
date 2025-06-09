@@ -46,7 +46,7 @@ export const load: PageServerLoad = async (event) => {
 		return {
 			user: {
 				...event.locals.user,
-				profilePicture: profilePictureUrl,
+				profilePicture: event.locals.user.profilePicture || profilePictureUrl,
 			},
 			wallets,
 			recentTransactions,
@@ -68,20 +68,24 @@ export const actions: Actions = {
 			return fail(400, { message: 'Profile picture URL is required' })
 		}
 
-		// TODO: Update the profile picture in the database
-		// For now, we'll just log the URL and return success
-		console.log(
-			'Updating profile picture for user',
-			event.locals.user.id,
-			'to:',
-			profilePictureUrl,
-		)
+		try {
+			// Update the profile picture in the database
+			await db
+				.update(schema.user)
+				.set({ profilePicture: profilePictureUrl })
+				.where(eq(schema.user.id, event.locals.user.id))
 
-		// In a real implementation, you would:
-		// 1. Validate the URL or uploaded image
-		// 2. Save the URL to the database
-		// 3. Handle image uploads to a CDN/storage service if needed
+			console.log(
+				'Profile picture updated successfully for user',
+				event.locals.user.id,
+				'to:',
+				profilePictureUrl,
+			)
 
-		return { success: true, profilePictureUrl }
+			return { success: true, profilePictureUrl }
+		} catch (error) {
+			console.error('Error updating profile picture:', error)
+			return fail(500, { message: 'Failed to update profile picture' })
+		}
 	},
 }

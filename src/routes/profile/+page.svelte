@@ -121,13 +121,17 @@
 
 			if (response.ok) {
 				console.log('Profile picture updated successfully')
-				// TODO: Update the local data to reflect the change
-				// You might want to refresh the page data or update the reactive state
+				// Update the local data to reflect the change
+				data.user.profilePicture = profilePicUrl
+				// Optionally reload the page to ensure fresh data
+				window.location.reload()
 			} else {
 				console.error('Failed to update profile picture')
+				alert('Failed to update profile picture. Please try again.')
 			}
 		} catch (error) {
 			console.error('Error updating profile picture:', error)
+			alert('An error occurred while updating your profile picture.')
 		}
 
 		isEditingPic = false
@@ -306,16 +310,12 @@
 				<div class="rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 p-2">
 					<Bell class="h-5 w-5 text-white" />
 				</div>
-				<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-					Notifications
-				</h3>
+				<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Notifications</h3>
 			</div>
 			<div class="space-y-4">
 				<div class="flex items-center justify-between">
 					<div>
-						<p class="font-medium text-gray-800 dark:text-white">
-							Email Notifications
-						</p>
+						<p class="font-medium text-gray-800 dark:text-white">Email Notifications</p>
 						<p class="text-sm text-gray-600 dark:text-gray-400">
 							Receive order updates via email
 						</p>
@@ -536,10 +536,12 @@
 		{#if data.wallets && data.wallets.length > 0}
 			<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 				<!-- Wallet Balances -->
-				<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+				<div
+					class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+				>
 					<div class="mb-6 flex items-center gap-3">
 						<div class="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-2">
-							<div class="h-5 w-5 text-white font-bold">₹</div>
+							<div class="h-5 w-5 font-bold text-white">₹</div>
 						</div>
 						<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
 							Wallet Balances
@@ -547,7 +549,9 @@
 					</div>
 					<div class="space-y-3">
 						{#each data.wallets as { wallet, canteen }}
-							<div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+							<div
+								class="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700"
+							>
 								<div>
 									<p class="font-medium text-gray-800 dark:text-white">
 										{canteen?.name || 'Unknown Canteen'}
@@ -566,11 +570,15 @@
 								</div>
 							</div>
 						{/each}
-						<div class="mt-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900">
+						<div class="mt-4 rounded-lg bg-blue-50 p-3 dark:bg-blue-900">
 							<div class="flex items-center justify-between">
-								<span class="font-medium text-blue-800 dark:text-blue-200">Total Balance</span>
-								<span class="font-bold text-xl text-blue-800 dark:text-blue-200">
-									₹{data.wallets.reduce((sum, w) => sum + parseFloat(w.wallet.balance), 0).toFixed(2)}
+								<span class="font-medium text-blue-800 dark:text-blue-200"
+									>Total Balance</span
+								>
+								<span class="text-xl font-bold text-blue-800 dark:text-blue-200">
+									₹{data.wallets
+										.reduce((sum, w) => sum + parseFloat(w.wallet.balance), 0)
+										.toFixed(2)}
 								</span>
 							</div>
 						</div>
@@ -578,11 +586,23 @@
 				</div>
 
 				<!-- Recent Transactions -->
-				<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+				<div
+					class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+				>
 					<div class="mb-6 flex items-center gap-3">
 						<div class="rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 p-2">
-							<svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+							<svg
+								class="h-5 w-5 text-white"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+								/>
 							</svg>
 						</div>
 						<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
@@ -590,9 +610,11 @@
 						</h3>
 					</div>
 					{#if data.recentTransactions && data.recentTransactions.length > 0}
-						<div class="space-y-3 max-h-80 overflow-y-auto">
+						<div class="max-h-80 space-y-3 overflow-y-auto">
 							{#each data.recentTransactions as { transaction, canteen, performedBy }}
-								<div class="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-600">
+								<div
+									class="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-600"
+								>
 									<div class="flex-1">
 										<p class="font-medium text-gray-800 dark:text-white">
 											{canteen?.name || 'Unknown Canteen'}
@@ -601,18 +623,29 @@
 											{transaction.reference || 'No reference'}
 										</p>
 										<p class="text-xs text-gray-500">
-											{new Date(transaction.createdAt).toLocaleDateString('en-IN', {
-												year: 'numeric',
-												month: 'short',
-												day: 'numeric',
-												hour: '2-digit',
-												minute: '2-digit'
-											})}
+											{new Date(transaction.createdAt).toLocaleDateString(
+												'en-IN',
+												{
+													year: 'numeric',
+													month: 'short',
+													day: 'numeric',
+													hour: '2-digit',
+													minute: '2-digit',
+												},
+											)}
 										</p>
 									</div>
 									<div class="text-right">
-										<p class="font-bold {parseFloat(transaction.amount) > 0 ? 'text-green-600' : 'text-red-600'}">
-											{parseFloat(transaction.amount) > 0 ? '+' : ''}₹{Math.abs(parseFloat(transaction.amount)).toFixed(2)}
+										<p
+											class="font-bold {parseFloat(transaction.amount) > 0
+												? 'text-green-600'
+												: 'text-red-600'}"
+										>
+											{parseFloat(transaction.amount) > 0
+												? '+'
+												: ''}₹{Math.abs(
+												parseFloat(transaction.amount),
+											).toFixed(2)}
 										</p>
 										<p class="text-xs text-gray-500">
 											by {performedBy?.name || 'System'}
@@ -622,19 +655,23 @@
 							{/each}
 						</div>
 					{:else}
-						<div class="text-center py-8 text-gray-500">
+						<div class="py-8 text-center text-gray-500">
 							<p>No transactions found</p>
 						</div>
 					{/if}
 				</div>
 			</div>
 		{:else}
-			<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-				<div class="text-center py-8">
-					<div class="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-3 mx-auto w-fit mb-4">
-						<div class="h-6 w-6 text-white font-bold">₹</div>
+			<div
+				class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+			>
+				<div class="py-8 text-center">
+					<div
+						class="mx-auto mb-4 w-fit rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-3"
+					>
+						<div class="h-6 w-6 font-bold text-white">₹</div>
 					</div>
-					<h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+					<h3 class="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
 						No Wallet Found
 					</h3>
 					<p class="text-gray-600 dark:text-gray-400">
