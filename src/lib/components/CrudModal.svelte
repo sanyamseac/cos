@@ -11,12 +11,13 @@
 	interface Field {
 		name: string
 		label: string
-		type: 'text' | 'number' | 'textarea' | 'select' | 'switch' | 'hidden'
+		type: 'text' | 'number' | 'textarea' | 'select' | 'switch' | 'hidden' | 'file'
 		required?: boolean
 		placeholder?: string
 		options?: { value: string | number; label: string }[]
 		step?: string
 		value?: any
+		accept?: string
 	}
 
 	interface Props {
@@ -94,10 +95,7 @@
 	// Only initialize form when modal opens, track open state to prevent re-initialization
 	$effect(() => {
 		if (open && !lastOpenState) {
-			console.log('CrudModal: modal opened, initializing form')
-			console.log('CrudModal: fields:', fields)
 			formData = initializeForm()
-			console.log('CrudModal: initialized formData:', formData)
 		}
 		lastOpenState = open
 	})
@@ -134,7 +132,7 @@
 			class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
 		/>
 		<Dialog.Content
-			class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:scale-out data-[state=open]:scale-in fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-0 shadow-xl dark:border-gray-700 dark:bg-gray-800"
+			class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:scale-out data-[state=open]:scale-in fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-[90%] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-0 shadow-xl dark:border-gray-700 dark:bg-gray-800"
 		>
 			<!-- Header with gradient background -->
 			<div
@@ -167,6 +165,7 @@
 							await update()
 						}
 					}}
+					enctype="multipart/form-data"
 				>
 					{#if editing && item}
 						<input type="hidden" name="id" value={item.id} />
@@ -277,6 +276,22 @@
 									placeholder={field.placeholder}
 									class="h-24 w-full resize-none rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-gray-900 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
 								></textarea>
+							</div>
+						{:else if field.type === 'file'}
+							<div>
+								<Label.Root
+									class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
+									{field.label}
+									{#if field.required}<span class="text-red-500">*</span>{/if}
+								</Label.Root>
+								<input
+									type="file"
+									name={field.name}
+									required={field.required}
+									class="block w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-500 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-indigo-500 file:to-purple-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:from-indigo-600 hover:file:to-purple-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+									accept={field.accept || 'image/*'}
+								/>
 							</div>
 						{:else}
 							<div>

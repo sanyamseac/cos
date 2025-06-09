@@ -23,7 +23,7 @@
 	let fileInput: HTMLInputElement
 
 	// Available SVG avatars
-	const avatarUrls = Array.from({ length: 8 }, (_, i) => `/content/avatars/avatar-${i + 1}.svg`)
+	const avatarUrls = Array.from({ length: 8 }, (_, i) => `/avatars/avatar-${i + 1}.svg`)
 
 	function handleFileUpload(event: Event) {
 		const target = event.target as HTMLInputElement

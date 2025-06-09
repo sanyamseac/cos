@@ -12,5 +12,5 @@ export function generateId(length = 21): string {
 
 export function getRandomDefaultAvatar(): string {
 	const avatarNumber = Math.floor(Math.random() * 8) + 1
-	return `/content/avatars/avatar-${avatarNumber}.svg`
+	return `/avatars/avatar-${avatarNumber}.svg`
 }

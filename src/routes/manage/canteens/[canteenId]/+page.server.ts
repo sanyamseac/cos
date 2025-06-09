@@ -17,7 +17,7 @@ export const load: PageServerLoad = async (event) => {
 			.select()
 			.from(schema.canteens)
 			.where(
-				and(eq(schema.canteens.acronym, canteenAcronym), eq(schema.canteens.active, true)),
+				and(eq(schema.canteens.acronym, canteenAcronym)),
 			)
 			.then((results) => results[0])
 

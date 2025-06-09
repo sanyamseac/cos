@@ -38,15 +38,10 @@ export const load: PageServerLoad = async (event) => {
 			.orderBy(desc(schema.walletTransactions.createdAt))
 			.limit(5)
 
-		// For now, returning a fixed profile picture URL
-		// This will be replaced with actual database call later
-		const profilePictureUrl =
-			'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face&auto=format'
-
 		return {
 			user: {
 				...event.locals.user,
-				profilePicture: event.locals.user.profilePicture || profilePictureUrl,
+				profilePicture: event.locals.user.profilePicture,
 			},
 			wallets,
 			recentTransactions,

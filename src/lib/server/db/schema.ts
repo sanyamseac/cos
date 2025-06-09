@@ -31,6 +31,7 @@ export const canteens = pgTable('canteens', {
 	name: text('name').notNull(),
 	acronym: text('acronym').notNull().unique(),
 	description: text('description').notNull(),
+	image: text('image').notNull(),
 	timings: text('timings').notNull(),
 	open: boolean('is_open').notNull().default(true),
 	active: boolean('active').notNull().default(true),

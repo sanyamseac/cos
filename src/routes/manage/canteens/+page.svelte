@@ -2,13 +2,10 @@
 	import { Button } from 'bits-ui'
 	import {
 		Clock,
-		MapPin,
 		ChefHat,
-		Star,
 		ArrowRight,
 		Plus,
 		Edit,
-		Trash2,
 		Settings,
 		ArrowLeft,
 	} from 'lucide-svelte'
@@ -19,21 +16,13 @@
 	import { fly, fade } from 'svelte/transition'
 	import { goto } from '$app/navigation'
 
-	let { data }: { data: PageData } = $props()
+	let { data } = $props()
 
-	// Modal state
 	let showCrudModal = $state(false)
 	let editingCanteen = $state(false)
 	let selectedCanteen = $state(null)
-	let showDeleteDialog = $state(false)
-	let isLoading = $state(false)
 
-	// Success message state
-	let showSuccessMessage = $state(false)
-	let successMessage = $state('')
-
-	// Field definitions for CRUD modal
-	const canteenFields = [
+	const canteenFields = $derived([
 		{
 			name: 'name',
 			label: 'Name',
@@ -64,7 +53,15 @@
 		},
 		{ name: 'open', label: 'Currently Open', type: 'switch' as const },
 		{ name: 'active', label: 'Active', type: 'switch' as const },
-	]
+		{
+			name: 'image',
+			label: 'Image',
+			type: 'file' as const,
+			required: editingCanteen ? false : true,
+			accept: 'image/*',
+			placeholder: 'Upload canteen image',
+		}
+	])
 
 	// Functions for modal handling
 	function handleAddCanteen() {
@@ -85,15 +82,6 @@
 		editingCanteen = false
 	}
 
-	function showSuccess(message: string) {
-		successMessage = message
-		showSuccessMessage = true
-		setTimeout(() => {
-			showSuccessMessage = false
-		}, 3000)
-	}
-
-	// Function to get canteen status badge
 	function getStatusBadge(isOpen: boolean) {
 		return isOpen
 			? {
@@ -101,20 +89,6 @@
 					class: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
 				}
 			: { text: 'Closed', class: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }
-	}
-
-	// Function to get canteen emoji/icon based on name
-	function getCanteenEmoji(name: string) {
-		if (name.toLowerCase().includes('main') || name.toLowerCase().includes('central'))
-			return '🍽️'
-		if (name.toLowerCase().includes('coffee') || name.toLowerCase().includes('cafe'))
-			return '☕'
-		if (name.toLowerCase().includes('juice') || name.toLowerCase().includes('smoothie'))
-			return '🥤'
-		if (name.toLowerCase().includes('snack')) return '🍿'
-		if (name.toLowerCase().includes('health')) return '🥗'
-		if (name.toLowerCase().includes('night') || name.toLowerCase().includes('late')) return '🌙'
-		return '🍴'
 	}
 </script>
 
@@ -193,7 +167,9 @@
 							<div class="p-6 pb-4">
 								<div class="mb-4 flex items-start justify-between">
 									<div class="flex items-center gap-3">
-										<div class="text-3xl">{getCanteenEmoji(canteen.name)}</div>
+										<div class="text-3xl">
+											<img src={canteen.image} alt="{canteen.name} logo" class="h-12 w-12 rounded-full object-cover" />
+										</div>
 										<div>
 											<h3
 												class="text-xl font-bold text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400"
@@ -288,26 +264,15 @@
 			{/if}
 		</div>
 	</div>
+
+	<CrudModal
+		bind:open={showCrudModal}
+		editing={editingCanteen}
+		entityName="Canteen"
+		item={selectedCanteen}
+		fields={canteenFields}
+		addAction="?/addCanteen"
+		updateAction="?/updateCanteen"
+		onClose={closeCrudModal}
+	/>
 </div>
-
-<!-- CRUD Modal -->
-<CrudModal
-	bind:open={showCrudModal}
-	editing={editingCanteen}
-	entityName="Canteen"
-	item={selectedCanteen}
-	fields={canteenFields}
-	addAction="?/addCanteen"
-	updateAction="?/updateCanteen"
-	onClose={closeCrudModal}
-/>
-
-<!-- Success Message -->
-{#if showSuccessMessage && successMessage}
-	<div
-		transition:fade={{ duration: 300 }}
-		class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 transform rounded-full bg-green-600 px-6 py-3 text-center text-white shadow-lg"
-	>
-		<span>{successMessage}</span>
-	</div>
-{/if}

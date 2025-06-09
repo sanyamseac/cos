@@ -4,6 +4,8 @@ import type { PageServerLoad, Actions } from './$types'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { asc, desc, eq } from 'drizzle-orm'
+import path from 'path'
+import fs from 'fs/promises'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -33,10 +35,18 @@ export const actions: Actions = {
 			const acronym = body.get('acronym')?.toString()
 			const description = body.get('description')?.toString()
 			const active = body.get('active') === 'true'
+			const image = body.get('image') as File
 
-			if (!name || !timings || !acronym || !description) {
+			if (!name || !timings || !acronym || !description || !image) {
 				return fail(400, { error: 'Name, timings, acronym, and description are required' })
 			}
+
+			const filename = acronym + path.extname(image.name)
+			const savePath = path.join('static', 'content', 'canteenImages', filename)
+
+			await fs.mkdir(path.dirname(savePath), { recursive: true })
+			const arrayBuffer = await image.arrayBuffer()
+			await fs.writeFile(savePath, Buffer.from(arrayBuffer))
 
 			const [newCanteen] = await db
 				.insert(schema.canteens)
@@ -47,6 +57,7 @@ export const actions: Actions = {
 					acronym,
 					description,
 					active: active ?? true,
+					image: `/content/canteenImages/${filename}`,
 				})
 				.returning()
 
@@ -69,9 +80,20 @@ export const actions: Actions = {
 			const description = body.get('description')?.toString()
 			const acronym = body.get('acronym')?.toString()
 			const active = body.get('active') === 'true'
+			const image = body.get('image') as File
 
 			if (!id) {
 				return fail(400, { error: 'Canteen ID is required' })
+			}
+
+			let filename = ''
+			if (path.extname(image.name)) {
+				filename = acronym + path.extname(image.name)
+				const savePath = path.join('static', 'content', 'canteenImages', filename)
+
+				await fs.mkdir(path.dirname(savePath), { recursive: true })
+				const arrayBuffer = await image.arrayBuffer()
+				await fs.writeFile(savePath, Buffer.from(arrayBuffer))
 			}
 
 			const updateData: any = {}
@@ -81,6 +103,7 @@ export const actions: Actions = {
 			if (description) updateData.description = description
 			if (acronym) updateData.acronym = acronym
 			if (active !== undefined) updateData.active = active
+			if (path.extname(image.name)) updateData.image = `/content/canteenImages/${filename}`
 
 			const [updatedCanteen] = await db
 				.update(schema.canteens)
