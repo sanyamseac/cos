@@ -1,4 +1,4 @@
-import { fail, redirect } from '@sveltejs/kit'
+import { fail, redirect, error } from '@sveltejs/kit'
 import type { Actions, PageServerLoad } from './$types'
 import * as auth from '$lib/server/session'
 import { db } from '$lib/server/db'
@@ -11,7 +11,7 @@ export const load: PageServerLoad = async (event) => {
 	}
 	
 	if (!auth.ADMIN.includes(event.locals.user.role)) {
-		return fail(403, { message: 'Access denied' })
+		throw error(403, 'Access denied')
 	}
 
 	const consumerId = event.params.consumerId
@@ -88,11 +88,11 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	addMoney: async (event) => {
 		if (!event.locals.user) {
-			return fail(401, { message: 'Unauthorized' })
+			throw fail(401, { message: 'Unauthorized' })
 		}
 
 		if (!auth.ADMIN.includes(event.locals.user.role)) {
-			return fail(403, { message: 'Access denied' })
+			throw fail(403, { message: 'Access denied' })
 		}
 
 		const formData = await event.request.formData()
@@ -102,7 +102,7 @@ export const actions: Actions = {
 		const reference = formData.get('reference') as string
 
 		if (!consumerId || !canteenId || !amount || amount <= 0) {
-			return fail(400, { message: 'Invalid input data' })
+			throw fail(400, { message: 'Invalid input data' })
 		}
 
 		try {
@@ -150,7 +150,7 @@ export const actions: Actions = {
 			return { success: true, message: 'Money added successfully' }
 		} catch (error) {
 			console.error('Error adding money:', error)
-			return fail(500, { message: 'Failed to add money' })
+			throw fail(500, { message: 'Failed to add money' })
 		}
 	},
 }

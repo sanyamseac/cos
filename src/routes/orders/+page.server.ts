@@ -1,4 +1,4 @@
-import { redirect, fail } from '@sveltejs/kit'
+import { redirect, fail, error } from '@sveltejs/kit'
 import * as auth from '$lib/server/session'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
@@ -9,7 +9,7 @@ export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
 	if (!auth.CONSUMER.includes(event.locals.user.role))
-		return fail(403, { message: 'Access denied' })
+		throw error(403,' Access denied')
 
 	try {
 		// Get user's orders with canteen information
@@ -27,8 +27,8 @@ export const load: PageServerLoad = async (event) => {
 			user: event.locals.user,
 			orders
 		}
-	} catch (error) {
-		console.error('Error loading orders:', error)
-		throw fail(500, { message: 'Failed to load orders' })
+	} catch (err) {
+		console.error('Error loading orders:', err)
+		throw error(500, 'Failed to load orders')
 	}
 }

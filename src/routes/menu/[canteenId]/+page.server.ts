@@ -73,7 +73,7 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	addToBasket: async ({ request, locals, params }) => {
 		if (!locals.user) {
-			return fail(401, { error: 'Not authenticated' })
+			throw fail(401, { error: 'Not authenticated' })
 		}
 
 		const formData = await request.formData()
@@ -83,14 +83,14 @@ export const actions: Actions = {
 		const addonIds = formData.getAll('addonIds').map(id => Number(id)).filter(id => !isNaN(id))
 
 		if (!menuItemId || isNaN(menuItemId)) {
-			return fail(400, { error: 'Invalid menu item' })
+			throw fail(400, { error: 'Invalid menu item' })
 		}
 
 		try {
 			// Get canteen ID from the acronym
 			const canteenAcronym = params.canteenId
 			if (!canteenAcronym) {
-				return fail(400, { error: 'Invalid canteen ID' })
+				throw fail(400, { error: 'Invalid canteen ID' })
 			}
 
 			const canteen = await db
@@ -100,7 +100,7 @@ export const actions: Actions = {
 				.limit(1)
 
 			if (canteen.length === 0) {
-				return fail(404, { error: 'Canteen not found' })
+				throw fail(404, { error: 'Canteen not found' })
 			}
 
 			const canteenId = canteen[0].id
@@ -195,7 +195,7 @@ export const actions: Actions = {
 			return { success: true }
 		} catch (error) {
 			console.error('Error adding item to basket:', error)
-			return fail(500, { error: 'Failed to add item to basket' })
+			throw fail(500, { error: 'Failed to add item to basket' })
 		}
 	}
 }

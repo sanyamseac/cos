@@ -115,7 +115,7 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	updateQuantity: async ({ request, locals }) => {
 		if (!locals.user) {
-			return fail(401, { error: 'Not authenticated' })
+			throw fail(401, { error: 'Not authenticated' })
 		}
 
 		const formData = await request.formData()
@@ -123,7 +123,7 @@ export const actions: Actions = {
 		const quantity = Number(formData.get('quantity'))
 
 		if (!basketItemId || isNaN(basketItemId) || !quantity || isNaN(quantity)) {
-			return fail(400, { error: 'Invalid parameters' })
+			throw fail(400, { error: 'Invalid parameters' })
 		}
 
 		try {
@@ -139,20 +139,20 @@ export const actions: Actions = {
 			return { success: true }
 		} catch (error) {
 			console.error('Error updating quantity:', error)
-			return fail(500, { error: 'Failed to update quantity' })
+			throw fail(500, { error: 'Failed to update quantity' })
 		}
 	},
 
 	removeItem: async ({ request, locals }) => {
 		if (!locals.user) {
-			return fail(401, { error: 'Not authenticated' })
+			throw fail(401, { error: 'Not authenticated' })
 		}
 
 		const formData = await request.formData()
 		const basketItemId = Number(formData.get('basketItemId'))
 
 		if (!basketItemId || isNaN(basketItemId)) {
-			return fail(400, { error: 'Invalid parameters' })
+			throw fail(400, { error: 'Invalid parameters' })
 		}
 
 		try {
@@ -162,20 +162,20 @@ export const actions: Actions = {
 			return { success: true }
 		} catch (error) {
 			console.error('Error removing item:', error)
-			return fail(500, { error: 'Failed to remove item' })
+			throw fail(500, { error: 'Failed to remove item' })
 		}
 	},
 
 	clearBasket: async ({ request, locals }) => {
 		if (!locals.user) {
-			return fail(401, { error: 'Not authenticated' })
+			throw fail(401, { error: 'Not authenticated' })
 		}
 
 		const formData = await request.formData()
 		const canteenId = Number(formData.get('canteenId'))
 
 		if (!canteenId || isNaN(canteenId)) {
-			return fail(400, { error: 'Invalid parameters' })
+			throw fail(400, { error: 'Invalid parameters' })
 		}
 
 		try {
@@ -191,13 +191,13 @@ export const actions: Actions = {
 			return { success: true }
 		} catch (error) {
 			console.error('Error clearing basket:', error)
-			return fail(500, { error: 'Failed to clear basket' })
+			throw fail(500, { error: 'Failed to clear basket' })
 		}
 	},
 
 	placeOrder: async ({ request, locals }) => {
 		if (!locals.user) {
-			return fail(401, { error: 'Not authenticated' })
+			throw fail(401, { error: 'Not authenticated' })
 		}
 
 		const formData = await request.formData()
@@ -209,7 +209,7 @@ export const actions: Actions = {
 		const paymentMethod = isWalletPayment ? 'wallet' : 'postpaid'
 
 		if (!canteenId || isNaN(canteenId)) {
-			return fail(400, { error: 'Invalid canteen ID' })
+			throw fail(400, { error: 'Invalid canteen ID' })
 		}
 
 		try {
@@ -390,7 +390,7 @@ export const actions: Actions = {
 		} catch (error) {
 			console.error('Error placing order:', error)
 			const message = error instanceof Error ? error.message : 'Failed to place order'
-			return fail(500, { error: message })
+			throw fail(500, { error: message })
 		}
 	}
 }

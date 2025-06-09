@@ -1,4 +1,4 @@
-import { redirect, fail, error } from '@sveltejs/kit'
+import { redirect, error, fail } from '@sveltejs/kit'
 import * as auth from '$lib/server/session'
 import type { PageServerLoad, Actions } from './$types'
 import { db } from '$lib/server/db'
@@ -6,6 +6,9 @@ import * as schema from '$lib/server/db/schema'
 import { asc, desc, eq } from 'drizzle-orm'
 import path from 'path'
 import fs from 'fs/promises'
+import { generateId } from '$lib/helper'
+import { encodeHexLowerCase } from '@oslojs/encoding'
+import { sha256 } from '@oslojs/crypto/sha2'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -25,7 +28,7 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	addCanteen: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -38,11 +41,12 @@ export const actions: Actions = {
 			const image = body.get('image') as File
 
 			if (!name || !timings || !acronym || !description || !image) {
-				return fail(400, { error: 'Name, timings, acronym, and description are required' })
+				throw fail(400, { error: 'Name, timings, acronym, and description are required' })
 			}
 
 			const filename = acronym + path.extname(image.name)
 			const savePath = path.join('static', 'content', 'canteenImages', filename)
+			const password = generateId(8)
 
 			await fs.mkdir(path.dirname(savePath), { recursive: true })
 			const arrayBuffer = await image.arrayBuffer()
@@ -58,18 +62,27 @@ export const actions: Actions = {
 					description,
 					active: active ?? true,
 					image: `/content/canteenImages/${filename}`,
+					password: encodeHexLowerCase(sha256(new TextEncoder().encode(password))),
 				})
 				.returning()
+			
+			await db.insert(schema.user).values({
+				id: generateId(),
+				name: newCanteen.name,
+				email: newCanteen.acronym + '@canteens.iiit.ac.in',
+				role: 'canteen',
+				profilePicture: newCanteen.image,
+			})
 
-			return { success: true, canteen: newCanteen }
+			return { success: true, canteen: newCanteen, password }
 		} catch (error) {
 			console.error('Error creating canteen:', error)
-			return fail(500, { error: 'Failed to create canteen' })
+			throw fail(500, { error: 'Failed to create canteen' })
 		}
 	},
 
 	updateCanteen: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -83,7 +96,7 @@ export const actions: Actions = {
 			const image = body.get('image') as File
 
 			if (!id) {
-				return fail(400, { error: 'Canteen ID is required' })
+				throw fail(400, { error: 'Canteen ID is required' })
 			}
 
 			let filename = ''
@@ -112,13 +125,44 @@ export const actions: Actions = {
 				.returning()
 
 			if (!updatedCanteen) {
-				return fail(404, { error: 'Canteen not found' })
+				throw fail(404, { error: 'Canteen not found' })
 			}
 
 			return { success: true, canteen: updatedCanteen }
 		} catch (error) {
 			console.error('Error updating canteen:', error)
-			return fail(500, { error: 'Failed to update canteen' })
+			throw fail(500, { error: 'Failed to update canteen' })
 		}
 	},
+
+	resetPassword: async ({ request, locals }) => {
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+
+		try {
+			const body = await request.formData()
+			const id = parseInt(body.get('id')?.toString() || '')
+			const newPassword = generateId(8)
+
+			if (!id) {
+				throw fail(400, { error: 'Canteen ID is required' })
+			}
+
+			const [canteen] = await db
+				.update(schema.canteens)
+				.set({
+					password: encodeHexLowerCase(sha256(new TextEncoder().encode(newPassword))),
+				})
+				.where(eq(schema.canteens.id, id))
+				.returning()
+
+			if (!canteen) {
+				throw fail(404, { error: 'Canteen not found' })
+			}
+
+			return { success: true, canteen, newPassword }
+		} catch (error) {
+			console.error('Error resetting password:', error)
+			throw fail(500, { error: 'Failed to reset password' })
+		}
+	}
 }

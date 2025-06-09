@@ -1,5 +1,5 @@
 import * as auth from '$lib/server/session'
-import { fail, redirect } from '@sveltejs/kit'
+import { fail, redirect, error } from '@sveltejs/kit'
 import type { Actions, PageServerLoad } from './$types'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
@@ -9,7 +9,7 @@ export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
 	if (!auth.CONSUMER.includes(event.locals.user.role))
-		return fail(403, { message: 'Access denied' })
+		throw error(403, 'Access denied')
 
 	try {
 		// Get wallet information
@@ -46,21 +46,21 @@ export const load: PageServerLoad = async (event) => {
 			wallets,
 			recentTransactions,
 		}
-	} catch (error) {
-		console.error('Error loading profile data:', error)
-		return fail(500, { message: 'Failed to load profile data' })
+	} catch (err) {
+		console.error('Error loading profile data:', err)
+		throw error(500,'Failed to load profile data')
 	}
 }
 
 export const actions: Actions = {
 	updateProfilePicture: async (event) => {
-		if (!event.locals.user) return fail(401, { message: 'Unauthorized' })
+		if (!event.locals.user) throw fail(401, { message: 'Unauthorized' })
 
 		const data = await event.request.formData()
 		const profilePictureUrl = data.get('profilePictureUrl') as string
 
 		if (!profilePictureUrl) {
-			return fail(400, { message: 'Profile picture URL is required' })
+			throw fail(400, { message: 'Profile picture URL is required' })
 		}
 
 		try {
@@ -80,7 +80,7 @@ export const actions: Actions = {
 			return { success: true, profilePictureUrl }
 		} catch (error) {
 			console.error('Error updating profile picture:', error)
-			return fail(500, { message: 'Failed to update profile picture' })
+			throw fail(500, { message: 'Failed to update profile picture' })
 		}
 	},
 }

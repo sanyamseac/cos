@@ -25,7 +25,7 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	addCanteen: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -37,7 +37,7 @@ export const actions: Actions = {
 			const active = body.get('active') === 'true'
 
 			if (!name || !timings || !acronym || !description) {
-				return fail(400, { error: 'Name, timings, acronym, and description are required' })
+				throw fail(400, { error: 'Name, timings, acronym, and description are required' })
 			}
 
 			const [newCanteen] = await db
@@ -55,12 +55,12 @@ export const actions: Actions = {
 			return { success: true, canteen: newCanteen }
 		} catch (error) {
 			console.error('Error creating canteen:', error)
-			return fail(500, { error: 'Failed to create canteen' })
+			throw fail(500, { error: 'Failed to create canteen' })
 		}
 	},
 
 	updateCanteen: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -73,7 +73,7 @@ export const actions: Actions = {
 			const active = body.get('active') === 'true'
 
 			if (!id) {
-				return fail(400, { error: 'Canteen ID is required' })
+				throw fail(400, { error: 'Canteen ID is required' })
 			}
 
 			const updateData: any = {}
@@ -91,13 +91,13 @@ export const actions: Actions = {
 				.returning()
 
 			if (!updatedCanteen) {
-				return fail(404, { error: 'Canteen not found' })
+				throw fail(404, { error: 'Canteen not found' })
 			}
 
 			return { success: true, canteen: updatedCanteen }
 		} catch (error) {
 			console.error('Error updating canteen:', error)
-			return fail(500, { error: 'Failed to update canteen' })
+			throw fail(500, { error: 'Failed to update canteen' })
 		}
 	},
 }

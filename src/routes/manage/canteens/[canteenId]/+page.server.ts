@@ -74,7 +74,7 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	addMenuItem: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -96,7 +96,7 @@ export const actions: Actions = {
 					hasName: !!name,
 					hasPrice: !!price,
 				})
-				return fail(400, { error: 'CanteenId, category, name, and price are required' })
+				throw fail(400, { error: 'CanteenId, category, name, and price are required' })
 			}
 
 			const available =
@@ -120,12 +120,12 @@ export const actions: Actions = {
 			return { success: true, menuItem: newItem }
 		} catch (error) {
 			console.error('Error creating menu item:', error)
-			return fail(500, { error: 'Failed to create menu item' })
+			throw fail(500, { error: 'Failed to create menu item' })
 		}
 	},
 
 	updateMenuItem: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -140,7 +140,7 @@ export const actions: Actions = {
 			const active = body.get('active')
 
 			if (!id) {
-				return fail(400, { error: 'Menu item ID is required' })
+				throw fail(400, { error: 'Menu item ID is required' })
 			}
 
 			const updateData: any = {}
@@ -160,19 +160,19 @@ export const actions: Actions = {
 				.returning()
 
 			if (!updatedItem) {
-				return fail(404, { error: 'Menu item not found' })
+				throw fail(404, { error: 'Menu item not found' })
 			}
 
 			return { success: true, menuItem: updatedItem }
 		} catch (error) {
 			console.error('Error updating menu item:', error)
-			return fail(500, { error: 'Failed to update menu item' })
+			throw fail(500, { error: 'Failed to update menu item' })
 		}
 	},
 
 	// Addons
 	addAddon: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -184,7 +184,7 @@ export const actions: Actions = {
 			const type = body.get('type')?.toString() || 'veg'
 
 			if (!itemId || !name || !price) {
-				return fail(400, { error: 'ItemId, name, and price are required' })
+				throw fail(400, { error: 'ItemId, name, and price are required' })
 			}
 
 			const [newAddon] = await db
@@ -202,12 +202,12 @@ export const actions: Actions = {
 			return { success: true, addon: newAddon }
 		} catch (error) {
 			console.error('Error creating addon:', error)
-			return fail(500, { error: 'Failed to create addon' })
+			throw fail(500, { error: 'Failed to create addon' })
 		}
 	},
 
 	updateAddon: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -220,7 +220,7 @@ export const actions: Actions = {
 			const type = body.get('type')?.toString()
 
 			if (!id) {
-				return fail(400, { error: 'Addon ID is required' })
+				throw fail(400, { error: 'Addon ID is required' })
 			}
 
 			const updateData: any = {}
@@ -238,19 +238,19 @@ export const actions: Actions = {
 				.returning()
 
 			if (!updatedAddon) {
-				return fail(404, { error: 'Addon not found' })
+				throw fail(404, { error: 'Addon not found' })
 			}
 
 			return { success: true, addon: updatedAddon }
 		} catch (error) {
 			console.error('Error updating addon:', error)
-			return fail(500, { error: 'Failed to update addon' })
+			throw fail(500, { error: 'Failed to update addon' })
 		}
 	},
 
 	// Variants
 	addVariant: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -261,7 +261,7 @@ export const actions: Actions = {
 			const available = body.get('available') === 'true'
 
 			if (!itemId || !name || !price) {
-				return fail(400, { error: 'ItemId, name, and price are required' })
+				throw fail(400, { error: 'ItemId, name, and price are required' })
 			}
 
 			const [newVariant] = await db
@@ -278,12 +278,12 @@ export const actions: Actions = {
 			return { success: true, variant: newVariant }
 		} catch (error) {
 			console.error('Error creating variant:', error)
-			return fail(500, { error: 'Failed to create variant' })
+			throw fail(500, { error: 'Failed to create variant' })
 		}
 	},
 
 	updateVariant: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw error(403, 'Unauthorized')
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
 
 		try {
 			const body = await request.formData()
@@ -295,7 +295,7 @@ export const actions: Actions = {
 			const available = body.get('available')
 
 			if (!id) {
-				return fail(400, { error: 'Variant ID is required' })
+				throw fail(400, { error: 'Variant ID is required' })
 			}
 
 			const updateData: any = {}
@@ -312,13 +312,13 @@ export const actions: Actions = {
 				.returning()
 
 			if (!updatedVariant) {
-				return fail(404, { error: 'Variant not found' })
+				throw fail(404, { error: 'Variant not found' })
 			}
 
 			return { success: true, variant: updatedVariant }
 		} catch (error) {
 			console.error('Error updating variant:', error)
-			return fail(500, { error: 'Failed to update variant' })
+			throw fail(500, { error: 'Failed to update variant' })
 		}
 	},
 }

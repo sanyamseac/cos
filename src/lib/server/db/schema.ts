@@ -29,6 +29,7 @@ export const pushSubscriptionsTable = pgTable('push_subscriptions', {
 export const canteens = pgTable('canteens', {
 	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
 	name: text('name').notNull(),
+	password: text('password').notNull(),
 	acronym: text('acronym').notNull().unique(),
 	description: text('description').notNull(),
 	image: text('image').notNull(),
@@ -219,6 +220,5 @@ export type BasketAddon = typeof basketAddons.$inferSelect
 export type Order = typeof orders.$inferSelect
 export type OrderItem = typeof orderItems.$inferSelect
 export type OrderAddon = typeof orderAddons.$inferSelect
-export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect
 export type Wallet = typeof wallets.$inferSelect
 export type WalletTransaction = typeof walletTransactions.$inferSelect

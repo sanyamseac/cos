@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { Button } from 'bits-ui'
+	import { Toggle } from "bits-ui";
+	import LockKeyOpen from "phosphor-svelte/lib/LockKeyOpen";
 	import {
 		Clock,
 		ChefHat,
@@ -9,19 +11,21 @@
 		Settings,
 		ArrowLeft,
 	} from 'lucide-svelte'
-	import type { PageData } from '../$types'
-	import { enhance } from '$app/forms'
 	import CrudModal from '$lib/components/CrudModal.svelte'
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte'
-	import { fly, fade } from 'svelte/transition'
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { goto } from '$app/navigation'
+	import { fromStore } from 'svelte/store'
+	import { enhance } from '$app/forms'
 
-	let { data } = $props()
+	let { data, form } = $props()
 
 	let showCrudModal = $state(false)
 	let editingCanteen = $state(false)
 	let selectedCanteen = $state(null)
-
+	let unlocked = $state(false);
+	let showConfirmDialog = $state(false)
+	let resetForm: HTMLFormElement | null = $state(null)
+	const code = $derived(unlocked ? form?.password || form?.newPassword : "••••••••");
 	const canteenFields = $derived([
 		{
 			name: 'name',
@@ -89,6 +93,22 @@
 					class: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
 				}
 			: { text: 'Closed', class: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }
+	}
+
+	function handleResetPassword(canteen: any) {
+		showConfirmDialog = true
+	}
+
+	function confirmResetPassword() {
+		if (resetForm) {
+			resetForm.requestSubmit();
+		}
+		closeConfirmDialog();
+	}
+
+	function closeConfirmDialog() {
+		showConfirmDialog = false
+		resetForm = null
 	}
 </script>
 
@@ -168,7 +188,7 @@
 								<div class="mb-4 flex items-start justify-between">
 									<div class="flex items-center gap-3">
 										<div class="text-3xl">
-											<img src={canteen.image} alt="{canteen.name} logo" class="h-12 w-12 rounded-full object-cover" />
+											<img src={canteen.image} alt="{canteen.name} logo" class="h-12 w-12 rounded object-cover" />
 										</div>
 										<div>
 											<h3
@@ -185,13 +205,26 @@
 									</div>
 
 									<!-- Admin Action Buttons -->
-									<Button.Root
-										onclick={() => handleEditCanteen(canteen)}
-										class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-all hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
-										title="Edit canteen"
-									>
-										<Edit size={14} />
-									</Button.Root>
+									<div class="flex items-center">
+										<Button.Root
+											onclick={() => handleEditCanteen(canteen)}
+											class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-all hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
+											title="Edit canteen"
+										>
+											<Edit size={14} />
+										</Button.Root>
+										<form bind:this={resetForm} action="?/resetPassword" use:enhance method="post">
+											<input type="hidden" name="id" value={canteen.id} />
+											<Button.Root
+												type="button"
+												onclick={() => handleResetPassword(canteen)}
+												class="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600 transition-all hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-300 dark:hover:bg-yellow-800 ml-2"
+												title="Reset password"
+											>
+												<LockKeyOpen size={14} />
+											</Button.Root>
+										</form>
+									</div>
 								</div>
 
 								<!-- Admin Status Badges -->
@@ -226,6 +259,35 @@
 									<Clock size={16} />
 									<span>{canteen.timings}</span>
 								</div>
+								<div class="">
+									<span class="text-sm text-gray-500 dark:text-gray-400">
+										Username: {canteen.acronym}@canteens.iiit.ac.in
+									</span>
+								</div>
+								{#if form?.password || form?.newPassword}
+									<div
+										class="mt-2 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 py-1 px-3 dark:border-gray-600 dark:bg-gray-700"
+									>
+										<div class="flex-1">
+											<span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+												Password: 
+											</span>
+											<span class="font-mono text-sm {unlocked
+												? 'text-gray-900 dark:text-gray-100'
+												: 'text-gray-500 dark:text-gray-400'}"
+											>
+												{code}
+											</span>
+										</div>
+										<Toggle.Root
+											aria-label="toggle code visibility"
+											class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-all hover:bg-gray-100 hover:text-gray-900 data-[state=on]:bg-indigo-100 data-[state=on]:border-indigo-300 data-[state=on]:text-indigo-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 dark:data-[state=on]:bg-indigo-900 dark:data-[state=on]:border-indigo-700 dark:data-[state=on]:text-indigo-300"
+											bind:pressed={unlocked}
+										>
+											<LockKeyOpen class="h-4 w-4" />
+										</Toggle.Root>
+									</div>
+								{/if}
 							</div>
 
 							<!-- Action Button -->
@@ -274,5 +336,16 @@
 		addAction="?/addCanteen"
 		updateAction="?/updateCanteen"
 		onClose={closeCrudModal}
+	/>
+
+	<ConfirmDialog
+		bind:open={showConfirmDialog}
+		title="Reset Password"
+		description={`Are you sure you want to reset the password? This action cannot be undone.`}
+		onClose={closeConfirmDialog}
+		onConfirm={confirmResetPassword}
+		confirmText="Yes, Reset"
+		cancelText="Cancel"
+		variant="danger"
 	/>
 </div>
