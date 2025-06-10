@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Dialog } from 'bits-ui'
-	import { User, Save, X, Upload } from 'lucide-svelte'
+	import { User, Save, X } from 'lucide-svelte'
 
 	interface Props {
 		open: boolean
@@ -189,7 +189,7 @@
 					</h4>
 					<div class="grid grid-cols-4 gap-3">
 						{#each avatarUrls as avatarUrl, i}
-							<button
+							<Button.Root
 								onclick={() => selectAvatar(i)}
 								class="h-14 w-14 overflow-hidden rounded-full ring-2 ring-transparent transition-all duration-200 hover:scale-105 hover:ring-gray-300 dark:hover:ring-gray-600 {selectedAvatarIndex ===
 								i
@@ -201,7 +201,7 @@
 									alt="Avatar {i + 1}"
 									class="h-full w-full object-cover"
 								/>
-							</button>
+							</Button.Root>
 						{/each}
 					</div>
 				</div>
@@ -224,13 +224,13 @@
 			</div>
 
 			<!-- Close Button -->
-			<button
+			<Dialog.Close
 				onclick={handleClose}
 				class="absolute top-4 right-4 rounded-md p-1 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none active:scale-[0.98] dark:hover:bg-gray-700 dark:focus-visible:ring-offset-gray-800"
 			>
 				<X class="h-5 w-5 text-gray-500 dark:text-gray-400" />
 				<span class="sr-only">Close</span>
-			</button>
+			</Dialog.Close>
 		</Dialog.Content>
 	</Dialog.Portal>
 </Dialog.Root>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Dialog } from 'bits-ui'
+	import { Dialog, Button } from 'bits-ui'
 	import { X } from 'lucide-svelte'
 
 	interface Props {
@@ -54,7 +54,7 @@
 				{/if}
 
 				<div class="flex gap-3 pt-4">
-					<button
+					<Button.Root
 						onclick={onConfirm}
 						disabled={loading}
 						class="flex-1 items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-md transition-all focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 {variant ===
@@ -68,14 +68,14 @@
 							></div>
 						{/if}
 						{confirmText}
-					</button>
-					<button
+					</Button.Root>
+					<Button.Root
 						onclick={onClose}
 						disabled={loading}
 						class="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
 					>
 						{cancelText}
-					</button>
+					</Button.Root>
 				</div>
 			</div>
 

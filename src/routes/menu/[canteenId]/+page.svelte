@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { Button, Dialog } from 'bits-ui'
+	import BadgeRoot from '$lib/components/Badge.svelte'
 	import { Clock, ChefHat, ArrowLeft, Plus, ShoppingCart } from 'lucide-svelte'
 	import type { PageData } from './$types'
 	import { goto } from '$app/navigation'
 	import { fade } from 'svelte/transition'
 	import ItemDialog from './components/ItemDialog.svelte'
-	import { enhance } from '$app/forms'
+
+	// Create Badge object to match the existing usage pattern
+	const Badge = { Root: BadgeRoot }
 
 	// Import page data
 	let { data }: { data: PageData } = $props()
@@ -56,22 +59,22 @@
 		const form = document.createElement('form')
 		form.method = 'POST'
 		form.action = '?/addToBasket'
-		
+
 		const menuItemIdInput = document.createElement('input')
 		menuItemIdInput.type = 'hidden'
 		menuItemIdInput.name = 'menuItemId'
 		menuItemIdInput.value = item.id.toString()
 		form.appendChild(menuItemIdInput)
-		
+
 		const quantityInput = document.createElement('input')
 		quantityInput.type = 'hidden'
 		quantityInput.name = 'quantity'
 		quantityInput.value = item.quantity.toString()
 		form.appendChild(quantityInput)
-		
+
 		document.body.appendChild(form)
 		addingToCart = true
-		
+
 		try {
 			form.submit()
 			cartUpdateMessage = `${item.name} added to basket!`
@@ -201,7 +204,7 @@
 										<!-- Item header with food type and name -->
 										<div class="mb-2 flex items-start justify-between">
 											<div class="flex-1">
-												<div class="mb-1 flex items-center gap-1">
+												<div class="mb-1 flex items-center gap-2">
 													<span
 														class="mr-1 inline-block"
 														title={item.type}
@@ -212,6 +215,26 @@
 													>
 														{item.name}
 													</h3>
+													<!-- Status badges -->
+													{#if !item.available}
+														<Badge.Root
+															class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+														>
+															Unavailable
+														</Badge.Root>
+													{:else if !item.active}
+														<Badge.Root
+															class="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+														>
+															Inactive
+														</Badge.Root>
+													{:else}
+														<Badge.Root
+															class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+														>
+															Available
+														</Badge.Root>
+													{/if}
 												</div>
 											</div>
 

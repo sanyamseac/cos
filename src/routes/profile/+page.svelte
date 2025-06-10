@@ -1,19 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms'
 	import type { PageServerData } from './$types'
-	import { Button, Switch, Select, Label } from 'bits-ui'
-	import {
-		User,
-		Mail,
-		Shield,
-		Bell,
-		Eye,
-		Lock,
-		Palette,
-		Globe,
-		Camera,
-		LogOut,
-	} from 'lucide-svelte'
+	import { Button, Switch, Select, Avatar, Accordion } from 'bits-ui'
+	import { User, Mail, Shield, Bell, Lock, Palette, Camera, LogOut } from 'lucide-svelte'
 	import ProfilePictureDialog from './components/ProfilePictureDialog.svelte'
 	import { onMount } from 'svelte'
 	import { notificationService, requestNotificationPermission } from '$lib/notifications'
@@ -25,20 +14,17 @@
 	let { data }: { data: PageServerData } = $props()
 
 	let emailNotifs = $state(false)
-	// let browserNotifs = $state(false) // Removed
 	let profileVisibility = $state('private')
 	let isEditingPic = $state(false)
 	// Notification permission state
 	let notificationPermission = $state<NotificationPermission>('default')
-	// let isRequestingPermission = $state(false) // Removed, or will be handled by isManagingPush
+
 	let pushNotifications = $state(false)
-	let isManagingPush = $state(false) // This will now also cover the initial permission request phase
+	let isManagingPush = $state(false) // This will also cover the initial permission request phase
 	const visibilityOptions = [
 		{ value: 'public', label: 'Public' },
 		{ value: 'private', label: 'Private' },
 	]
-
-	// Removed handleBrowserNotificationToggle function
 
 	// Handle push notification toggle (Service Worker based)
 	async function handlePushNotificationToggle(enabled: boolean) {
@@ -259,25 +245,24 @@
 			<div class="flex items-center justify-between">
 				<div class="flex items-center gap-5">
 					<div class="relative">
-						<div
-							class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-purple-600"
-						>
-							{#if data.user.profilePicture}
-								<img
-									src={data.user.profilePicture}
-									alt="Profile"
-									class="h-full w-full object-cover"
-								/>
-							{:else}
-								<User class="h-10 w-10 text-white" />
-							{/if}
-						</div>
-						<button
+						<Avatar.Root class="h-20 w-20">
+							<Avatar.Image
+								src={data.user.profilePicture || undefined}
+								alt="Profile picture"
+								class="h-full w-full object-cover"
+							/>
+							<Avatar.Fallback
+								class="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
+							>
+								<User class="h-10 w-10" />
+							</Avatar.Fallback>
+						</Avatar.Root>
+						<Button.Root
 							class="absolute -right-1 -bottom-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 transition-colors hover:bg-blue-600"
 							onclick={() => (isEditingPic = true)}
 						>
 							<Camera class="h-3 w-3 text-white" />
-						</button>
+						</Button.Root>
 					</div>
 					<div class="mt-2 flex flex-col">
 						<h2 class="text-2xl font-bold text-gray-800 dark:text-white">
@@ -586,80 +571,101 @@
 				</div>
 
 				<!-- Recent Transactions -->
-				<div
-					class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-				>
-					<div class="mb-6 flex items-center gap-3">
-						<div class="rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 p-2">
-							<svg
-								class="h-5 w-5 text-white"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-								/>
-							</svg>
-						</div>
-						<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-							Recent Transactions
-						</h3>
-					</div>
-					{#if data.recentTransactions && data.recentTransactions.length > 0}
-						<div class="max-h-80 space-y-3 overflow-y-auto">
-							{#each data.recentTransactions as { transaction, canteen, performedBy }}
+				<Accordion.Root value="transactions" type="single">
+					<Accordion.Item
+						value="transactions"
+						class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+					>
+						<Accordion.Trigger
+							class="flex w-full items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700"
+						>
+							<div class="flex items-center gap-3">
 								<div
-									class="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-600"
+									class="rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 p-2"
 								>
-									<div class="flex-1">
-										<p class="font-medium text-gray-800 dark:text-white">
-											{canteen?.name || 'Unknown Canteen'}
-										</p>
-										<p class="text-sm text-gray-600 dark:text-gray-400">
-											{transaction.reference || 'No reference'}
-										</p>
-										<p class="text-xs text-gray-500">
-											{new Date(transaction.createdAt).toLocaleDateString(
-												'en-IN',
-												{
-													year: 'numeric',
-													month: 'short',
-													day: 'numeric',
-													hour: '2-digit',
-													minute: '2-digit',
-												},
-											)}
-										</p>
-									</div>
-									<div class="text-right">
-										<p
-											class="font-bold {parseFloat(transaction.amount) > 0
-												? 'text-green-600'
-												: 'text-red-600'}"
-										>
-											{parseFloat(transaction.amount) > 0
-												? '+'
-												: ''}₹{Math.abs(
-												parseFloat(transaction.amount),
-											).toFixed(2)}
-										</p>
-										<p class="text-xs text-gray-500">
-											by {performedBy?.name || 'System'}
-										</p>
-									</div>
+									<svg
+										class="h-5 w-5 text-white"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+										/>
+									</svg>
 								</div>
-							{/each}
-						</div>
-					{:else}
-						<div class="py-8 text-center text-gray-500">
-							<p>No transactions found</p>
-						</div>
-					{/if}
-				</div>
+								<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+									Recent Transactions
+								</h3>
+							</div>
+							<CaretUpDown class="h-4 w-4 transition-transform duration-200" />
+						</Accordion.Trigger>
+						<Accordion.Content
+							class="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden"
+						>
+							<div class="px-6 pb-6">
+								{#if data.recentTransactions && data.recentTransactions.length > 0}
+									<div class="max-h-80 space-y-3 overflow-y-auto">
+										{#each data.recentTransactions as { transaction, canteen, performedBy }}
+											<div
+												class="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-600"
+											>
+												<div class="flex-1">
+													<p
+														class="font-medium text-gray-800 dark:text-white"
+													>
+														{canteen?.name || 'Unknown Canteen'}
+													</p>
+													<p
+														class="text-sm text-gray-600 dark:text-gray-400"
+													>
+														{transaction.reference || 'No reference'}
+													</p>
+													<p class="text-xs text-gray-500">
+														{new Date(
+															transaction.createdAt,
+														).toLocaleDateString('en-IN', {
+															year: 'numeric',
+															month: 'short',
+															day: 'numeric',
+															hour: '2-digit',
+															minute: '2-digit',
+														})}
+													</p>
+												</div>
+												<div class="text-right">
+													<p
+														class="font-bold {parseFloat(
+															transaction.amount,
+														) > 0
+															? 'text-green-600'
+															: 'text-red-600'}"
+													>
+														{parseFloat(transaction.amount) > 0
+															? '+'
+															: ''}₹{Math.abs(
+															parseFloat(transaction.amount),
+														).toFixed(2)}
+													</p>
+													<p class="text-xs text-gray-500">
+														by {performedBy?.name || 'System'}
+													</p>
+												</div>
+											</div>
+										{/each}
+									</div>
+								{:else}
+									<div class="py-8 text-center text-gray-500">
+										<p>No transactions found</p>
+									</div>
+								{/if}
+							</div>
+						</Accordion.Content>
+					</Accordion.Item>
+				</Accordion.Root>
 			</div>
 		{:else}
 			<div

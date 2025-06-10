@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from 'bits-ui'
-	import { Clock, ChefHat, ArrowLeft, Plus, Edit, Settings } from 'lucide-svelte'
+	import { Clock, ChefHat, ArrowLeft, Plus, Edit } from 'lucide-svelte'
 	import type { PageData } from './$types'
 	import { goto } from '$app/navigation'
 	import CrudModal from '$lib/components/CrudModal.svelte'

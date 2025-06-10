@@ -1,8 +1,7 @@
 <!-- Notification Demo Page -->
 <script lang="ts">
-	import { enhance } from '$app/forms'
-	import { Button } from 'bits-ui'
-	import { Bell, Send, Users, Zap, AlertCircle, CheckCircle, Clock, X } from 'lucide-svelte'
+	import { Button, Checkbox, Progress } from 'bits-ui'
+	import { Bell, Send, Zap, AlertCircle, CheckCircle, Clock, X } from 'lucide-svelte'
 	import { serviceWorkerManager } from '$lib/serviceWorkerManager'
 	import type { PageServerData } from './$types'
 
@@ -19,12 +18,12 @@
 	let connectionStatus = $state({
 		isConnected: false,
 		isRegistered: false,
-		pushSubscription: null,
+		pushSubscription: null as PushSubscription | null,
 	})
 
 	// Debug info
 	let debugInfo = $state({
-		swRegistration: null,
+		swRegistration: false,
 		swActive: false,
 		swInstalling: false,
 		swWaiting: false,
@@ -150,7 +149,7 @@
 		} catch (error) {
 			lastResponse = {
 				success: false,
-				message: 'Network error: ' + error.message,
+				message: 'Network error: ' + (error as Error).message,
 			}
 		} finally {
 			isLoading = false
@@ -161,6 +160,7 @@
 		notificationTitle = preset.title
 		notificationBody = preset.body
 	}
+	
 	function sendTestToSelf() {
 		targetUserId = data.user.id
 		notificationTitle = '🧪 Test Notification'
@@ -189,7 +189,7 @@
 			}
 		} catch (error) {
 			console.error('Error enabling push notifications:', error)
-			alert('Error enabling push notifications: ' + error.message)
+			alert('Error enabling push notifications: ' + (error as Error).message)
 		}
 	}
 
@@ -239,6 +239,19 @@
 
 <svelte:head>
 	<title>Notification Demo - Canteen Ordering System</title>
+	<style>
+		@keyframes indeterminate {
+			0% {
+				transform: translateX(-100%);
+			}
+			50% {
+				transform: translateX(0%);
+			}
+			100% {
+				transform: translateX(100%);
+			}
+		}
+	</style>
 </svelte:head>
 
 <div
@@ -396,18 +409,33 @@
 				>
 					<!-- Broadcast Toggle -->
 					<div class="flex items-center gap-3">
-						<input
-							type="checkbox"
-							id="broadcast"
-							bind:checked={broadcast}
-							class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
-						/>
-						<label
-							for="broadcast"
-							class="text-sm font-medium text-gray-700 dark:text-gray-300"
+						<Checkbox.Root
+							checked={broadcast}
+							onCheckedChange={(checked) => {
+								broadcast = checked ?? false
+							}}
+							class="flex h-4 w-4 items-center justify-center rounded border-2 border-gray-300 bg-gray-100 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:data-[state=checked]:bg-blue-600"
 						>
+							{#snippet children({ checked })}
+								{#if checked}
+									<svg
+										width="12"
+										height="12"
+										viewBox="0 0 15 15"
+										fill="none"
+										xmlns="http://www.w3.org/2000/svg"
+									>
+										<path
+											d="m11.4669 3.72684c.2669-.41331.6-1.58671.9-1.7636.3966-.18671.8659-.18671 1.2625 0L6.50002 8.50106l-1.42662-1.42671c-.39289-.39289-.88323-.39289-1.27586 0-.39289.39289-.39289.88323 0 1.27586l2.85355 2.85355c.39289.39289.88323.39289 1.27586 0l5.50006-5.50006c.3929-.39289.3929-.88323 0-1.27586z"
+											fill="white"
+										/>
+									</svg>
+								{/if}
+							{/snippet}
+						</Checkbox.Root>
+						<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
 							Broadcast to all users
-						</label>
+						</span>
 					</div>
 
 					<!-- Target User ID -->
@@ -486,6 +514,23 @@
 							Send Notification
 						{/if}
 					</Button.Root>
+
+					{#if isLoading}
+						<div class="mt-4">
+							<Progress.Root
+								value={null}
+								class="relative h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+							>
+								<div
+									class="h-full w-full animate-pulse bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-300 ease-in-out"
+									style="transform: translateX(-100%); animation: indeterminate 2s infinite linear;"
+								></div>
+							</Progress.Root>
+							<p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+								Sending notification...
+							</p>
+						</div>
+					{/if}
 				</form>
 			</div>
 

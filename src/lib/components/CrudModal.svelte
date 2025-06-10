@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Dialog, Label, Switch, Select } from 'bits-ui'
+	import { Dialog, Label, Switch, Select, Button } from 'bits-ui'
 	import { enhance } from '$app/forms'
 	import { X } from 'lucide-svelte'
 	import Check from 'phosphor-svelte/lib/Check'
@@ -315,7 +315,7 @@
 					{/each}
 
 					<div class="mt-8 flex gap-3 pt-4">
-						<button
+						<Button.Root
 							type="button"
 							onclick={handleConfirm}
 							disabled={loading}
@@ -327,15 +327,15 @@
 								></div>
 							{/if}
 							{editing ? 'Update' : 'Create'}
-						</button>
-						<button
+						</Button.Root>
+						<Button.Root
 							type="button"
 							onclick={onClose}
 							disabled={loading}
 							class="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
 						>
 							Cancel
-						</button>
+						</Button.Root>
 					</div>
 				</form>
 			</div>

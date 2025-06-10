@@ -3,6 +3,7 @@
 	import type { ActionData } from './$types'
 	import { page } from '$app/state'
 	import { User, Lock, LogIn, Landmark } from 'lucide-svelte'
+	import { Button, Separator, Label } from 'bits-ui'
 
 	let { form }: { form: ActionData } = $props()
 	let redirectUrl = page.url.searchParams.get('redirect') || '/'
@@ -65,21 +66,20 @@
 			{/if}
 			<!-- CAS Login (Primary) -->
 			<form method="post" action="?/oauth&redirect={redirectUrl}" use:enhance>
-				<button
+				<Button.Root
 					type="submit"
 					class="group mb-6 flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4 font-semibold text-white shadow-lg transition-all duration-300 hover:from-indigo-600 hover:to-purple-700 hover:shadow-xl focus:ring-4 focus:ring-indigo-500/25 focus:outline-none"
 				>
 					<Landmark class="h-5 w-5 transition-transform group-hover:scale-110" />
 					Continue with IIIT CAS
-				</button>
+				</Button.Root>
 			</form>
 			<!-- Divider -->
 			<div class="relative my-6">
-				<div class="absolute inset-0 flex items-center">
-					<div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
-				</div>
-				<div class="relative flex justify-center text-sm">
-					<span class="bg-white px-4 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+				<Separator.Root class="bg-gray-300 dark:bg-gray-600" />
+				<div class="absolute inset-0 flex items-center justify-center">
+					<span
+						class="bg-white px-4 text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400"
 						>or sign in with credentials</span
 					>
 				</div>
@@ -100,12 +100,12 @@
 			>
 				<!-- Username Field -->
 				<div>
-					<label
+					<Label.Root
 						for="username"
 						class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
 					>
 						Username
-					</label>
+					</Label.Root>
 					<div class="relative">
 						<div
 							class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"
@@ -126,12 +126,12 @@
 
 				<!-- Password Field -->
 				<div>
-					<label
+					<Label.Root
 						for="password"
 						class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
 					>
 						Password
-					</label>
+					</Label.Root>
 					<div class="relative">
 						<div
 							class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"
@@ -151,7 +151,7 @@
 				</div>
 
 				<!-- Login Button -->
-				<button
+				<Button.Root
 					type="submit"
 					disabled={isLoading}
 					class="group flex w-full items-center justify-center gap-3 rounded-xl bg-gray-900 px-6 py-3 font-semibold text-white transition-all duration-200 hover:bg-gray-800 focus:ring-4 focus:ring-gray-900/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600"
@@ -165,7 +165,7 @@
 						<LogIn class="h-5 w-5 transition-transform group-hover:scale-110" />
 						Sign In
 					{/if}
-				</button>
+				</Button.Root>
 			</form>
 
 			<!-- Footer Links -->

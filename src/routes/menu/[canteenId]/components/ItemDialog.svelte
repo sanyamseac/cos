@@ -1,12 +1,17 @@
 <script lang="ts">
-	import { Button, Dialog } from 'bits-ui'
+	import { Button, Dialog, RadioGroup, Checkbox } from 'bits-ui'
 	import { Minus, Plus, X as Close, ShoppingCart } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
 
-	let { item, addingToCart, getFoodTypeIcon, onClose }: {
-		item: any,
-		addingToCart?: boolean,
-		getFoodTypeIcon: (type: string) => string,
+	let {
+		item,
+		addingToCart,
+		getFoodTypeIcon,
+		onClose,
+	}: {
+		item: any
+		addingToCart?: boolean
+		getFoodTypeIcon: (type: string) => string
 		onClose: () => void
 	} = $props()
 
@@ -18,7 +23,7 @@
 	const addonsPrice = $derived(
 		item.selectedAddons.length > 0
 			? item.selectedAddons.reduce((sum: number, addon: any) => sum + Number(addon.price), 0)
-			: 0
+			: 0,
 	)
 	const totalPrice = $derived((basePrice + variantPrice + addonsPrice) * item.quantity)
 	const formattedTotalPrice = $derived(totalPrice.toFixed(2))
@@ -89,30 +94,49 @@
 				<h3 class="mb-3 text-lg font-medium text-gray-900 dark:text-white">
 					Choose Variant
 				</h3>
-				<div class="space-y-2">
+				<RadioGroup.Root
+					class="space-y-2"
+					value={item.selectedVariant?.id?.toString()}
+					onValueChange={(value) => {
+						if (value) {
+							const variant = item.variants.find(
+								(v: any) => v.id.toString() === value,
+							)
+							if (variant) selectVariant(variant)
+						}
+					}}
+				>
 					{#each item.variants as variant}
-						<label
+						<div
 							class="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
 						>
-							<div class="flex items-center gap-2">
-								<input
-									type="radio"
-									name="variant"
-									value={variant.id}
-									checked={item.selectedVariant?.id === variant.id}
-									onchange={() => selectVariant(variant)}
-									class="h-4 w-4 accent-indigo-600"
-								/>
-								<span class="text-gray-900 dark:text-white">
-									{variant.name}
-								</span>
-							</div>
+							<RadioGroup.Item
+								value={variant.id.toString()}
+								class="flex items-center gap-2"
+							>
+								{#snippet children({ checked })}
+									<div
+										class="h-4 w-4 rounded-full border-2 border-indigo-600 bg-white transition-all duration-200 {checked
+											? 'bg-indigo-600 ring-2 ring-indigo-200'
+											: ''}"
+									>
+										{#if checked}
+											<div
+												class="m-auto mt-0.5 h-2 w-2 rounded-full bg-white"
+											></div>
+										{/if}
+									</div>
+									<span class="text-gray-900 dark:text-white">
+										{variant.name}
+									</span>
+								{/snippet}
+							</RadioGroup.Item>
 							<span class="font-medium text-gray-900 dark:text-white">
 								₹{Number(variant.price).toFixed(2)}
 							</span>
-						</label>
+						</div>
 					{/each}
-				</div>
+				</RadioGroup.Root>
 			</div>
 		{/if}
 
@@ -122,25 +146,43 @@
 				<h3 class="mb-3 text-lg font-medium text-gray-900 dark:text-white">Add Extra</h3>
 				<div class="space-y-2">
 					{#each item.addons as addon}
-						<label
+						<div
 							class="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
 						>
-							<div class="flex items-center gap-2">
-								<input
-									type="checkbox"
-									checked={isAddonSelected(addon)}
-									onchange={() => toggleAddon(addon)}
-									class="h-4 w-4 accent-indigo-600"
-								/>
-								<span class="mr-1">{getFoodTypeIcon(addon.type)}</span>
-								<span class="text-gray-900 dark:text-white">
-									{addon.name}
-								</span>
-							</div>
+							<Checkbox.Root
+								class="flex items-center gap-2"
+								checked={isAddonSelected(addon)}
+								onCheckedChange={() => toggleAddon(addon)}
+							>
+								{#snippet children({ checked })}
+									<div
+										class="flex h-4 w-4 items-center justify-center rounded border-2 border-indigo-600 bg-white data-[state=checked]:bg-indigo-600 data-[state=checked]:text-white"
+									>
+										{#if checked}
+											<svg
+												width="12"
+												height="12"
+												viewBox="0 0 15 15"
+												fill="none"
+												xmlns="http://www.w3.org/2000/svg"
+											>
+												<path
+													d="m11.4669 3.72684c.1-4.5-.1-.9-.7636-.3966L6.50002 8.50106l-1.42662-1.42671c-.39289-.39289-.88323-.39289-1.27586 0-.39289.39289-.39289.88323 0 1.27586l2.85355 2.85355c.39289.39289.88323.39289 1.27586 0l5.50006-5.50006c.3929-.39289.3929-.88323 0-1.27586z"
+													fill="currentColor"
+												/>
+											</svg>
+										{/if}
+									</div>
+									<span class="mr-1">{getFoodTypeIcon(addon.type)}</span>
+									<span class="text-gray-900 dark:text-white">
+										{addon.name}
+									</span>
+								{/snippet}
+							</Checkbox.Root>
 							<span class="font-medium text-gray-900 dark:text-white">
 								+₹{Number(addon.price).toFixed(2)}
 							</span>
-						</label>
+						</div>
 					{/each}
 				</div>
 			</div>
@@ -183,8 +225,8 @@
 				<span>₹{formattedTotalPrice}</span>
 			</div>
 
-			<form 
-				method="POST" 
+			<form
+				method="POST"
 				action="?/addToBasket"
 				use:enhance={() => {
 					submitting = true
