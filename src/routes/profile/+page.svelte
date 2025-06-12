@@ -650,9 +650,6 @@
 															parseFloat(transaction.amount),
 														).toFixed(2)}
 													</p>
-													<p class="text-xs text-gray-500">
-														by {performedBy?.name || 'System'}
-													</p>
 												</div>
 											</div>
 										{/each}

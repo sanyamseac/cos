@@ -19,20 +19,16 @@ export const load: PageServerLoad = async (event) => {
 				id: schema.user.id,
 				name: schema.user.name,
 				email: schema.user.email,
-				role: schema.user.role,
 				profilePicture: schema.user.profilePicture,
-				totalWalletBalance: sql<string>`COALESCE(SUM(CASE WHEN ${schema.canteens.active} = true THEN ${schema.wallets.balance} ELSE 0 END), '0.00')`,
-				orderCount: sql<number>`COALESCE(COUNT(DISTINCT ${schema.orders.id}), 0)`,
+				totalWalletBalance: sql<number>`COALESCE(SUM(DISTINCT ${schema.wallets.balance}), 0)`,
+				orderCount: sql<number>`COUNT(DISTINCT ${schema.orders.id})`,
 			})
 			.from(schema.user)
 			.leftJoin(schema.wallets, eq(schema.user.id, schema.wallets.userId))
-			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
 			.leftJoin(schema.orders, eq(schema.user.id, schema.orders.userId))
+			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
 			.groupBy(
-				schema.user.id,
-				schema.user.name,
-				schema.user.email,
-				schema.user.role
+				schema.user.id
 			)
 			.orderBy(schema.user.name)
 

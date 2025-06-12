@@ -10,7 +10,6 @@ export const load: PageServerLoad = async (event) => {
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
 
 	try {
-		// Get wallet information
 		const wallets = await db
 			.select({
 				wallet: schema.wallets,
@@ -20,21 +19,18 @@ export const load: PageServerLoad = async (event) => {
 			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
 			.where(and(eq(schema.wallets.userId, event.locals.user.id), eq(schema.canteens.active, true)))
 
-		// Get recent wallet transactions
 		const recentTransactions = await db
 			.select({
 				transaction: schema.walletTransactions,
 				wallet: schema.wallets,
 				canteen: schema.canteens,
-				performedBy: schema.user,
 			})
 			.from(schema.walletTransactions)
 			.leftJoin(schema.wallets, eq(schema.walletTransactions.walletId, schema.wallets.id))
 			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
-			.leftJoin(schema.user, eq(schema.walletTransactions.performedBy, schema.user.id))
 			.where(eq(schema.wallets.userId, event.locals.user.id))
 			.orderBy(desc(schema.walletTransactions.createdAt))
-			.limit(5)
+			.limit(15)
 
 		return {
 			user: {
