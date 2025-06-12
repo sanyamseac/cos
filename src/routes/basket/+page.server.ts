@@ -15,7 +15,7 @@ export const load: PageServerLoad = async (event) => {
 	try {
 		// Get all canteens to check baskets for each one
 		const allCanteens = await db.select().from(schema.canteens)
-		
+
 		// Get basket items for each canteen
 		const basketsByCanteen = await Promise.all(
 			allCanteens.map(async (canteen) => {
@@ -101,7 +101,7 @@ export const load: PageServerLoad = async (event) => {
 				inArray(schema.wallets.canteenId, canteenIds.length > 0 ? canteenIds : [0])
 			))
 
-		return { 
+		return {
 			user: event.locals.user,
 			baskets: basketsWithItems,
 			wallets
@@ -202,11 +202,12 @@ export const actions: Actions = {
 
 		const formData = await request.formData()
 		const canteenId = Number(formData.get('canteenId'))
-		const paymentMethodForm = formData.get('paymentMethod')
-		
-		// Convert boolean string to boolean - true means wallet, false means postpaid
-		const isWalletPayment = paymentMethodForm === 'true'
-		const paymentMethod = isWalletPayment ? 'wallet' : 'postpaid'
+		// Get payment method directly as 'wallet' or 'postpaid'
+		const paymentMethod = formData.get('paymentMethod') as 'wallet' | 'postpaid'
+
+		if (!['wallet', 'postpaid'].includes(paymentMethod)) {
+			throw fail(400, { error: 'Invalid payment method' })
+		}
 
 		if (!canteenId || isNaN(canteenId)) {
 			throw fail(400, { error: 'Invalid canteen ID' })
@@ -361,10 +362,10 @@ export const actions: Actions = {
 				if (paymentMethod === 'wallet' && wallet && wallet.length > 0) {
 					const currentBalance = Number(wallet[0].balance)
 					const newBalance = currentBalance - totalAmount
-					
+
 					await tx
 						.update(schema.wallets)
-						.set({ 
+						.set({
 							balance: newBalance.toString(),
 							updatedAt: new Date()
 						})
@@ -382,8 +383,8 @@ export const actions: Actions = {
 				await tx.delete(schema.baskets).where(eq(schema.baskets.id, basket[0].id))
 			})
 
-			return { 
-				success: true, 
+			return {
+				success: true,
 				message: 'Order placed successfully!',
 				redirect: '/orders'
 			}

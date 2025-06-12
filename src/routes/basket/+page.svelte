@@ -3,12 +3,13 @@
 	import BasketHeader from './components/BasketHeader.svelte'
 	import BasketCanteenSection from './components/BasketCanteenSection.svelte'
 	import EmptyBasket from './components/EmptyBasket.svelte'
-	import OrderConfirmDialog from './components/OrderConfirmDialog.svelte'
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte'
 	import {
 		calculateGrandTotal,
 		initializePaymentMethods,
 		getWalletBalance,
 	} from '$lib/utils/basketUtils'
+	import { formatPrice, calculateBasketTotal } from '$lib/utils/priceUtils'
 
 	let { data }: { data: PageData } = $props()
 
@@ -38,6 +39,7 @@
 			// Create form data
 			const formData = new FormData()
 			formData.append('canteenId', selectedBasket.canteen.id.toString())
+			// Send payment method as string
 			formData.append(
 				'paymentMethod',
 				paymentMethods[selectedBasket.canteen.id] ? 'wallet' : 'postpaid',
@@ -50,15 +52,17 @@
 					body: formData,
 				})
 
+				const result = await response.json()
 				if (response.ok) {
-					// Handle success - you might want to redirect or show a success message
 					showOrderConfirm = false
-					// Optionally refresh the page or update the UI
-					window.location.reload()
+					// Auto-redirect on success
+					if (result.redirect) {
+						window.location.href = result.redirect
+					} else {
+						window.location.reload()
+					}
 				} else {
-					// Handle error
-					const result = await response.text()
-					orderError = 'Failed to place order. Please try again.'
+					orderError = result?.error || 'Failed to place order. Please try again.'
 					console.error('Order submission failed:', result)
 				}
 			} catch (error) {
@@ -115,12 +119,16 @@
 	</div>
 </div>
 
-<!-- Order Confirmation Alert Dialog -->
-<OrderConfirmDialog
+<!-- Order Confirmation Dialog -->
+<ConfirmDialog
 	bind:open={showOrderConfirm}
-	basket={selectedBasket}
-	paymentMethod={selectedBasket ? paymentMethods[selectedBasket.canteen.id] : false}
+	title="Confirm Your Order"
+	description={selectedBasket
+		? `Place order at ${selectedBasket.canteen.name} for ${formatPrice(calculateBasketTotal(selectedBasket.items))} (${paymentMethods[selectedBasket.canteen.id] ? 'Pay with Wallet' : 'Pay on Collection'})`
+		: ''}
 	onConfirm={confirmOrder}
-	isSubmitting={isSubmittingOrder}
-	error={orderError}
+	onClose={() => (showOrderConfirm = false)}
+	confirmText={isSubmittingOrder ? 'Processing...' : 'Place Order'}
+	loading={isSubmittingOrder}
+	variant={orderError ? 'danger' : 'primary'}
 />
