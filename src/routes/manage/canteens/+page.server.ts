@@ -62,9 +62,14 @@ export const actions: Actions = {
 					description,
 					active: active ?? true,
 					image: `/content/canteenImages/${filename}`,
-					password: encodeHexLowerCase(sha256(new TextEncoder().encode(password))),
 				})
 				.returning()
+			
+			// Insert canteen auth credentials
+			await db.insert(schema.canteenAuth).values({
+				canteenId: newCanteen.id,
+				passwordHash: encodeHexLowerCase(sha256(new TextEncoder().encode(password))),
+			})
 			
 			await db.insert(schema.user).values({
 				id: generateId(),
@@ -147,19 +152,26 @@ export const actions: Actions = {
 				throw fail(400, { error: 'Canteen ID is required' })
 			}
 
-			const [canteen] = await db
-				.update(schema.canteens)
-				.set({
-					password: encodeHexLowerCase(sha256(new TextEncoder().encode(newPassword))),
-				})
+			// First, get the canteen to make sure it exists
+			const canteen = await db
+				.select()
+				.from(schema.canteens)
 				.where(eq(schema.canteens.id, id))
-				.returning()
+				.limit(1)
 
-			if (!canteen) {
+			if (canteen.length === 0) {
 				throw fail(404, { error: 'Canteen not found' })
 			}
 
-			return { success: true, canteen, newPassword }
+			// Update the password in canteenAuth table
+			await db
+				.update(schema.canteenAuth)
+				.set({
+					passwordHash: encodeHexLowerCase(sha256(new TextEncoder().encode(newPassword))),
+				})
+				.where(eq(schema.canteenAuth.canteenId, id))
+
+			return { success: true, canteen: canteen[0], newPassword }
 		} catch (error) {
 			console.error('Error resetting password:', error)
 			throw fail(500, { error: 'Failed to reset password' })

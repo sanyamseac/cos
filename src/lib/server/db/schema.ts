@@ -29,7 +29,6 @@ export const pushSubscriptionsTable = pgTable('push_subscriptions', {
 export const canteens = pgTable('canteens', {
 	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
 	name: text('name').notNull(),
-	password: text('password').notNull(),
 	acronym: text('acronym').notNull().unique(),
 	description: text('description').notNull(),
 	image: text('image').notNull(),
@@ -37,6 +36,16 @@ export const canteens = pgTable('canteens', {
 	open: boolean('is_open').notNull().default(true),
 	active: boolean('active').notNull().default(true),
 	orderCounter: integer('order_counter').notNull().default(0),
+})
+
+export const canteenAuth = pgTable('canteen_auth', {
+	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+	canteenId: integer('canteen_id')
+		.notNull()
+		.references(() => canteens.id, { onDelete: 'cascade' })
+		.unique(),
+	passwordHash: text('password_hash').notNull(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
 export const menuItems = pgTable('menu_items', {
@@ -209,6 +218,7 @@ export const walletTransactions = pgTable('wallet_transactions', {
 export type Session = typeof session.$inferSelect
 export type User = typeof user.$inferSelect
 export type Canteen = typeof canteens.$inferSelect
+export type CanteenAuth = typeof canteenAuth.$inferSelect
 export type MenuItem = typeof menuItems.$inferSelect
 export type PushSubscription = typeof pushSubscriptionsTable.$inferSelect
 export type Variant = typeof variants.$inferSelect

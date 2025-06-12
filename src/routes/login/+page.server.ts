@@ -43,20 +43,23 @@ export const actions: Actions = {
 		}
 
 		let user:any = null
-
 		if (username.includes('@canteens.iiit.ac.in')) {
 			const canteen = username.split('@')[0]
 			const canteenDetails = await db
-				.select()
+				.select({
+					canteen: schema.canteens,
+					auth: schema.canteenAuth
+				})
 				.from(schema.canteens)
+				.innerJoin(schema.canteenAuth, eq(schema.canteens.id, schema.canteenAuth.canteenId))
 				.where(eq(schema.canteens.acronym, canteen))
 				.limit(1)
 			
 			if (canteenDetails.length === 0)
 				throw fail(404, { message: 'Canteen not found' })
 
-			const canteenPassword = canteenDetails[0].password
-			if (canteenPassword !== encodeHexLowerCase(sha256(new TextEncoder().encode(password)))) {
+			const canteenPasswordHash = canteenDetails[0].auth.passwordHash
+			if (canteenPasswordHash !== encodeHexLowerCase(sha256(new TextEncoder().encode(password)))) {
 				throw fail(401, { message: 'Invalid canteen password' })
 			}
 
