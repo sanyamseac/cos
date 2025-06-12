@@ -2,7 +2,6 @@
 	import type { PageData } from './$types'
 	import { enhance } from '$app/forms'
 	import { goto } from '$app/navigation'
-	import type { PgTimestamp } from 'drizzle-orm/pg-core'
 	import CrudModal from '$lib/components/CrudModal.svelte'
 
 	let { data }: { data: PageData } = $props()
@@ -23,7 +22,6 @@
 		reference = ''
 	}
 
-	// Define fields for the add money form
 	let addMoneyFields = [		{
 			name: 'canteenId',
 			label: 'Select Canteen',
@@ -82,7 +80,7 @@
 </script>
 
 <svelte:head>
-	<title>user Details - {data.user.name} - COS</title>
+	<title>user Details - {data.consumer.name} - COS</title>
 </svelte:head>
 
 <div class="max-w-[1400px] mx-auto px-4 py-6 pb-20">
@@ -97,8 +95,7 @@
 				</svg>
 				Back to users
 			</button>
-			<h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">{data.user.name}</h1>
-			<p class="text-gray-600 dark:text-gray-400">{data.user.email}</p>
+			<h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">{data.consumer.name}</h1>
 		</div>
 		<button
 			onclick={openAddMoneyModal}
@@ -108,22 +105,22 @@
 		</button>
 	</div>
 
-	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">		<!-- user Overview -->
+	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 		<div class="lg:col-span-1">
 			<div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-6">
 				<h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">user Overview</h2>
 				<div class="space-y-3">
 					<div>
 						<span class="text-sm text-gray-500 dark:text-gray-400">User ID</span>
-						<p class="font-medium text-gray-900 dark:text-gray-100">{data.user.id}</p>
+						<p class="font-medium text-gray-900 dark:text-gray-100">{data.consumer.id}</p>
 					</div>
 					<div>
 						<span class="text-sm text-gray-500 dark:text-gray-400">Email</span>
-						<p class="font-medium text-gray-900 dark:text-gray-100">{data.user.email}</p>
+						<p class="font-medium text-gray-900 dark:text-gray-100">{data.consumer.email}</p>
 					</div>
 					<div>
 						<span class="text-sm text-gray-500 dark:text-gray-400">Role</span>
-						<p class="font-medium capitalize text-gray-900 dark:text-gray-100">{data.user.role}</p>
+						<p class="font-medium capitalize text-gray-900 dark:text-gray-100">{data.consumer.role}</p>
 					</div>
 					<div>
 						<span class="text-sm text-gray-500 dark:text-gray-400">Total Wallet Balance</span>
@@ -284,7 +281,6 @@
 	</div>
 </div>
 
-<!-- Add Money Modal -->
 <CrudModal
 	bind:open={showAddMoneyModal}
 	editing={false}

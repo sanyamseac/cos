@@ -3,50 +3,41 @@ import type { Actions, PageServerLoad } from './$types'
 import * as auth from '$lib/server/session'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, sql, sum, count } from 'drizzle-orm'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user) {
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
 	}
-	
-	if (!auth.ADMIN.includes(event.locals.user.role)) {
+		if (!auth.ADMIN.includes(event.locals.user.role)) {
 		throw fail(403, { message: 'Access denied' })
 	}
+	
 	try {
-		// Get all consumers with aggregated wallet balances
-		const users = await db
+		const usersWithStats = await db
 			.select({
 				id: schema.user.id,
 				name: schema.user.name,
 				email: schema.user.email,
 				role: schema.user.role,
+				profilePicture: schema.user.profilePicture,
+				totalWalletBalance: sql<string>`COALESCE(SUM(CASE WHEN ${schema.canteens.active} = true THEN ${schema.wallets.balance} ELSE 0 END), '0.00')`,
+				orderCount: sql<number>`COALESCE(COUNT(DISTINCT ${schema.orders.id}), 0)`,
 			})
 			.from(schema.user)
-
-		// Get wallet summary for each user
-		const walletSummaries = await db
-			.select({
-				userId: schema.wallets.userId,
-				totalBalance: schema.wallets.balance,
-				canteenCount: schema.wallets.canteenId,
-			})
-			.from(schema.wallets)
+			.leftJoin(schema.wallets, eq(schema.user.id, schema.wallets.userId))
 			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
-			.where(eq(schema.canteens.active, true))
-
-		// Get order counts for each user
-		const orderCounts = await db
-			.select({
-				userId: schema.orders.userId,
-				orderCount: schema.orders.id,
-			})
-			.from(schema.orders)
+			.leftJoin(schema.orders, eq(schema.user.id, schema.orders.userId))
+			.groupBy(
+				schema.user.id,
+				schema.user.name,
+				schema.user.email,
+				schema.user.role
+			)
+			.orderBy(schema.user.name)
 
 		return {
-			users,
-			walletSummaries,
-			orderCounts,
+			users: usersWithStats,
 		}
 	} catch (error) {
 		console.error('Error loading consumer data:', error)

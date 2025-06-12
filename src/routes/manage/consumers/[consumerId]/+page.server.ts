@@ -6,82 +6,84 @@ import * as schema from '$lib/server/db/schema'
 import { eq, desc, and } from 'drizzle-orm'
 
 export const load: PageServerLoad = async (event) => {
-	if (!event.locals.user) {
+	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
-	}
 	
-	if (!auth.ADMIN.includes(event.locals.user.role)) {
+	if (!auth.ADMIN.includes(event.locals.user.role))
 		throw error(403, 'Access denied')
-	}
 
 	const consumerId = event.params.consumerId
 
 	try {
-		const canteens = await db
-			.select()
-			.from(schema.canteens)
-			.where(eq(schema.canteens.active, true))
-
-		// Get wallet details with canteen information
-		const wallets = await db
-			.select({
-				wallet: schema.wallets,
-				canteen: schema.canteens,
-			})
-			.from(schema.wallets)
-			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
-			.where(eq(schema.wallets.userId, consumerId))
-
-		// Get recent wallet transactions
-		const walletTransactions = await db
-			.select({
-				transaction: schema.walletTransactions,
-				wallet: schema.wallets,
-				canteen: schema.canteens,
-				performedBy: schema.user,
-			})
-			.from(schema.walletTransactions)
-			.leftJoin(schema.wallets, eq(schema.walletTransactions.walletId, schema.wallets.id))
-			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
-			.leftJoin(schema.user, eq(schema.walletTransactions.performedBy, schema.user.id))
-			.where(eq(schema.wallets.userId, consumerId))
-			.orderBy(desc(schema.walletTransactions.createdAt))
-			.limit(20)
-
-		// Get orders with canteen information
-		const orders = await db
-			.select({
-				order: schema.orders,
-				canteen: schema.canteens,
-			})
-			.from(schema.orders)
-			.leftJoin(schema.canteens, eq(schema.orders.canteenId, schema.canteens.id))
-			.where(eq(schema.orders.userId, consumerId))
-			.orderBy(desc(schema.orders.createdAt))
-			.limit(10)
-
-		// Get active baskets
-		const baskets = await db
-			.select({
-				basket: schema.baskets,
-				canteen: schema.canteens,
-			})
-			.from(schema.baskets)
-			.leftJoin(schema.canteens, eq(schema.baskets.canteenId, schema.canteens.id))
-			.where(eq(schema.baskets.createdBy, consumerId))
-			.orderBy(desc(schema.baskets.updatedAt))
+		const [consumer, canteens, wallets, walletTransactions, orders, baskets] = await Promise.all([
+			db
+				.select()
+				.from(schema.user)
+				.where(eq(schema.user.id, consumerId)),
+			
+            db
+                .select()
+                .from(schema.canteens)
+                .where(eq(schema.canteens.active, true)),
+            
+            db
+                .select({
+                    wallet: schema.wallets,
+                    canteen: schema.canteens,
+                })
+                .from(schema.wallets)
+                .leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
+                .where(eq(schema.wallets.userId, consumerId)),
+            
+            db
+                .select({
+                    transaction: schema.walletTransactions,
+                    wallet: schema.wallets,
+                    canteen: schema.canteens,
+                    performedBy: schema.user,
+                })
+                .from(schema.walletTransactions)
+                .leftJoin(schema.wallets, eq(schema.walletTransactions.walletId, schema.wallets.id))
+                .leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
+                .leftJoin(schema.user, eq(schema.walletTransactions.performedBy, schema.user.id))
+                .where(eq(schema.wallets.userId, consumerId))
+                .orderBy(desc(schema.walletTransactions.createdAt))
+                .limit(20),
+            
+            db
+                .select({
+                    order: schema.orders,
+                    canteen: schema.canteens,
+                })
+                .from(schema.orders)
+                .leftJoin(schema.canteens, eq(schema.orders.canteenId, schema.canteens.id))
+                .where(eq(schema.orders.userId, consumerId))
+                .orderBy(desc(schema.orders.createdAt))
+                .limit(10),
+            
+            db
+                .select({
+                    basket: schema.baskets,
+                    canteen: schema.canteens,
+                })
+                .from(schema.baskets)
+                .leftJoin(schema.canteens, eq(schema.baskets.canteenId, schema.canteens.id))
+                .where(eq(schema.baskets.createdBy, consumerId))
+                .orderBy(desc(schema.baskets.updatedAt))
+        ])
 
 		return {
 			user: event.locals.user,
+			consumer: consumer[0],
 			canteens,
 			wallets,
 			walletTransactions,
 			orders,
 			baskets,
 		}
-	} catch (error) {
-		console.error('Error loading consumer details:', error)
-		throw fail(500, { message: 'Failed to load consumer details' })
+	} catch (err) {
+		console.error('Error loading consumer details:', err)
+		throw error(500, 'Failed to load consumer details')
 	}
 }
 
@@ -91,9 +93,7 @@ export const actions: Actions = {
 			throw fail(401, { message: 'Unauthorized' })
 		}
 
-		if (!auth.ADMIN.includes(event.locals.user.role)) {
-			throw fail(403, { message: 'Access denied' })
-		}
+		if (!auth.ADMIN.includes(event.locals.user.role)) return fail(403, { message: 'Access denied' })
 
 		const formData = await event.request.formData()
 		const consumerId = event.params.consumerId
@@ -101,7 +101,7 @@ export const actions: Actions = {
 		const amount = parseFloat(formData.get('amount') as string)
 		const reference = formData.get('reference') as string
 
-		if (!consumerId || !canteenId || !amount || amount <= 0) {
+		if (!consumerId || !canteenId || !amount) {
 			throw fail(400, { message: 'Invalid input data' })
 		}
 
@@ -114,7 +114,6 @@ export const actions: Actions = {
 				.limit(1)
 
 			if (!wallet.length) {
-				// Create new wallet
 				const newWallet = await db
 					.insert(schema.wallets)
 					.values({
@@ -126,7 +125,6 @@ export const actions: Actions = {
 
 				wallet = newWallet
 			} else {
-				// Update existing wallet
 				const currentBalance = parseFloat(wallet[0].balance)
 				const newBalance = currentBalance + amount
 
@@ -139,11 +137,10 @@ export const actions: Actions = {
 					.where(eq(schema.wallets.id, wallet[0].id))
 			}
 
-			// Record transaction
 			await db.insert(schema.walletTransactions).values({
 				walletId: wallet[0].id,
 				amount: amount.toString(),
-				reference: reference || `Manual credit by ${event.locals.user.name}`,
+				reference: reference || `Manual transaction by ${event.locals.user.role}`,
 				performedBy: event.locals.user.id,
 			})
 
