@@ -202,7 +202,7 @@
 			>
 				{#if selectedItem}
 					<ItemDialog
-						item={selectedItem}
+						bind:item={selectedItem}
 						{addingToCart}
 						{getFoodTypeIcon}
 						onClose={closeDialog}

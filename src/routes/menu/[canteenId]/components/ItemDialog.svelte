@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { Button, Dialog, RadioGroup, Checkbox } from 'bits-ui'
+	import { Button, Dialog, RadioGroup, Checkbox, Label, useId } from 'bits-ui'
 	import { Minus, Plus, X as Close, ShoppingCart } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
 
 	let {
-		item,
+		item = $bindable(),
 		addingToCart,
 		getFoodTypeIcon,
 		onClose,
@@ -16,6 +16,7 @@
 	} = $props()
 
 	let submitting = $state(false)
+	let value = $state(item.selectedVariant?.id?.toString() || '')
 
 	// Format price calculations using $derived
 	const basePrice = $derived(Number(item.price))
@@ -29,28 +30,44 @@
 	const formattedTotalPrice = $derived(totalPrice.toFixed(2))
 
 	// Handle variant selection
-	function selectVariant(variant: any) {
-		item.selectedVariant = variant
-	}
-
-	// Handle addon toggle
-	function toggleAddon(addon: any) {
-		const index = item.selectedAddons.findIndex((a: any) => a.id === addon.id)
-		if (index >= 0) {
-			// Remove addon
-			item.selectedAddons = [
-				...item.selectedAddons.slice(0, index),
-				...item.selectedAddons.slice(index + 1),
-			]
-		} else {
-			// Add addon
-			item.selectedAddons = [...item.selectedAddons, addon]
+	function handleValueChange(newValue: string) {
+		value = newValue
+		const variant = item.variants.find((v: any) => v.id.toString() === newValue)
+		if (variant) {
+			item.selectedVariant = variant
 		}
 	}
 
-	// Check if addon is selected
+	// Transform variants into radio group items
+	const variantItems = $derived(
+		item.variants.map((variant: any) => ({
+			value: variant.id.toString(),
+			label: variant.name,
+			disabled: !variant.available || !variant.active
+		}))
+	)
+
+	// Checkbox state management
 	function isAddonSelected(addon: any) {
 		return item.selectedAddons.some((a: any) => a.id === addon.id)
+	}
+
+	function handleAddonChange(addon: any, checked: boolean) {
+		if (checked) {
+			// Add addon if it's not already in the list
+			if (!isAddonSelected(addon)) {
+				item.selectedAddons = [...item.selectedAddons, addon]
+			}
+		} else {
+			// Remove addon if it's in the list
+			const index = item.selectedAddons.findIndex((a: any) => a.id === addon.id)
+			if (index >= 0) {
+				item.selectedAddons = [
+					...item.selectedAddons.slice(0, index),
+					...item.selectedAddons.slice(index + 1),
+				]
+			}
+		}
 	}
 
 	// Quantity functions
@@ -94,49 +111,42 @@
 				<h3 class="mb-3 text-lg font-medium text-gray-900 dark:text-white">
 					Choose Variant
 				</h3>
-				<RadioGroup.Root
-					class="space-y-2"
-					value={item.selectedVariant?.id?.toString()}
-					onValueChange={(value) => {
-						if (value) {
-							const variant = item.variants.find(
-								(v: any) => v.id.toString() === value,
-							)
-							if (variant) selectVariant(variant)
-						}
-					}}
-				>
-					{#each item.variants as variant}
-						<div
-							class="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
-						>
-							<RadioGroup.Item
-								value={variant.id.toString()}
-								class="flex items-center gap-2"
-							>
-								{#snippet children({ checked })}
-									<div
-										class="h-4 w-4 rounded-full border-2 border-indigo-600 bg-white transition-all duration-200 {checked
-											? 'bg-indigo-600 ring-2 ring-indigo-200'
-											: ''}"
+				<div class="space-y-3">
+					<RadioGroup.Root
+						class="flex flex-col gap-3"
+						bind:value
+						onValueChange={handleValueChange}
+					>
+						{#each item.variants as variant}
+							{@const id = useId()}
+							<div class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">
+								<div class="flex items-center">
+									<RadioGroup.Item
+										{id}
+										value={variant.id.toString()}
+										disabled={!variant.available || !variant.active}
+										class="flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
 									>
-										{#if checked}
-											<div
-												class="m-auto mt-0.5 h-2 w-2 rounded-full bg-white"
-											></div>
-										{/if}
-									</div>
-									<span class="text-gray-900 dark:text-white">
+										{#snippet children({ checked })}
+											{#if checked}
+												<div class="h-2 w-2 rounded-full bg-white" />
+											{/if}
+										{/snippet}
+									</RadioGroup.Item>
+									<Label.Root 
+										for={id} 
+										class="ml-3 cursor-pointer text-gray-900 dark:text-white {(!variant.available || !variant.active) ? 'cursor-not-allowed opacity-50' : ''}"
+									>
 										{variant.name}
-									</span>
-								{/snippet}
-							</RadioGroup.Item>
-							<span class="font-medium text-gray-900 dark:text-white">
-								₹{Number(variant.price).toFixed(2)}
-							</span>
-						</div>
-					{/each}
-				</RadioGroup.Root>
+									</Label.Root>
+								</div>
+								<span class="font-medium text-gray-900 dark:text-white {(!variant.available || !variant.active) ? 'opacity-50' : ''}">
+									₹{Number(variant.price).toFixed(2)}
+								</span>
+							</div>
+						{/each}
+					</RadioGroup.Root>
+				</div>
 			</div>
 		{/if}
 
@@ -152,7 +162,8 @@
 							<Checkbox.Root
 								class="flex items-center gap-2"
 								checked={isAddonSelected(addon)}
-								onCheckedChange={() => toggleAddon(addon)}
+								onCheckedChange={(checked) => handleAddonChange(addon, checked)}
+								value={addon.id.toString()}
 							>
 								{#snippet children({ checked })}
 									<div
@@ -160,15 +171,18 @@
 									>
 										{#if checked}
 											<svg
-												width="12"
-												height="12"
-												viewBox="0 0 15 15"
+												width="10"
+												height="8"
+												viewBox="0 0 10 8"
 												fill="none"
 												xmlns="http://www.w3.org/2000/svg"
 											>
 												<path
-													d="m11.4669 3.72684c.1-4.5-.1-.9-.7636-.3966L6.50002 8.50106l-1.42662-1.42671c-.39289-.39289-.88323-.39289-1.27586 0-.39289.39289-.39289.88323 0 1.27586l2.85355 2.85355c.39289.39289.88323.39289 1.27586 0l5.50006-5.50006c.3929-.39289.3929-.88323 0-1.27586z"
-													fill="currentColor"
+													d="M9 1L3.5 6.5L1 4"
+													stroke="currentColor"
+													stroke-width="1.5"
+													stroke-linecap="round"
+													stroke-linejoin="round"
 												/>
 											</svg>
 										{/if}
