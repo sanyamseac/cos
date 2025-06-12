@@ -19,9 +19,9 @@ export interface BasketItem extends MenuItemWithAddons {
 /**
  * Format a price as currency
  */
-export function formatPrice(price: number | string): string {
+export function formatPrice(price: number | string, precision : number = 2): string {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    return `₹${numPrice.toFixed(2)}`;
+    return `₹${numPrice.toFixed(precision)}`;
 }
 
 /**

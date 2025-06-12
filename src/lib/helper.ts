@@ -1,6 +1,6 @@
 import { generateRandomString } from '@oslojs/crypto/random'
 
-const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_'
+const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
 export function generateId(length = 21): string {
 	return generateRandomString(

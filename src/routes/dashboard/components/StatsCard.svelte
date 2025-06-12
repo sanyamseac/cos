@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ChartLineDown, ChartLineUp } from 'phosphor-svelte'
 	interface Props {
 		title: string
 		value: string
@@ -18,8 +19,8 @@
 	}: Props = $props()
 
 	const sizeClasses = {
-		small: 'p-4 min-h-[120px]',
-		medium: 'p-4 min-h-[140px]',
+		small: 'p-4 min-h-[80px]',
+		medium: 'p-4 min-h-[100px]',
 		large: 'p-4 min-h-[200px]',
 		wide: 'p-6 min-w-[140px]',
 	}
@@ -60,16 +61,16 @@
 			{value}
 		</p>
 		{#if trend}
-			<p class="mt-3 flex items-center gap-1 text-xs opacity-90">
-				<span
-					class={trendUp
-						? 'rounded-full bg-white/20 px-2 py-1 text-white'
-						: 'rounded-full bg-white/20 px-2 py-1 text-white'}
-				>
-					{trendUp ? '📈' : '📉'}
-				</span>
-				<span class="text-white/90">{trend}</span>
-			</p>
+			<div class="mt-3 flex items-center gap-1 mb-1">
+				{#if trendUp}
+					<ChartLineUp class="text-white" />
+				{:else}
+					<ChartLineDown class="text-white" />
+				{/if}
+				<p class=" text-xs opacity-90">
+					<span class="text-white/90">{trend}</span>
+				</p>
+			</div>
 		{/if}
 	</div>
 </div>

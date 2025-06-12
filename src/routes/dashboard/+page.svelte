@@ -4,31 +4,18 @@
 	import QuickOrdersCard from './components/QuickOrdersCard.svelte'
 	import CanteenStatsCard from './components/CanteenStatsCard.svelte'
 	import { Button } from 'bits-ui'
+	import { formatPrice } from '$lib/utils'
 
 	let { data } = $props()
 
-	// Demo data
-	const demoStats = {
-		totalSpent: 2450.5,
-		ordersThisMonth: 23,
-		favoriteCanteen: 'Main Cafeteria',
+	const { stats, quickOrders = [], canteenStats = [] } = data
+	const displayStats = {
+		totalSpent: stats?.totalSpent || 0,
+		ordersThisMonth: stats?.ordersThisMonth || 0,
+		favoriteCanteen: stats?.favoriteCanteen || 'Start ordering to see your favorite!',
+		spentTrend: stats?.spentTrend || { value: '0', isUp: true },
+		ordersTrend: stats?.ordersTrend || { value: 0, isUp: true }
 	}
-
-	const quickOrders = [
-		{ id: 1, name: 'Chicken Sandwich', price: 8.99, canteen: 'Main Cafeteria', image: '🥪' },
-		{ id: 2, name: 'Caesar Salad', price: 12.5, canteen: 'Health Corner', image: '🥗' },
-		{ id: 3, name: 'Coffee & Muffin', price: 6.75, canteen: 'Coffee Shop', image: '☕' },
-		{ id: 4, name: 'Pizza Slice', price: 4.99, canteen: 'Italian Corner', image: '🍕' },
-		{ id: 5, name: 'Fish & Chips', price: 14.25, canteen: 'Main Cafeteria', image: '🐟' },
-		{ id: 6, name: 'Veggie Wrap', price: 9.5, canteen: 'Health Corner', image: '🌯' },
-	]
-
-	const canteenStats = [
-		{ name: 'Main Cafeteria', spent: 890.25, orders: 12, rating: 4.5 },
-		{ name: 'Health Corner', spent: 445.8, orders: 6, rating: 4.8 },
-		{ name: 'Italian Corner', spent: 325.5, orders: 4, rating: 4.3 },
-		{ name: 'Asian Kitchen', spent: 788.95, orders: 1, rating: 4.6 },
-	]
 </script>
 
 <div
@@ -57,56 +44,45 @@
 				</h1>
 				<Greeting
 					userName={data.user.name}
-					class="text-lg text-gray-700 dark:text-gray-300"
+					class="text-lg text-gray-700 dark:text-gray-500"
 				/>
 			</div>
-			<Button.Root
-				class="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:from-indigo-600 hover:to-purple-700 hover:shadow-xl"
-			>
-				View All Orders
-			</Button.Root>
 		</div>
-		<!-- Top Stats Row - Total Spent & Orders -->
+
+		<div class="lg:col-span-2">
+			<QuickOrdersCard {quickOrders} />
+		</div>
+
 		<div class="grid grid-cols-2 gap-6">
 			<StatsCard
-				title="Total Spent"
-				value="${demoStats.totalSpent.toFixed(2)}"
-				trend="+12% from last month"
-				trendUp={true}
+				title="Spent This Month"
+				value="{formatPrice(displayStats.totalSpent, 0)}"
+				trend="{displayStats.spentTrend.isUp ? '+' : ''}{displayStats.spentTrend.value}% from last month"
+				trendUp={displayStats.spentTrend.isUp}
 				size="medium"
 				gradient="emerald"
 			/>
 			<StatsCard
 				title="Orders This Month"
-				value={demoStats.ordersThisMonth}
-				trend="+5 from last month"
-				trendUp={true}
+				value={displayStats.ordersThisMonth.toString()}
+				trend="{displayStats.ordersTrend.isUp ? '+' : ''}{displayStats.ordersTrend.value} from last month"
+				trendUp={displayStats.ordersTrend.isUp}
 				size="medium"
 				gradient="blue"
 			/>
 		</div>
 
-		<!-- Favorite Canteen - Full Width -->
 		<div>
 			<StatsCard
 				title="Favorite Canteen"
-				value={demoStats.favoriteCanteen}
+				value={displayStats.favoriteCanteen}
 				size="wide"
 				gradient="purple"
 			/>
 		</div>
 
-		<!-- App Dashboard Content -->
-		<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-			<!-- Quick Orders - Main focus -->
-			<div class="lg:col-span-2">
-				<QuickOrdersCard {quickOrders} />
-			</div>
-
-			<!-- Canteen Stats - Side panel -->
-			<div class="lg:col-span-1">
-				<CanteenStatsCard {canteenStats} />
-			</div>
+		<div class="lg:col-span-1">
+			<CanteenStatsCard {canteenStats} />
 		</div>
 	</div>
 </div>
