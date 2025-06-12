@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from 'bits-ui'
-	import { Clock, MapPin, ChefHat, Star, ArrowRight, Plus, Edit, Trash2 } from 'lucide-svelte'
+	import { Clock, ChefHat, ArrowRight } from 'lucide-svelte'
 	import type { PageData } from './$types'
 	import {} from /* enhance */ '$app/forms'
 	import { goto } from '$app/navigation'

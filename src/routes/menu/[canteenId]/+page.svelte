@@ -1,14 +1,12 @@
 <script lang="ts">
 	import { Button, Dialog } from 'bits-ui'
-	import BadgeRoot from '$lib/components/Badge.svelte'
-	import { Clock, ChefHat, ArrowLeft, Plus, ShoppingCart } from 'lucide-svelte'
+	import { Clock, ChefHat, ArrowLeft } from 'lucide-svelte'
 	import type { PageData } from './$types'
 	import { goto } from '$app/navigation'
-	import { fade } from 'svelte/transition'
 	import ItemDialog from './components/ItemDialog.svelte'
-
-	// Create Badge object to match the existing usage pattern
-	const Badge = { Root: BadgeRoot }
+	import MenuCategorySection from '../components/MenuCategorySection.svelte'
+	import CartNotification from '../components/CartNotification.svelte'
+	import { getFoodTypeIcon } from '$lib/utils/foodTypeUtils'
 
 	// Import page data
 	let { data }: { data: PageData } = $props()
@@ -99,14 +97,6 @@
 		isDialogOpen = false
 		selectedItem = null
 	}
-
-	// Get food type icon
-	function getFoodTypeIcon(type: string) {
-		if (type === 'veg') return '🟢'
-		if (type === 'non-veg') return '🔴'
-		if (type === 'egg') return '🟠'
-		return ''
-	}
 </script>
 
 <svelte:head>
@@ -188,87 +178,7 @@
 		<div class="space-y-8">
 			{#if data.menuCategories && Object.keys(data.menuCategories).length > 0}
 				{#each Object.entries(data.menuCategories) as [category, items]}
-					<div>
-						<div class="mb-4">
-							<h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-								{category}
-							</h2>
-						</div>
-
-						<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-							{#each items.filter((item) => item.active && item.available) as item}
-								<div
-									class="group overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
-								>
-									<div class="p-4">
-										<!-- Item header with food type and name -->
-										<div class="mb-2 flex items-start justify-between">
-											<div class="flex-1">
-												<div class="mb-1 flex items-center gap-2">
-													<span
-														class="mr-1 inline-block"
-														title={item.type}
-														>{getFoodTypeIcon(item.type)}</span
-													>
-													<h3
-														class="text-lg font-medium text-gray-900 dark:text-white"
-													>
-														{item.name}
-													</h3>
-													<!-- Status badges -->
-													{#if !item.available}
-														<Badge.Root
-															class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-														>
-															Unavailable
-														</Badge.Root>
-													{:else if !item.active}
-														<Badge.Root
-															class="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-														>
-															Inactive
-														</Badge.Root>
-													{:else}
-														<Badge.Root
-															class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-														>
-															Available
-														</Badge.Root>
-													{/if}
-												</div>
-											</div>
-
-											<!-- Add to Cart Button -->
-											<Button.Root
-												class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition-all hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-800"
-												onclick={(event: Event) => {
-													event.stopPropagation()
-													handleItemClick(item)
-												}}
-												title="Add to cart"
-											>
-												<Plus size={16} />
-											</Button.Root>
-										</div>
-
-										<!-- Item description -->
-										{#if item.description}
-											<p
-												class="mb-3 text-sm text-gray-600 dark:text-gray-300"
-											>
-												{item.description}
-											</p>
-										{/if}
-
-										<!-- Price -->
-										<div class="font-medium text-gray-900 dark:text-white">
-											₹{item.price}
-										</div>
-									</div>
-								</div>
-							{/each}
-						</div>
-					</div>
+					<MenuCategorySection {category} {items} onItemClick={handleItemClick} />
 				{/each}
 			{:else}
 				<div class="rounded-lg bg-white p-4 text-center shadow-sm dark:bg-gray-800">
@@ -280,17 +190,7 @@
 		</div>
 
 		<!-- Cart Update Message -->
-		{#if showCartMessage && cartUpdateMessage}
-			<div
-				transition:fade={{ duration: 300 }}
-				class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 transform rounded-full bg-indigo-600 px-6 py-3 text-center text-white shadow-lg"
-			>
-				<div class="flex items-center gap-2">
-					<ShoppingCart size={18} />
-					<span>{cartUpdateMessage}</span>
-				</div>
-			</div>
-		{/if}
+		<CartNotification message={cartUpdateMessage} show={showCartMessage} />
 	</div>
 
 	<!-- Item Dialog for customization -->
