@@ -4,6 +4,8 @@ import * as auth from '$lib/server/session'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { eq, desc, and } from 'drizzle-orm'
+import { formatPrice } from '$lib/utils'
+import { sendToUser, type NotificationPayload } from '$lib/server/notificationService'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -143,6 +145,29 @@ export const actions: Actions = {
 				reference: reference || `Manual transaction by ${event.locals.user.role}`,
 				performedBy: event.locals.user.id,
 			})
+
+			const payload: NotificationPayload = {
+				title: 'Money Added',
+				body: `${formatPrice(amount)} added to your wallet.`,
+				icon: '/favicon.png',
+				badge: '/favicon.png',
+				tag: 'default',
+				data: '',
+				url: `/profile`,
+				requireInteraction: false,
+				actions: [
+					{
+						action: 'view',
+						title: 'View',
+					},
+					{
+						action: 'dismiss',
+						title: 'Dismiss',
+					},
+				],
+			}
+
+			await sendToUser(event.locals.user.id, payload)
 
 			return { success: true, message: 'Money added successfully' }
 		} catch (error) {

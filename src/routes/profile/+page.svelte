@@ -5,7 +5,7 @@
 	import { User, Mail, Shield, Bell, Lock, Palette, Camera, LogOut } from 'lucide-svelte'
 	import ProfilePictureDialog from './components/ProfilePictureDialog.svelte'
 	import { onMount } from 'svelte'
-	import { notificationService, requestNotificationPermission } from '$lib/notifications'
+	import { notificationService } from '$lib/notifications'
 	import { serviceWorkerManager } from '$lib/serviceWorkerManager'
 	import Check from 'phosphor-svelte/lib/Check'
 	import CaretUpDown from 'phosphor-svelte/lib/CaretUpDown'
@@ -16,82 +16,28 @@
 	let emailNotifs = $state(false)
 	let profileVisibility = $state('private')
 	let isEditingPic = $state(false)
-	// Notification permission state
-	let notificationPermission = $state<NotificationPermission>('default')
 
 	let pushNotifications = $state(false)
-	let isManagingPush = $state(false) // This will also cover the initial permission request phase
+	let isManagingPush = $state(false)
 	const visibilityOptions = [
 		{ value: 'public', label: 'Public' },
 		{ value: 'private', label: 'Private' },
 	]
 
-	// Handle push notification toggle (Service Worker based)
 	async function handlePushNotificationToggle(enabled: boolean) {
 		isManagingPush = true
 		try {
 			if (enabled) {
-				// First ensure basic notification permission
-				if (notificationPermission !== 'granted') {
-					console.log('Requesting notification permission for push...')
-					const permission = await requestNotificationPermission()
-					notificationPermission = permission // Update status immediately
-					if (permission !== 'granted') {
-						pushNotifications = false
-						localStorage.setItem('pushNotifications', 'false')
-						console.log('Notification permission denied, cannot enable push.')
-						return
-					}
-					console.log('Notification permission granted.')
-				}
-
-				// Enable push notifications with Service Worker
-				console.log('Enabling push notifications...')
 				const success = await notificationService.enablePushNotifications(data.user.id)
-				if (success) {
-					pushNotifications = true
-					console.log('Push notifications enabled successfully')
-					// Optionally show a test push notification
-					setTimeout(() => {
-						notificationService.sendNotification({
-							title: '📱 Push Notifications Enabled!',
-							body: "You'll now receive background updates.",
-							tag: 'push-notification-enabled',
-						})
-					}, 500)
-				} else {
-					pushNotifications = false
-					console.error('Failed to enable push notifications after permission grant.')
-				}
+				pushNotifications = success
 			} else {
-				// Disable push notifications
-				console.log('Disabling push notifications...')
 				await notificationService.disablePushNotifications(data.user.id)
 				pushNotifications = false
-				console.log('Push notifications disabled')
 			}
 		} catch (error) {
-			console.error('Error managing push notifications:', error)
-			pushNotifications = false // Ensure state is false on error
+			pushNotifications = false
 		} finally {
 			isManagingPush = false
-		}
-
-		localStorage.setItem('pushNotifications', pushNotifications.toString())
-	}
-
-	// Check current push subscription status
-	async function checkPushSubscriptionStatus() {
-		try {
-			const subscription = await serviceWorkerManager.getPushSubscription()
-			if (subscription) {
-				pushNotifications = true
-			} else {
-				pushNotifications = false // Ensure it's false if no subscription
-			}
-		} catch (error) {
-			console.error('Error checking push subscription:', error)
-			pushNotifications = false
 		}
 	}
 
@@ -107,10 +53,7 @@
 
 			if (response.ok) {
 				console.log('Profile picture updated successfully')
-				// Update the local data to reflect the change
 				data.user.profilePicture = profilePicUrl
-				// Optionally reload the page to ensure fresh data
-				window.location.reload()
 			} else {
 				console.error('Failed to update profile picture')
 				alert('Failed to update profile picture. Please try again.')
@@ -130,6 +73,7 @@
 		{ value: 'dark', label: 'Dark' },
 		{ value: 'system', label: 'System' },
 	]
+	const FullName = $derived(getThemeLabel(themeMode))
 	function updateTheme(mode: string) {
 		themeMode = mode
 		if (mode === 'system') {
@@ -149,41 +93,23 @@
 	function getThemeLabel(mode: string) {
 		return themes.find((theme) => theme.value === mode)?.label || 'System'
 	}
-	const FullName = $derived(getThemeLabel(themeMode))
-	onMount(() => {
+
+	onMount(async () => {
 		themeMode = (localStorage.getItem('theme') as string) || 'system'
 		updateTheme(themeMode)
-		// Load notification preferences
-		// const savedBrowserNotifs = localStorage.getItem('browserNotifications') // Removed
-		// if (savedBrowserNotifs !== null) { // Removed
-		// 	browserNotifs = savedBrowserNotifs === 'true' // Removed
-		// } // Removed
-
-		const savedPushNotifs = localStorage.getItem('pushNotifications')
-		if (savedPushNotifs !== null) {
-			pushNotifications = savedPushNotifs === 'true'
-		}
-
-		// Check current notification permission status
-		if (notificationService.isSupported) {
-			notificationPermission = notificationService.permissionStatus
-		}
-
-		// Check push notification status if initially enabled and permission is granted
-		if (
-			serviceWorkerManager.isSupported &&
-			pushNotifications &&
-			notificationPermission === 'granted'
-		) {
-			checkPushSubscriptionStatus()
-		} else if (notificationPermission !== 'granted') {
-			// If permission is not granted, push notifications should be considered off
-			pushNotifications = false
-			localStorage.setItem('pushNotifications', 'false')
+		
+		if (serviceWorkerManager.isSupported) {
+			try {
+				const subscription = await serviceWorkerManager.getPushSubscription()
+				pushNotifications = !!subscription
+			} catch (error) {
+				pushNotifications = false
+			}
 		}
 	})
 	$effect(() => {
 		localStorage.setItem('theme', themeMode)
+		data = data
 	})
 </script>
 
@@ -325,34 +251,20 @@
 							<p class="text-sm text-gray-600 dark:text-gray-400">
 								Background notifications for important updates.
 							</p>
-							{#if notificationPermission === 'denied'}
-								<p class="mt-1 text-xs text-red-600 dark:text-red-400">
-									⚠️ Notification permission denied. Please enable in browser
-									settings to use Push Notifications.
-								</p>
-							{:else if isManagingPush}
-								<p class="mt-1 text-xs text-blue-600 dark:text-blue-400">
-									{#if notificationPermission === 'default'}Requesting
-										permission...{:else}Managing push notifications...{/if}
-								</p>
-							{:else if pushNotifications && notificationPermission === 'granted'}
+							{#if pushNotifications}
 								<p class="mt-1 text-xs text-green-600 dark:text-green-400">
 									✅ Push notifications active
 								</p>
-							{:else if notificationPermission === 'granted' && !pushNotifications}
-								<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-									Enable for background updates.
-								</p>
-							{:else if notificationPermission === 'default'}
+							{:else}
 								<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
 									Click to enable push notifications.
 								</p>
 							{/if}
 						</div>
 						<Switch.Root
-							checked={pushNotifications}
+							bind:checked={pushNotifications}
 							onCheckedChange={handlePushNotificationToggle}
-							disabled={isManagingPush || notificationPermission === 'denied'}
+							disabled={isManagingPush}
 							class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:opacity-50 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700"
 						>
 							<Switch.Thumb
@@ -609,7 +521,7 @@
 							<div class="px-6 pb-6">
 								{#if data.recentTransactions && data.recentTransactions.length > 0}
 									<div class="max-h-80 space-y-3 overflow-y-auto">
-										{#each data.recentTransactions as { transaction, canteen, performedBy }}
+										{#each data.recentTransactions as { transaction, canteen }}
 											<div
 												class="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-600"
 											>

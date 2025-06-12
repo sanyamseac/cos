@@ -21,27 +21,17 @@ class ServiceWorkerManager {
 	private vapidPublicKey: string = '' // Will be fetched from server
 	private isInitializing: boolean = false
 
-	constructor() {
-		// Don't initialize here - let it be called explicitly
-	}
-
-	/**
-	 * Check if Service Worker is supported
-	 */
+	// Check if Service Worker is supported
 	get isSupported(): boolean {
 		return typeof window !== 'undefined' && 'serviceWorker' in navigator
 	}
 
-	/**
-	 * Check if Push API is supported
-	 */
+	//Check if Push API is supported
 	get isPushSupported(): boolean {
 		return typeof window !== 'undefined' && 'PushManager' in window
 	}
 
-	/**
-	 * Get current state
-	 */
+	// Get State of Service Worker
 	getState(): ServiceWorkerState {
 		return {
 			isSupported: this.isSupported,
@@ -51,9 +41,8 @@ class ServiceWorkerManager {
 			registration: this.registration,
 		}
 	}
-	/**
-	 * Initialize Service Worker
-	 */
+	
+	//
 	async initializeServiceWorker(): Promise<ServiceWorkerRegistration | null> {
 		if (!this.isSupported) {
 			console.warn('Service Workers are not supported in this browser')
@@ -127,9 +116,7 @@ class ServiceWorkerManager {
 		}
 	}
 
-	/**
-	 * Fetch VAPID public key from server
-	 */
+	// Fetch VAPID public key from server
 	private async fetchVapidKey(): Promise<void> {
 		try {
 			const response = await fetch('/api/push/vapid-key')
@@ -144,9 +131,7 @@ class ServiceWorkerManager {
 			console.error('Error fetching VAPID public key:', error)
 		}
 	}
-	/**
-	 * Subscribe to push notifications
-	 */
+	// Subscribe to push notifications
 	async subscribeToPush(userId: string): Promise<PushSubscription | null> {
 		try {
 			// Ensure Service Worker is properly registered
@@ -203,9 +188,9 @@ class ServiceWorkerManager {
 			console.error('Failed to subscribe to push notifications:', error)
 			return null
 		}
-	} /**
-	 * Ensure Service Worker is active and ready
-	 */
+	} 
+
+	// Ensure Service Worker is active and ready
 	private async ensureServiceWorkerActive(): Promise<void> {
 		if (!this.registration) {
 			await this.initializeServiceWorker()

@@ -33,10 +33,7 @@ export const load: PageServerLoad = async (event) => {
 			.limit(15)
 
 		return {
-			user: {
-				...event.locals.user,
-				profilePicture: event.locals.user.profilePicture,
-			},
+			user: event.locals.user,
 			wallets,
 			recentTransactions,
 		}

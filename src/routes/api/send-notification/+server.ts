@@ -3,7 +3,6 @@ import type { RequestHandler } from './$types'
 import {
 	sendToUser,
 	broadcast,
-	sendOrderNotification,
 	type NotificationPayload,
 } from '$lib/server/notificationService'
 
@@ -21,42 +20,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// Handle both type='broadcast' and broadcast=true formats for backward compatibility
 		const shouldBroadcast = type === 'broadcast' || isBroadcast === true
-
-		// Special handling for order notifications
-		if (type === 'order' && notificationData.orderId && notificationData.status) {
-			if (!userId) {
-				return new Response(
-					JSON.stringify({
-						error: 'userId is required for order notifications',
-					}),
-					{
-						status: 400,
-						headers: { 'Content-Type': 'application/json' },
-					},
-				)
-			}
-
-			const result = await sendOrderNotification(
-				userId,
-				notificationData.orderId,
-				notificationData.status,
-				notificationData.customMessage,
-			)
-
-			return new Response(
-				JSON.stringify({
-					success: result.success,
-					message: 'Order notification sent successfully',
-					stats: {
-						sent: result.sent,
-						failed: result.failed,
-					},
-				}),
-				{
-					headers: { 'Content-Type': 'application/json' },
-				},
-			)
-		}
 
 		// Create standard notification payload
 		const payload: NotificationPayload = {

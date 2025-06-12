@@ -30,14 +30,11 @@ class NotificationService {
 	constructor() {
 		if (typeof window !== 'undefined' && 'Notification' in window) {
 			this.permission = Notification.permission
-			// Check if service worker is available for enhanced notifications
 			this.useServiceWorker = serviceWorkerManager.isSupported
 		}
 	}
 
-	/**
-	 * Request notification permission from the user
-	 */
+	// Request notification permission from the user
 	async requestPermission(): Promise<NotificationPermission> {
 		if (typeof window === 'undefined' || !('Notification' in window)) {
 			console.warn('Browser notifications are not supported')
@@ -59,9 +56,7 @@ class NotificationService {
 		}
 	}
 
-	/**
-	 * Check if notifications are supported and permitted
-	 */
+	// Check if notifications are supported and permitted
 	get isSupported(): boolean {
 		return typeof window !== 'undefined' && 'Notification' in window
 	}
@@ -74,9 +69,7 @@ class NotificationService {
 		return this.permission
 	}
 
-	/**
-	 * Enable push notifications (Service Worker based)
-	 */
+	// Enable push notifications (Service Worker based)
 	async enablePushNotifications(userId: string): Promise<boolean> {
 		if (!this.useServiceWorker || !this.isPermitted) {
 			console.warn('Cannot enable push notifications: requirements not met')
@@ -96,9 +89,7 @@ class NotificationService {
 		}
 	}
 
-	/**
-	 * Disable push notifications
-	 */
+	// Disable push notifications
 	async disablePushNotifications(userId: string): Promise<boolean> {
 		if (!this.useServiceWorker) {
 			return true
@@ -112,9 +103,7 @@ class NotificationService {
 		}
 	}
 
-	/**
-	 * Send a browser notification
-	 */
+	// Send a browser notification
 	async sendNotification(payload: NotificationPayload): Promise<Notification | null> {
 		if (!this.isSupported) {
 			console.warn('Notifications not supported')
@@ -138,7 +127,7 @@ class NotificationService {
 						tag: payload.tag,
 						data: payload.data,
 						requireInteraction: payload.requireInteraction || false,
-						actions: payload.actions,
+						...(payload.actions && { actions: payload.actions }),
 					})
 					return null // Service Worker notifications don't return Notification objects
 				}
@@ -181,60 +170,7 @@ class NotificationService {
 		}
 	}
 
-	/**
-	 * Send an order-specific notification
-	 */
-	async sendOrderNotification(
-		orderNotification: OrderNotification,
-	): Promise<Notification | null> {
-		const { orderId, orderStatus, estimatedTime, ...payload } = orderNotification
-
-		// Customize notification based on order status
-		let title = payload.title
-		let body = payload.body
-		let requireInteraction = false
-
-		switch (orderStatus) {
-			case 'preparing':
-				title = title || '🍳 Order Being Prepared'
-				body =
-					body ||
-					`Your order #${orderId} is being prepared${estimatedTime ? ` (ETA: ${estimatedTime} min)` : ''}`
-				break
-			case 'ready':
-				title = title || '🔔 Order Ready for Pickup!'
-				body = body || `Your order #${orderId} is ready for pickup at the canteen`
-				requireInteraction = true
-				break
-			case 'completed':
-				title = title || '✅ Order Completed'
-				body = body || `Thank you! Order #${orderId} has been completed`
-				break
-			case 'cancelled':
-				title = title || '❌ Order Cancelled'
-				body = body || `Order #${orderId} has been cancelled`
-				requireInteraction = true
-				break
-		}
-
-		return this.sendNotification({
-			...payload,
-			title,
-			body,
-			tag: `order-${orderId}`,
-			requireInteraction,
-			data: {
-				orderId,
-				orderStatus,
-				url: `/orders?highlight=${orderId}`,
-				...payload.data,
-			},
-		})
-	}
-
-	/**
-	 * Clear all notifications with a specific tag
-	 */
+	// Clear all notifications with a specific tag
 	clearNotifications(tag?: string) {
 		if (typeof window === 'undefined' || !this.useServiceWorker) {
 			return
@@ -254,42 +190,3 @@ export const notificationService = new NotificationService()
 
 // Utility functions for common notification scenarios
 export const requestNotificationPermission = () => notificationService.requestPermission()
-
-export const sendOrderReadyNotification = (orderId: string, customMessage?: string) => {
-	return notificationService.sendOrderNotification({
-		orderId,
-		orderStatus: 'ready',
-		title: '🔔 Order Ready!',
-		body: customMessage || `Your order #${orderId} is ready for pickup!`,
-	})
-}
-
-export const sendOrderPreparingNotification = (orderId: string, estimatedTime?: number) => {
-	return notificationService.sendOrderNotification({
-		orderId,
-		orderStatus: 'preparing',
-		estimatedTime,
-		title: '🍳 Order Being Prepared',
-		body: `Your order #${orderId} is being prepared${estimatedTime ? ` (ETA: ${estimatedTime} min)` : ''}`,
-	})
-}
-
-export const sendOrderCompletedNotification = (orderId: string) => {
-	return notificationService.sendOrderNotification({
-		orderId,
-		orderStatus: 'completed',
-		title: '✅ Order Completed',
-		body: `Thank you! Order #${orderId} has been completed`,
-	})
-}
-
-export const sendOrderCancelledNotification = (orderId: string, reason?: string) => {
-	return notificationService.sendOrderNotification({
-		orderId,
-		orderStatus: 'cancelled',
-		title: '❌ Order Cancelled',
-		body: reason
-			? `Order #${orderId} cancelled: ${reason}`
-			: `Order #${orderId} has been cancelled`,
-	})
-}
