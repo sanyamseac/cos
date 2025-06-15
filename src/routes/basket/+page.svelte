@@ -4,6 +4,8 @@
 	import BasketCanteenSection from './components/BasketCanteenSection.svelte'
 	import EmptyBasket from './components/EmptyBasket.svelte'
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte'
+	import ShareBasketModal from './components/ShareBasketModal.svelte'
+	import JoinBasketModal from './components/JoinBasketModal.svelte'
 	import {
 		calculateGrandTotal,
 		initializePaymentMethods,
@@ -24,6 +26,11 @@
 	let selectedBasket: any = $state(null)
 	let isSubmittingOrder = $state(false)
 	let orderError = $state('')
+
+	// Sharing state
+	let showShareModal = $state(false)
+	let showJoinModal = $state(false)
+	let shareAccessCode = $state('')
 
 	function openOrderConfirm(basket: any) {
 		selectedBasket = basket
@@ -75,6 +82,60 @@
 			showOrderConfirm = false
 		}
 	}
+
+	async function handleShareBasket(canteenId: number) {
+		try {
+			const formData = new FormData()
+			formData.append('canteenId', canteenId.toString())
+
+			const response = await fetch('?/shareBasket', {
+				method: 'POST',
+				body: formData,
+			})
+
+			const result = await response.json()
+			if (response.ok) {
+				shareAccessCode = result.data.accessCode
+			} else {
+				throw new Error(result.data?.error || 'Failed to share basket')
+			}
+		} catch (error) {
+			console.error('Error sharing basket:', error)
+			throw error
+		}
+	}
+
+	async function handleJoinBasket(accessCode: string) {
+		try {
+			const formData = new FormData()
+			formData.append('accessCode', accessCode)
+
+			const response = await fetch('?/joinBasket', {
+				method: 'POST',
+				body: formData,
+			})
+
+			const result = await response.json()
+			if (result.type === 'success') {
+				// Reload the page to show the updated basket
+				window.location.reload()
+			} else {
+				throw new Error(result.data?.error || 'Failed to join basket')
+			}
+		} catch (error) {
+			console.error('Error joining basket:', error)
+			throw error
+		}
+	}
+
+	function openShareModal() {
+		shareAccessCode = ''
+		showShareModal = true
+	}
+
+	function openJoinModal() {
+		showJoinModal = true
+	}
 </script>
 
 <svelte:head>
@@ -99,7 +160,13 @@
 	</div>
 
 	<div class="relative z-10 space-y-6 p-4 sm:p-6">
-		<BasketHeader basketCount={data.baskets.length} {grandTotal} />
+		<BasketHeader 
+			basketCount={data.baskets.length} 
+			{grandTotal} 
+			hasBaskets={data.baskets.length > 0}
+			onShareBasket={openShareModal}
+			onJoinBasket={openJoinModal}
+		/>
 
 		{#if data.baskets.length === 0}
 			<EmptyBasket />
@@ -131,4 +198,18 @@
 	confirmText={isSubmittingOrder ? 'Processing...' : 'Place Order'}
 	loading={isSubmittingOrder}
 	variant={orderError ? 'danger' : 'primary'}
+/>
+
+<!-- Share Basket Modal -->
+<ShareBasketModal
+	bind:open={showShareModal}
+	accessCode={shareAccessCode}
+	onShare={handleShareBasket}
+	canteens={data.baskets.map(b => b.canteen)}
+/>
+
+<!-- Join Basket Modal -->
+<JoinBasketModal
+	bind:open={showJoinModal}
+	onJoin={handleJoinBasket}
 />

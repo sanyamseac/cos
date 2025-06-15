@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from 'bits-ui'
-	import { Trash2 } from 'lucide-svelte'
+	import { Trash2, Users, Crown } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
 	import BasketItem from './BasketItem.svelte'
 	import PaymentMethodSelector from './PaymentMethodSelector.svelte'
@@ -21,12 +21,38 @@
 	const basketTotal = $derived(calculateBasketTotal(basket.items))
 	const hasSufficientBalance = $derived(walletBalance >= basketTotal)
 	const canPlaceOrder = $derived(!paymentMethod || (paymentMethod && hasSufficientBalance))
+	const isSharedBasket = $derived(basket.basketAccess?.members && basket.basketAccess.members.length > 1)
+
+	// Group items by user for shared baskets
+	const itemsByUser = $derived(() => {
+		if (!isSharedBasket) return []
+		
+		const userGroups = basket.items.reduce((groups: any, item: any) => {
+			const userId = item.addedByUser?.id || 'unknown'
+			if (!groups[userId]) {
+				groups[userId] = {
+					user: item.addedByUser || { id: 'unknown', name: 'Unknown User' },
+					items: [],
+					total: 0
+				}
+			}
+			groups[userId].items.push(item)
+			groups[userId].total += calculateBasketTotal([item])
+			return groups
+		}, {})
+		
+		return Object.values(userGroups)
+	})
 
 	function getPaymentMethodText(): string {
 		if (!paymentMethod) {
 			return 'Place Order (Pay Later)'
 		}
 		return hasSufficientBalance ? 'Place Order (Wallet)' : 'Insufficient Balance'
+	}
+
+	function isOwner(userId: string): boolean {
+		return basket.basketAccess?.members?.find((m: any) => m.user.id === userId)?.isOwner || false
 	}
 </script>
 
@@ -39,9 +65,19 @@
 			<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
 				{basket.canteen.name}
 			</h2>
-			<p class="text-sm text-gray-600 dark:text-gray-300">
-				{basket.items.length} item{basket.items.length !== 1 ? 's' : ''}
-			</p>
+			<div class="flex items-center gap-3 mt-1">
+				<p class="text-sm text-gray-600 dark:text-gray-300">
+					{basket.items.length} item{basket.items.length !== 1 ? 's' : ''}
+				</p>
+				{#if isSharedBasket}
+					<div class="flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-1">
+						<Users size={14} class="text-blue-600 dark:text-blue-400" />
+						<span class="text-xs text-blue-700 dark:text-blue-300">
+							{basket.basketAccess.members.length} member{basket.basketAccess.members.length !== 1 ? 's' : ''}
+						</span>
+					</div>
+				{/if}
+			</div>
 			<div class="mt-2 flex items-center gap-4">
 				<span class="text-sm text-gray-600 dark:text-gray-300">
 					Wallet Balance: <span class="font-medium text-green-600">
@@ -76,9 +112,37 @@
 
 	<!-- Basket Items -->
 	<div class="space-y-4">
-		{#each basket.items as item}
-			<BasketItem {item} />
-		{/each}
+		{#if isSharedBasket}
+			<!-- Shared basket: show items grouped by user -->
+			{#each itemsByUser as userGroup}
+				<div class="border-l-4 border-indigo-200 dark:border-indigo-700 pl-4">
+					<div class="mb-3 flex items-center gap-2">
+						{#if isOwner(userGroup.user.id)}
+							<Crown size={16} class="text-yellow-500" />
+						{/if}
+						<h4 class="font-medium text-gray-900 dark:text-white">
+							{userGroup.user.name}
+							{#if isOwner(userGroup.user.id)}
+								<span class="text-xs text-yellow-600 dark:text-yellow-400">(Owner)</span>
+							{/if}
+						</h4>
+						<span class="text-sm text-gray-500 dark:text-gray-400">
+							• {formatPrice(userGroup.total)}
+						</span>
+					</div>
+					<div class="space-y-2">
+						{#each userGroup.items as item}
+							<BasketItem {item} showAddedBy={false} />
+						{/each}
+					</div>
+				</div>
+			{/each}
+		{:else}
+			<!-- Regular basket: show items normally -->
+			{#each basket.items as item}
+				<BasketItem {item} />
+			{/each}
+		{/if}
 	</div>
 
 	<!-- Place Order Button for this canteen -->

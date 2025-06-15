@@ -1,17 +1,20 @@
 <script lang="ts">
 	import { Button } from 'bits-ui'
-	import { Minus, Plus, Trash2 } from 'lucide-svelte'
+	import { Minus, Plus, Trash2, User } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
 	import { getFoodTypeIcon } from '$lib/utils/foodTypeUtils'
 	import { calculateBasketItemTotal, formatPrice } from '$lib/utils/priceUtils'
 
 	let {
 		item,
+		showAddedBy = false,
 	}: {
 		item: any
+		showAddedBy?: boolean
 	} = $props()
 
 	const itemTotal = $derived(calculateBasketItemTotal(item))
+	const canEdit = $derived(item.canEdit !== false) // Default to true for backward compatibility
 </script>
 
 <div class="flex items-start gap-4 rounded-lg border border-gray-100 p-4 dark:border-gray-700">
@@ -24,6 +27,17 @@
 			<h3 class="font-medium text-gray-900 dark:text-white">
 				{item.menuItem?.name || 'Unknown Item'}
 			</h3>
+			{#if showAddedBy && item.addedByUser}
+				<div class="flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-1">
+					<User size={12} class="text-blue-600 dark:text-blue-400" />
+					<span class="text-xs text-blue-700 dark:text-blue-300">{item.addedByUser.name}</span>
+				</div>
+			{/if}
+			{#if !canEdit}
+				<span class="rounded bg-gray-100 dark:bg-gray-700 px-2 py-1 text-xs text-gray-600 dark:text-gray-400">
+					Read only
+				</span>
+			{/if}
 		</div>
 
 		<!-- Variant -->
@@ -74,7 +88,7 @@
 				<Button.Root
 					type="submit"
 					class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-all hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-					disabled={item.quantity <= 1}
+					disabled={item.quantity <= 1 || !canEdit}
 				>
 					<Minus size={14} />
 				</Button.Root>
@@ -90,7 +104,7 @@
 				<Button.Root
 					type="submit"
 					class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-all hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-					disabled={item.quantity >= 10}
+					disabled={item.quantity >= 10 || !canEdit}
 				>
 					<Plus size={14} />
 				</Button.Root>
@@ -98,15 +112,17 @@
 		</div>
 
 		<!-- Remove Item -->
-		<form method="POST" action="?/removeItem" use:enhance>
-			<input type="hidden" name="basketItemId" value={item.id} />
-			<Button.Root
-				type="submit"
-				class="flex items-center gap-1 rounded-lg bg-red-100 px-2 py-1 text-xs text-red-600 transition-all hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800"
-			>
-				<Trash2 size={12} />
-				Remove
-			</Button.Root>
-		</form>
+		{#if canEdit}
+			<form method="POST" action="?/removeItem" use:enhance>
+				<input type="hidden" name="basketItemId" value={item.id} />
+				<Button.Root
+					type="submit"
+					class="flex items-center gap-1 rounded-lg bg-red-100 px-2 py-1 text-xs text-red-600 transition-all hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800"
+				>
+					<Trash2 size={12} />
+					Remove
+				</Button.Root>
+			</form>
+		{/if}
 	</div>
 </div>

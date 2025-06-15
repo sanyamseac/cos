@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, integer, boolean, numeric } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, integer, boolean, numeric, unique } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 export const user = pgTable('user', {
 	id: text('id').primaryKey(),
@@ -91,7 +92,6 @@ export const baskets = pgTable('baskets', {
 	canteenId: integer('canteen_id')
 		.notNull()
 		.references(() => canteens.id, { onDelete: 'cascade' }),
-	isShared: boolean('is_shared').notNull().default(false),
 	createdBy: text('created_by')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
@@ -99,7 +99,7 @@ export const baskets = pgTable('baskets', {
 	updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
-export const basketUsers = pgTable('basket_users', {
+export const basketAccess = pgTable('basket_access', {
 	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
 	basketId: text('basket_id')
 		.notNull()
@@ -107,8 +107,13 @@ export const basketUsers = pgTable('basket_users', {
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
+	accessCode: text('access_code').unique(),
+	isOwner: boolean('is_owner').notNull().default(false),
 	joinedAt: timestamp('joined_at').notNull().defaultNow(),
-})
+	expiresAt: timestamp('expires_at').notNull().default(sql`NOW() + INTERVAL '1 day'`),
+}, (table) => ({
+	uniqueBasketUser: unique('unique_basket_user').on(table.basketId, table.userId),
+}))
 
 export const basketItems = pgTable('basket_items', {
 	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
@@ -151,6 +156,8 @@ export const orders = pgTable('orders', {
 	totalAmount: numeric('total_amount', { precision: 10, scale: 2 }).notNull(),
 	notes: text('notes'),
 	prepaid: boolean('prepaid').notNull().default(false),
+	linked: boolean('linked').notNull().default(false),
+	linkingNumber: text('linking_number'),
 	otp: text('otp').notNull(),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	confirmedAt: timestamp('confirmed_at'),
@@ -224,7 +231,7 @@ export type PushSubscription = typeof pushSubscriptionsTable.$inferSelect
 export type Variant = typeof variants.$inferSelect
 export type Addon = typeof addons.$inferSelect
 export type Basket = typeof baskets.$inferSelect
-export type BasketUser = typeof basketUsers.$inferSelect
+export type BasketAccess = typeof basketAccess.$inferSelect
 export type BasketItem = typeof basketItems.$inferSelect
 export type BasketAddon = typeof basketAddons.$inferSelect
 export type Order = typeof orders.$inferSelect
