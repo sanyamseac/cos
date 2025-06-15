@@ -84,19 +84,59 @@
 	}
 
 	async function handleShareBasket(canteenId: number) {
+		console.log('handleShareBasket called with canteenId:', canteenId)
 		try {
 			const formData = new FormData()
 			formData.append('canteenId', canteenId.toString())
+			console.log('FormData created with canteenId:', formData.get('canteenId'))
 
+			console.log('Sending fetch request to ?/shareBasket')
 			const response = await fetch('?/shareBasket', {
 				method: 'POST',
 				body: formData,
 			})
+			console.log('Fetch response received, status:', response.status)
 
 			const result = await response.json()
+			console.log('Share basket response parsed:', result)
+			
 			if (response.ok) {
-				shareAccessCode = result.data.accessCode
+				// Fix the access code extraction 
+				try {
+					// The data is a string representation of an array where the last element is the access code
+					if (typeof result.data === 'string') {
+						try {
+							const parsedData = JSON.parse(result.data);
+							if (Array.isArray(parsedData) && parsedData.length > 0) {
+								// The last element of the array is the access code
+								const accessCode = parsedData[parsedData.length - 1];
+								console.log('Extracted access code:', accessCode);
+								shareAccessCode = accessCode;
+							} else {
+								throw new Error('Invalid data format');
+							}
+						} catch (e) {
+							// If it's not JSON, check if it's directly the access code
+							console.log('Using data directly as access code:', result.data);
+							shareAccessCode = result.data;
+						}
+					} else if (result.data && typeof result.data.accessCode !== 'undefined') {
+						console.log('Using data.accessCode:', result.data.accessCode);
+						shareAccessCode = result.data.accessCode;
+					} else if (Array.isArray(result.data) && result.data.length > 0) {
+						// If it's already an array, use the last element
+						const accessCode = result.data[result.data.length - 1];
+						console.log('Using last array element as access code:', accessCode);
+						shareAccessCode = accessCode;
+					}
+				} catch (e) {
+					console.error('Error parsing access code:', e);
+					throw new Error('Failed to parse access code from response');
+				}
+				
+				showShareModal = true // Ensure modal stays open
 			} else {
+				console.error('Response not OK:', response.status, result)
 				throw new Error(result.data?.error || 'Failed to share basket')
 			}
 		} catch (error) {
