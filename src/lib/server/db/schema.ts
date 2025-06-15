@@ -97,6 +97,7 @@ export const baskets = pgTable('baskets', {
 		.references(() => user.id, { onDelete: 'cascade' }),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow(),
+	basketAccessCode: text('basket_access_code'),
 })
 
 export const basketAccess = pgTable('basket_access', {
@@ -111,9 +112,9 @@ export const basketAccess = pgTable('basket_access', {
 	isOwner: boolean('is_owner').notNull().default(false),
 	joinedAt: timestamp('joined_at').notNull().defaultNow(),
 	expiresAt: timestamp('expires_at').notNull().default(sql`NOW() + INTERVAL '1 day'`),
-}, (table) => ({
-	uniqueBasketUser: unique('unique_basket_user').on(table.basketId, table.userId),
-}))
+}, (table) => [
+	unique('unique_basket_user').on(table.basketId, table.userId),]
+)
 
 export const basketItems = pgTable('basket_items', {
 	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),

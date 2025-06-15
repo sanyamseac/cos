@@ -2,19 +2,20 @@
 	import { Switch } from 'bits-ui'
 	import { CreditCard, Wallet } from 'lucide-svelte'
 	import { formatPrice } from '$lib/utils/priceUtils'
-
 	let {
 		canteenId,
 		walletBalance,
 		isWalletPayment = $bindable(),
 		basketTotal,
 		hasSufficientBalance,
+		onPaymentMethodChange,
 	}: {
 		canteenId: number
 		walletBalance: number
 		isWalletPayment: boolean
 		basketTotal: number
 		hasSufficientBalance: boolean
+		onPaymentMethodChange: (value: boolean) => void
 	} = $props()
 </script>
 
@@ -35,10 +36,11 @@
 		>
 			<CreditCard size={16} />
 			<span>Pay Later</span>
-		</div>
+		</div>		
 		<Switch.Root
 			id={'payment-method-switch-' + canteenId}
-			bind:checked={isWalletPayment}
+			checked={isWalletPayment}
+			onCheckedChange={onPaymentMethodChange}
 			class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none data-[state=checked]:bg-green-600"
 		>
 			<Switch.Thumb

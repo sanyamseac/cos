@@ -124,7 +124,6 @@ export const actions: Actions = {
 					.values({
 						id: generateId(),
 						canteenId,
-						isShared: false,
 						createdBy: locals.user.id,
 					})
 					.returning()
