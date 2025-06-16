@@ -13,7 +13,6 @@ export const load: PageServerLoad = async (event) => {
 		throw error(403, 'Access denied')
 
 	try {
-		// Get all user's baskets
 		const userBaskets = await db
 			.select({
 				basket: schema.baskets,
@@ -27,7 +26,7 @@ export const load: PageServerLoad = async (event) => {
 			.leftJoin(schema.canteens, eq(schema.baskets.canteenId, schema.canteens.id))
 			.leftJoin(schema.user, eq(schema.baskets.createdBy, schema.user.id))
 			.where(eq(schema.baskets.createdBy, event.locals.user.id))
-		// Get shared baskets (baskets from other users with same access codes)
+
 		const userAccessCodes = userBaskets
 			.map(b => b.basket.basketAccessCode)
 			.filter((code): code is string => code !== null)
@@ -53,7 +52,6 @@ export const load: PageServerLoad = async (event) => {
 				))
 		}
 
-		// Combine all baskets
 		const allBaskets = [...userBaskets, ...sharedBaskets]
 
 		const basketsWithDetails = await Promise.all(
@@ -61,7 +59,6 @@ export const load: PageServerLoad = async (event) => {
 				const { basket, canteen, owner } = basketData
 				if (!basket || !canteen) return null
 
-				// Get all items in this basket
 				const items = await db
 					.select({
 						id: schema.basketItems.id,
@@ -91,7 +88,6 @@ export const load: PageServerLoad = async (event) => {
 					.leftJoin(schema.user, eq(schema.basketItems.addedBy, schema.user.id))
 					.where(eq(schema.basketItems.basketId, basket.id))
 
-				// Get addons for each basket item
 				const itemsWithAddons = await Promise.all(
 					items.map(async (item) => {
 						const itemAddons = await db
@@ -123,12 +119,11 @@ export const load: PageServerLoad = async (event) => {
 				}
 			})
 		)
-		// Filter out null results and keep baskets with items
+
 		const validBaskets = basketsWithDetails
 			.filter((basket): basket is NonNullable<typeof basket> => basket !== null)
 			.filter(basket => basket.items.length > 0)
 
-		// Group baskets by canteen and access code
 		const basketsByCanteen = validBaskets.reduce((grouped, basket) => {
 			const canteenId = basket.canteen.id
 			const accessCode = basket.accessCode || 'individual'
@@ -149,7 +144,6 @@ export const load: PageServerLoad = async (event) => {
 			return grouped
 		}, {} as Record<number, Record<string, any>>)
 
-		// Flatten the grouped structure
 		const finalBaskets = Object.values(basketsByCanteen).flatMap(canteenGroups => 
 			Object.values(canteenGroups)
 		)
@@ -190,7 +184,6 @@ export const actions: Actions = {
 
 		try {
 			if (quantity <= 0) {
-				// Remove item if quantity is 0 or less, but only if user added it
 				await db
 					.delete(schema.basketItems)
 					.where(and(eq(schema.basketItems.id, basketItemId), eq(schema.basketItems.addedBy, locals.user.id)))
@@ -243,7 +236,6 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Find user's basket for this canteen
 			const userBasket = await db
 				.select()
 				.from(schema.baskets)
@@ -257,7 +249,6 @@ export const actions: Actions = {
 				return fail(404, { error: 'Basket not found' })
 			}
 
-			// Only clear items added by the current user
 			await db
 				.delete(schema.basketItems)
 				.where(and(
@@ -292,10 +283,8 @@ export const actions: Actions = {
 
 		try {
 			await db.transaction(async (tx) => {
-				// Get all baskets for this shared group or individual basket
 				let baskets;
 				if (accessCode && accessCode !== 'individual') {
-					// Get all baskets with this access code
 					baskets = await tx
 						.select()
 						.from(schema.baskets)
@@ -304,7 +293,6 @@ export const actions: Actions = {
 							eq(schema.baskets.basketAccessCode, accessCode)
 						))
 				} else {
-					// Get user's individual basket
 					baskets = await tx
 						.select()
 						.from(schema.baskets)
@@ -318,23 +306,12 @@ export const actions: Actions = {
 					throw new Error('No baskets found')
 				}
 
-				// Check if user is authorized to place order
-				// For shared baskets, only the original sharer can place orders
-				// For individual baskets, only the owner can place orders
-				const userBasket = baskets.find(b => b.createdBy === locals.user.id)
-				if (!userBasket) {
-					throw new Error('Only the basket owner can place orders')
+				let hasAccess = baskets.some(b => b.createdBy === locals.user.id)
+
+				if (!hasAccess) {
+					throw new Error('You do not have access to place orders for this basket')
 				}
 
-				// For shared baskets, verify user is the original sharer (first creator with access code)
-				if (accessCode && accessCode !== 'individual') {
-					const originalSharer = baskets.find(b => b.basketAccessCode === accessCode)
-					if (!originalSharer || originalSharer.createdBy !== locals.user.id) {
-						throw new Error('Only the original sharer can place orders')
-					}
-				}
-
-				// Get all basket items from all baskets in the group
 				const allBasketItems = []
 				for (const basket of baskets) {
 					const items = await tx
@@ -365,7 +342,6 @@ export const actions: Actions = {
 					throw new Error('No items in basket')
 				}
 
-				// Get addons for all items
 				const itemsWithAddons = await Promise.all(
 					allBasketItems.map(async (item) => {
 						const addons = await tx
@@ -382,7 +358,6 @@ export const actions: Actions = {
 					})
 				)
 
-				// Group items by user
 				const itemsByUser = itemsWithAddons.reduce((groups: any, item) => {
 					const userId = item.addedBy
 					if (!groups[userId]) {
@@ -392,14 +367,11 @@ export const actions: Actions = {
 					return groups
 				}, {})
 
-				// Generate linking number for shared orders
 				const isSharedBasket = baskets.length > 1
 				const linkingNumber = isSharedBasket ? generateId() : null
-
-				// Handle wallet payment validation for basket owner (if wallet payment)
-				let ownerWallet = null
+				let userWallet = null
 				if (paymentMethod === 'wallet') {
-					ownerWallet = await tx
+					userWallet = await tx
 						.select()
 						.from(schema.wallets)
 						.where(and(
@@ -408,11 +380,10 @@ export const actions: Actions = {
 						))
 						.limit(1)
 
-					if (ownerWallet.length === 0) {
+					if (userWallet.length === 0) {
 						throw new Error('Wallet not found')
 					}
 
-					// Calculate total amount for wallet validation
 					let totalAmount = 0
 					for (const item of itemsWithAddons) {
 						const basePrice = Number(item.menuItem!.price)
@@ -421,16 +392,14 @@ export const actions: Actions = {
 						totalAmount += (basePrice + variantPrice + addonsPrice) * item.quantity
 					}
 
-					const currentBalance = Number(ownerWallet[0].balance)
+					const currentBalance = Number(userWallet[0].balance)
 					if (currentBalance < totalAmount) {
 						throw new Error('Insufficient wallet balance')
 					}
 				}
 
-				// Create orders for each user
 				const createdOrders = []
 				for (const [userId, userItems] of Object.entries(itemsByUser)) {
-					// Calculate user's total
 					let userTotal = 0
 					for (const item of userItems as any[]) {
 						const basePrice = Number(item.menuItem!.price)
@@ -439,7 +408,6 @@ export const actions: Actions = {
 						userTotal += (basePrice + variantPrice + addonsPrice) * item.quantity
 					}
 
-					// Get and increment order counter for this canteen
 					const [canteen] = await tx
 						.update(schema.canteens)
 						.set({ orderCounter: sql`${schema.canteens.orderCounter} + 1` })
@@ -449,7 +417,6 @@ export const actions: Actions = {
 					const orderNumber = canteen.orderCounter.toString()
 					const otp = generateId(4)
 
-					// Create order
 					const [order] = await tx
 						.insert(schema.orders)
 						.values({
@@ -467,7 +434,6 @@ export const actions: Actions = {
 
 					createdOrders.push({ order, userItems, userTotal })
 
-					// Create order items for this user
 					for (const basketItem of userItems as any[]) {
 						const basePrice = Number(basketItem.menuItem!.price)
 						const variantPrice = basketItem.variant ? Number(basketItem.variant.price) : 0
@@ -487,7 +453,6 @@ export const actions: Actions = {
 							})
 							.returning()
 
-						// Add order addons
 						for (const addon of basketItem.addons) {
 							await tx.insert(schema.orderAddons).values({
 								orderItemId: orderItem.id,
@@ -497,11 +462,9 @@ export const actions: Actions = {
 						}
 					}
 				}
-
-				// Handle wallet deduction (from basket owner if wallet payment)
-				if (paymentMethod === 'wallet' && ownerWallet && ownerWallet.length > 0) {
+				if (paymentMethod === 'wallet' && userWallet && userWallet.length > 0) {
 					const totalAmount = createdOrders.reduce((sum, order) => sum + order.userTotal, 0)
-					const currentBalance = Number(ownerWallet[0].balance)
+					const currentBalance = Number(userWallet[0].balance)
 					const newBalance = currentBalance - totalAmount
 
 					await tx
@@ -510,18 +473,16 @@ export const actions: Actions = {
 							balance: newBalance.toString(),
 							updatedAt: new Date()
 						})
-						.where(eq(schema.wallets.id, ownerWallet[0].id))
+						.where(eq(schema.wallets.id, userWallet[0].id))
 
-					// Create wallet transaction
 					await tx.insert(schema.walletTransactions).values({
-						walletId: ownerWallet[0].id,
+						walletId: userWallet[0].id,
 						amount: (-totalAmount).toString(),
 						reference: `Group Order ${linkingNumber || createdOrders[0].order.orderNumber}`,
 						performedBy: locals.user!.id,
 					})
 				}
 
-				// Delete all baskets in the group after successful order
 				for (const basket of baskets) {
 					await tx.delete(schema.baskets).where(eq(schema.baskets.id, basket.id))
 				}
@@ -552,7 +513,6 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Get or create basket for this canteen
 			let basket = await db
 				.select()
 				.from(schema.baskets)
@@ -563,7 +523,6 @@ export const actions: Actions = {
 				.limit(1)
 
 			if (basket.length === 0) {
-				// Create new basket if none exists
 				const [newBasket] = await db
 					.insert(schema.baskets)
 					.values({
@@ -575,7 +534,6 @@ export const actions: Actions = {
 				basket = [newBasket]
 			}
 
-			// Generate access code and save it to the basket
 			const accessCode = generateId(8).toUpperCase()
 
 			await db
@@ -587,7 +545,6 @@ export const actions: Actions = {
 				.where(eq(schema.baskets.id, basket[0].id))
 
 			return {
-				success: true,
 				accessCode,
 			}
 		} catch (error) {
@@ -609,7 +566,6 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Find the shared basket with this access code
 			const sharedBasket = await db
 				.select({
 					basket: schema.baskets,
@@ -630,12 +586,10 @@ export const actions: Actions = {
 			const { basket, owner } = sharedBasket[0]
 			const canteenId = basket.canteenId
 
-			// Check if user is trying to join their own basket
 			if (basket.createdBy === locals.user.id) {
 				return fail(400, { error: 'You cannot join your own basket' })
 			}
 
-			// Get or create user's basket for this canteen
 			let userBasket = await db
 				.select()
 				.from(schema.baskets)
@@ -646,19 +600,17 @@ export const actions: Actions = {
 				.limit(1)
 
 			if (userBasket.length === 0) {
-				// Create new basket for the joining user
 				const [newBasket] = await db
 					.insert(schema.baskets)
 					.values({
 						id: generateId(),
 						createdBy: locals.user.id,
 						canteenId: canteenId,
-						basketAccessCode: accessCode.toUpperCase(), // Same access code
+						basketAccessCode: accessCode.toUpperCase(),
 					})
 					.returning()
 				userBasket = [newBasket]
 			} else {
-				// Update existing basket with the access code
 				await db
 					.update(schema.baskets)
 					.set({
@@ -676,6 +628,47 @@ export const actions: Actions = {
 		} catch (error) {
 			console.error('Error joining basket:', error)
 			return fail(500, { error: 'Failed to join basket' })
+		}
+	},
+
+	leaveBasket: async ({ request, locals }) => {
+		if (!locals.user) {
+			return fail(401, { error: 'Not authenticated' })
+		}
+
+		const formData = await request.formData()
+		const canteenId = Number(formData.get('canteenId'))
+
+		if (!canteenId || isNaN(canteenId)) {
+			return fail(400, { error: 'Invalid canteen ID' })
+		}
+
+		try {
+			const userBasket = await db
+				.select()
+				.from(schema.baskets)
+				.where(and(
+					eq(schema.baskets.createdBy, locals.user.id),
+					eq(schema.baskets.canteenId, canteenId)
+				))
+				.limit(1)
+
+			if (userBasket.length === 0) {
+				return fail(404, { error: 'Basket not found' })
+			}
+
+			await db
+				.update(schema.baskets)
+				.set({
+					basketAccessCode: null,
+					updatedAt: new Date()
+				})
+				.where(eq(schema.baskets.id, userBasket[0].id))
+
+			return { success: true }
+		} catch (error) {
+			console.error('Error leaving basket:', error)
+			return fail(500, { error: 'Failed to leave basket' })
 		}
 	}
 }

@@ -17,10 +17,9 @@
 			if (result.type === 'success') {
 				success = result.data?.message || 'Successfully joined basket!'
 				error = ''
-				// Redirect to basket page after a short delay
 				setTimeout(() => {
 					goto('/basket')
-				}, 1500)
+				}, 1000)
 			} else if (result.type === 'failure') {
 				error = result.data?.error || 'Failed to join basket'
 				success = ''
@@ -51,7 +50,7 @@
 					name="accessCode"
 					value={data.code || ''}
 					maxlength="8"
-					pattern="[A-Za-z0-9]{8}"
+					pattern="[A-Z0-9]&#123;8&#125;"
 					class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-center text-lg font-mono tracking-wider uppercase"
 					placeholder="XXXXXXXX"
 					required

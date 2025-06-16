@@ -3,13 +3,12 @@
 	import { Button } from 'bits-ui'
 	import { X } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
+	import { invalidateAll } from '$app/navigation'
 
 	let {
 		open = $bindable(false),
-		onJoin,
 	}: {
 		open: boolean
-		onJoin: (accessCode: string) => Promise<void>
 	} = $props()
 
 	let accessCode = $state('')
@@ -17,36 +16,8 @@
 	let error = $state('')
 	let success = $state('')
 
-	async function handleSubmit() {
-		if (!accessCode.trim() || accessCode.length !== 8) {
-			error = 'Please enter a valid 8-character access code'
-			return
-		}
-
-		loading = true
-		error = ''
-		success = ''
-
-		try {
-			await onJoin(accessCode.toUpperCase())
-			success = 'Successfully joined basket!'
-			setTimeout(() => {
-				open = false
-				// Reset state
-				accessCode = ''
-				success = ''
-				error = ''
-			}, 1500)
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to join basket'
-		} finally {
-			loading = false
-		}
-	}
-
 	function handleClose() {
 		open = false
-		accessCode = ''
 		error = ''
 		success = ''
 		loading = false
@@ -68,7 +39,21 @@
 				</Dialog.Close>
 			</div>
 
-			<div class="space-y-4">
+			<form
+				method="POST" 
+				action="?/joinBasket"
+				class="space-y-4"
+				use:enhance={() => {
+					return async ({ result }) => {
+						if (result.type === 'success') {
+							invalidateAll()
+							open = false
+						} else if (result.type === 'failure' && result.data) {
+							alert(result.data?.error || 'Failed to join basket')
+						}
+					}
+				}}
+				>
 				<p class="text-sm text-gray-600 dark:text-gray-300">
 					Enter the 8-character access code to join someone's basket and order together.
 				</p>
@@ -80,18 +65,16 @@
 					<input
 						type="text"
 						id="accessCode"
+						name="accessCode"
 						bind:value={accessCode}
 						maxlength="8"
-						pattern="[A-Za-z0-9]{8}"
+						pattern="[A-Z0-9]&#123;8&#125;"
 						class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-center text-lg font-mono tracking-wider uppercase"
 						placeholder="XXXXXXXX"
 						disabled={loading}
-						onkeydown={(e) => {
-							if (e.key === 'Enter') {
-								handleSubmit()
-							}
-						}}
+						required
 					/>
+					{accessCode}
 				</div>
 
 				{#if error}
@@ -116,9 +99,8 @@
 						Cancel
 					</Button.Root>
 					<Button.Root
-						type="button"
+						type="submit"
 						class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-						onclick={handleSubmit}
 						disabled={loading || !accessCode.trim()}
 					>
 						{loading ? 'Joining...' : 'Join Basket'}
@@ -133,7 +115,7 @@
 						<li>Each person pays for their own items (unless owner uses wallet)</li>
 					</ul>
 				</div>
-			</div>
+			</form>
 		</Dialog.Content>
 	</Dialog.Portal>
 </Dialog.Root>

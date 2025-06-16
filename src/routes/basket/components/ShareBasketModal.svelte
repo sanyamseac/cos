@@ -3,59 +3,24 @@
 	import { Button } from 'bits-ui'
 	import { Copy, Share2, X } from 'lucide-svelte'
 	import { browser } from '$app/environment'
+	import { enhance } from '$app/forms'
 
 	let {
 		open = $bindable(false),
-		accessCode = '',
-		onShare,
 		canteens = [],
 	}: {
 		open: boolean
-		accessCode: string
-		onShare: (canteenId: number) => Promise<void>
 		canteens: any[]
 	} = $props()
 
-	let canteenId = $state(0)
 	let loading = $state(false)
 	let copied = $state(false)
 	let error = $state('')
-
-	// Debug: Log canteens data and accessCode changes
-	$effect(() => {
-		console.log('ShareBasketModal canteens:', canteens)
-	})
-
-	$effect(() => {
-		console.log('ShareBasketModal accessCode changed:', accessCode)
-	})
+	let accessCode = $state('')
 
 	const shareUrl = $derived(
 		browser && accessCode ? `${window.location.origin}/basket/join?code=${accessCode}` : ''
 	)
-
-	async function handleShare(selectedCanteenId: number) {
-		console.log('handleShare called with canteenId:', selectedCanteenId)
-		canteenId = selectedCanteenId
-		loading = true
-		error = ''
-		
-		try {
-			console.log('About to call onShare with:', selectedCanteenId)
-			console.log('onShare is:', typeof onShare)
-			if (typeof onShare !== 'function') {
-				throw new Error('onShare is not a function')
-			}
-			await onShare(selectedCanteenId)
-			console.log('onShare completed successfully')
-		} catch (err) {
-			console.error('Error in handleShare:', err)
-			error = err instanceof Error ? err.message : 'Failed to share basket'
-		} finally {
-			loading = false
-			console.log('handleShare completed, loading set to false')
-		}
-	}
 
 	async function copyToClipboard() {
 		if (!browser || !shareUrl) return
@@ -85,7 +50,6 @@
 				console.error('Failed to share:', err)
 			}
 		} else {
-			// Fallback to copy
 			copyToClipboard()
 		}
 	}
@@ -109,28 +73,43 @@
 			{#if !accessCode}
 				<div class="space-y-4">
 					<p class="text-sm text-gray-600 dark:text-gray-300">
-						Choose a canteen to share your basket with others. They'll be able to add items and join your order.
+						Choose a canteen to share your basket with others.
 					</p>
 					
 					<div class="space-y-2">
 						{#if canteens.length > 0}
 							{#each canteens as canteen}
-								<!-- Debug info -->
-								<!-- {JSON.stringify(canteen)} -->
-								
-								<button
-									type="button"
-									class="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-									on:click={() => handleShare(canteen.id)}
-									disabled={loading}
+								<form 
+									method="POST" 
+									action="?/shareBasket"
+									use:enhance={() => {
+										loading = true
+										error = ''
+										return async ({ result, update }) => {
+											loading = false
+											if (result.type === 'success' && result.data?.accessCode) {
+												accessCode = result.data.accessCode
+											} else if (result.type === 'failure') {
+												error = result.data?.message || 'Failed to share basket'
+											}
+											await update()
+										}
+									}}
 								>
-									<div class="flex items-center justify-between">
-										<span class="font-medium text-gray-900 dark:text-white">{canteen.name || 'Unknown Canteen'}</span>
-										{#if loading && canteenId === canteen.id}
-											<div class="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
-										{/if}
-									</div>
-								</button>
+									<input type="hidden" name="canteenId" value={canteen.id} />
+									<Button.Root
+										type="submit"
+										class="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+										disabled={loading}
+									>
+										<div class="flex items-center justify-between">
+											<span class="font-medium text-gray-900 dark:text-white">{canteen.name || 'Unknown Canteen'}</span>
+											{#if loading}
+												<div class="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
+											{/if}
+										</div>
+									</Button.Root>
+								</form>
 							{/each}
 						{:else}
 							<div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
