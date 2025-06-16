@@ -1,11 +1,11 @@
 // Food type utilities
-export * from './foodTypeUtils';
+export * from './foodTypeUtils'
 
 // Price utilities
-export * from './priceUtils';
+export * from './priceUtils'
 
 // Form utilities
-export * from './formUtils';
+export * from './formUtils'
 
 // Basket utilities
-export * from './basketUtils';
+export * from './basketUtils'

@@ -36,7 +36,7 @@
 		>
 			<CreditCard size={16} />
 			<span>Pay Later</span>
-		</div>		
+		</div>
 		<Switch.Root
 			id={'payment-method-switch-' + canteenId}
 			checked={isWalletPayment}

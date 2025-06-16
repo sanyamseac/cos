@@ -83,7 +83,9 @@
 							</div>
 
 							<div
-								class="flex items-center gap-1 text-sm {data.canteen.open ? "text-green-600 dark:text-green-300" : "text-red-600 dark:text-red-400"}"
+								class="flex items-center gap-1 text-sm {data.canteen.open
+									? 'text-green-600 dark:text-green-300'
+									: 'text-red-600 dark:text-red-400'}"
 							>
 								<ChefHat size={16} />
 								<span>{data.canteen.open ? 'Open Now' : 'Closed'}</span>

@@ -9,8 +9,7 @@ import { generateId } from '$lib/helper'
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
-	if (!auth.CONSUMER.includes(event.locals.user.role))
-		throw error(403, 'Access denied')
+	if (!auth.CONSUMER.includes(event.locals.user.role)) throw error(403, 'Access denied')
 
 	try {
 		const userBaskets = await db
@@ -23,7 +22,7 @@ export const load: PageServerLoad = async (event) => {
 			.where(eq(schema.baskets.createdBy, event.locals.user.id))
 
 		const userAccessCodes = userBaskets
-			.map(b => b.basket.basketAccessCode)
+			.map((b) => b.basket.basketAccessCode)
 			.filter((code): code is string => code !== null)
 
 		let sharedBaskets: typeof userBaskets = []
@@ -35,11 +34,16 @@ export const load: PageServerLoad = async (event) => {
 				})
 				.from(schema.baskets)
 				.leftJoin(schema.canteens, eq(schema.baskets.canteenId, schema.canteens.id))
-				.where(and(
-					sql`${schema.baskets.basketAccessCode} IS NOT NULL`,
-					sql`${schema.baskets.basketAccessCode} IN (${sql.join(userAccessCodes.map(code => sql`${code}`), sql`, `)})`,
-					not(eq(schema.baskets.createdBy, event.locals.user.id))
-				))
+				.where(
+					and(
+						sql`${schema.baskets.basketAccessCode} IS NOT NULL`,
+						sql`${schema.baskets.basketAccessCode} IN (${sql.join(
+							userAccessCodes.map((code) => sql`${code}`),
+							sql`, `,
+						)})`,
+						not(eq(schema.baskets.createdBy, event.locals.user.id)),
+					),
+				)
 		}
 
 		const allBaskets = [...userBaskets, ...sharedBaskets]
@@ -74,7 +78,10 @@ export const load: PageServerLoad = async (event) => {
 						},
 					})
 					.from(schema.basketItems)
-					.leftJoin(schema.menuItems, eq(schema.basketItems.menuItemId, schema.menuItems.id))
+					.leftJoin(
+						schema.menuItems,
+						eq(schema.basketItems.menuItemId, schema.menuItems.id),
+					)
 					.leftJoin(schema.variants, eq(schema.basketItems.variantId, schema.variants.id))
 					.leftJoin(schema.user, eq(schema.basketItems.addedBy, schema.user.id))
 					.where(eq(schema.basketItems.basketId, basket.id))
@@ -89,52 +96,58 @@ export const load: PageServerLoad = async (event) => {
 								type: schema.addons.type,
 							})
 							.from(schema.basketAddons)
-							.leftJoin(schema.addons, eq(schema.basketAddons.addonId, schema.addons.id))
+							.leftJoin(
+								schema.addons,
+								eq(schema.basketAddons.addonId, schema.addons.id),
+							)
 							.where(eq(schema.basketAddons.basketItemId, item.id))
 
 						return {
 							...item,
 							addons: itemAddons,
-							canEdit: item.addedBy === event.locals.user.id
+							canEdit: item.addedBy === event.locals.user.id,
 						}
-					})
+					}),
 				)
 
 				return {
 					canteen,
 					basket: basket,
 					items: itemsWithAddons,
-					accessCode: basket.basketAccessCode
+					accessCode: basket.basketAccessCode,
 				}
-			})
+			}),
 		)
 
 		const validBaskets = basketsWithDetails
 			.filter((basket): basket is NonNullable<typeof basket> => basket !== null)
-			.filter(basket => basket.items.length > 0)
+			.filter((basket) => basket.items.length > 0)
 
-		const basketsByCanteen = validBaskets.reduce((grouped, basket) => {
-			const canteenId = basket.canteen.id
-			const accessCode = basket.accessCode || 'individual'
-			
-			if (!grouped[canteenId]) {
-				grouped[canteenId] = {}
-			}
-			if (!grouped[canteenId][accessCode]) {
-				grouped[canteenId][accessCode] = {
-					canteen: basket.canteen,
-					baskets: [],
-					accessCode: basket.accessCode,
-					isShared: !!basket.accessCode
+		const basketsByCanteen = validBaskets.reduce(
+			(grouped, basket) => {
+				const canteenId = basket.canteen.id
+				const accessCode = basket.accessCode || 'individual'
+
+				if (!grouped[canteenId]) {
+					grouped[canteenId] = {}
 				}
-			}
-			
-			grouped[canteenId][accessCode].baskets.push(basket)
-			return grouped
-		}, {} as Record<number, Record<string, any>>)
+				if (!grouped[canteenId][accessCode]) {
+					grouped[canteenId][accessCode] = {
+						canteen: basket.canteen,
+						baskets: [],
+						accessCode: basket.accessCode,
+						isShared: !!basket.accessCode,
+					}
+				}
 
-		const finalBaskets = Object.values(basketsByCanteen).flatMap(canteenGroups => 
-			Object.values(canteenGroups)
+				grouped[canteenId][accessCode].baskets.push(basket)
+				return grouped
+			},
+			{} as Record<number, Record<string, any>>,
+		)
+
+		const finalBaskets = Object.values(basketsByCanteen).flatMap((canteenGroups) =>
+			Object.values(canteenGroups),
 		)
 
 		const wallets = await db
@@ -149,7 +162,7 @@ export const load: PageServerLoad = async (event) => {
 		return {
 			user: event.locals.user,
 			basketsByCanteen: finalBaskets,
-			wallets
+			wallets,
 		}
 	} catch (err) {
 		console.error('Error loading basket:', err)
@@ -175,12 +188,22 @@ export const actions: Actions = {
 			if (quantity <= 0) {
 				await db
 					.delete(schema.basketItems)
-					.where(and(eq(schema.basketItems.id, basketItemId), eq(schema.basketItems.addedBy, locals.user.id)))
+					.where(
+						and(
+							eq(schema.basketItems.id, basketItemId),
+							eq(schema.basketItems.addedBy, locals.user.id),
+						),
+					)
 			} else {
 				await db
 					.update(schema.basketItems)
 					.set({ quantity })
-					.where(and(eq(schema.basketItems.id, basketItemId), eq(schema.basketItems.addedBy, locals.user.id)))
+					.where(
+						and(
+							eq(schema.basketItems.id, basketItemId),
+							eq(schema.basketItems.addedBy, locals.user.id),
+						),
+					)
 			}
 			return { success: true }
 		} catch (error) {
@@ -204,7 +227,12 @@ export const actions: Actions = {
 		try {
 			await db
 				.delete(schema.basketItems)
-				.where(and(eq(schema.basketItems.id, basketItemId), eq(schema.basketItems.addedBy, locals.user.id)))
+				.where(
+					and(
+						eq(schema.basketItems.id, basketItemId),
+						eq(schema.basketItems.addedBy, locals.user.id),
+					),
+				)
 			return { success: true }
 		} catch (error) {
 			console.error('Error removing item:', error)
@@ -228,10 +256,12 @@ export const actions: Actions = {
 			const userBasket = await db
 				.select()
 				.from(schema.baskets)
-				.where(and(
-					eq(schema.baskets.createdBy, locals.user.id),
-					eq(schema.baskets.canteenId, canteenId)
-				))
+				.where(
+					and(
+						eq(schema.baskets.createdBy, locals.user.id),
+						eq(schema.baskets.canteenId, canteenId),
+					),
+				)
 				.limit(1)
 
 			if (userBasket.length === 0) {
@@ -240,11 +270,13 @@ export const actions: Actions = {
 
 			await db
 				.delete(schema.basketItems)
-				.where(and(
-					eq(schema.basketItems.basketId, userBasket[0].id),
-					eq(schema.basketItems.addedBy, locals.user.id)
-				))
-			
+				.where(
+					and(
+						eq(schema.basketItems.basketId, userBasket[0].id),
+						eq(schema.basketItems.addedBy, locals.user.id),
+					),
+				)
+
 			return { success: true }
 		} catch (error) {
 			console.error('Error clearing basket:', error)
@@ -272,30 +304,34 @@ export const actions: Actions = {
 
 		try {
 			await db.transaction(async (tx) => {
-				let baskets;
+				let baskets
 				if (accessCode && accessCode !== 'individual') {
 					baskets = await tx
 						.select()
 						.from(schema.baskets)
-						.where(and(
-							eq(schema.baskets.canteenId, canteenId),
-							eq(schema.baskets.basketAccessCode, accessCode)
-						))
+						.where(
+							and(
+								eq(schema.baskets.canteenId, canteenId),
+								eq(schema.baskets.basketAccessCode, accessCode),
+							),
+						)
 				} else {
 					baskets = await tx
 						.select()
 						.from(schema.baskets)
-						.where(and(
-							eq(schema.baskets.createdBy, locals.user.id),
-							eq(schema.baskets.canteenId, canteenId)
-						))
+						.where(
+							and(
+								eq(schema.baskets.createdBy, locals.user.id),
+								eq(schema.baskets.canteenId, canteenId),
+							),
+						)
 				}
 
 				if (baskets.length === 0) {
 					throw new Error('No baskets found')
 				}
 
-				let hasAccess = baskets.some(b => b.createdBy === locals.user.id)
+				let hasAccess = baskets.some((b) => b.createdBy === locals.user.id)
 
 				if (!hasAccess) {
 					throw new Error('You do not have access to place orders for this basket')
@@ -320,8 +356,14 @@ export const actions: Actions = {
 							},
 						})
 						.from(schema.basketItems)
-						.leftJoin(schema.menuItems, eq(schema.basketItems.menuItemId, schema.menuItems.id))
-						.leftJoin(schema.variants, eq(schema.basketItems.variantId, schema.variants.id))
+						.leftJoin(
+							schema.menuItems,
+							eq(schema.basketItems.menuItemId, schema.menuItems.id),
+						)
+						.leftJoin(
+							schema.variants,
+							eq(schema.basketItems.variantId, schema.variants.id),
+						)
 						.where(eq(schema.basketItems.basketId, basket.id))
 
 					allBasketItems.push(...items)
@@ -340,11 +382,14 @@ export const actions: Actions = {
 								price: schema.addons.price,
 							})
 							.from(schema.basketAddons)
-							.leftJoin(schema.addons, eq(schema.basketAddons.addonId, schema.addons.id))
+							.leftJoin(
+								schema.addons,
+								eq(schema.basketAddons.addonId, schema.addons.id),
+							)
 							.where(eq(schema.basketAddons.basketItemId, item.id))
 
-						return { ...item, addons: addons.filter(addon => addon.id) }
-					})
+						return { ...item, addons: addons.filter((addon) => addon.id) }
+					}),
 				)
 
 				const itemsByUser = itemsWithAddons.reduce((groups: any, item) => {
@@ -363,10 +408,12 @@ export const actions: Actions = {
 					userWallet = await tx
 						.select()
 						.from(schema.wallets)
-						.where(and(
-							eq(schema.wallets.userId, locals.user.id),
-							eq(schema.wallets.canteenId, canteenId)
-						))
+						.where(
+							and(
+								eq(schema.wallets.userId, locals.user.id),
+								eq(schema.wallets.canteenId, canteenId),
+							),
+						)
 						.limit(1)
 
 					if (userWallet.length === 0) {
@@ -377,7 +424,10 @@ export const actions: Actions = {
 					for (const item of itemsWithAddons) {
 						const basePrice = Number(item.menuItem!.price)
 						const variantPrice = item.variant ? Number(item.variant.price) : 0
-						const addonsPrice = item.addons.reduce((sum, addon) => sum + Number(addon.price), 0)
+						const addonsPrice = item.addons.reduce(
+							(sum, addon) => sum + Number(addon.price),
+							0,
+						)
 						totalAmount += (basePrice + variantPrice + addonsPrice) * item.quantity
 					}
 
@@ -393,7 +443,10 @@ export const actions: Actions = {
 					for (const item of userItems as any[]) {
 						const basePrice = Number(item.menuItem!.price)
 						const variantPrice = item.variant ? Number(item.variant.price) : 0
-						const addonsPrice = item.addons.reduce((sum: number, addon: any) => sum + Number(addon.price), 0)
+						const addonsPrice = item.addons.reduce(
+							(sum: number, addon: any) => sum + Number(addon.price),
+							0,
+						)
 						userTotal += (basePrice + variantPrice + addonsPrice) * item.quantity
 					}
 
@@ -401,9 +454,13 @@ export const actions: Actions = {
 						.update(schema.canteens)
 						.set({ orderCounter: sql`${schema.canteens.orderCounter} + 1` })
 						.where(eq(schema.canteens.id, canteenId))
-						.returning({ orderCounter: schema.canteens.orderCounter })
+						.returning({
+							orderCounter: schema.canteens.orderCounter,
+							acronym: schema.canteens.acronym,
+						})
 
-					const orderNumber = canteen.orderCounter.toString()
+					const orderNumber =
+						canteen.acronym.toUpperCase() + '-' + canteen.orderCounter.toString()
 					const otp = generateId(4)
 
 					const [order] = await tx
@@ -425,9 +482,15 @@ export const actions: Actions = {
 
 					for (const basketItem of userItems as any[]) {
 						const basePrice = Number(basketItem.menuItem!.price)
-						const variantPrice = basketItem.variant ? Number(basketItem.variant.price) : 0
-						const addonsPrice = basketItem.addons.reduce((sum: number, addon: any) => sum + Number(addon.price), 0)
-						const subtotal = (basePrice + variantPrice + addonsPrice) * basketItem.quantity
+						const variantPrice = basketItem.variant
+							? Number(basketItem.variant.price)
+							: 0
+						const addonsPrice = basketItem.addons.reduce(
+							(sum: number, addon: any) => sum + Number(addon.price),
+							0,
+						)
+						const subtotal =
+							(basePrice + variantPrice + addonsPrice) * basketItem.quantity
 
 						const [orderItem] = await tx
 							.insert(schema.orderItems)
@@ -452,7 +515,10 @@ export const actions: Actions = {
 					}
 				}
 				if (paymentMethod === 'wallet' && userWallet && userWallet.length > 0) {
-					const totalAmount = createdOrders.reduce((sum, order) => sum + order.userTotal, 0)
+					const totalAmount = createdOrders.reduce(
+						(sum, order) => sum + order.userTotal,
+						0,
+					)
 					const currentBalance = Number(userWallet[0].balance)
 					const newBalance = currentBalance - totalAmount
 
@@ -460,7 +526,7 @@ export const actions: Actions = {
 						.update(schema.wallets)
 						.set({
 							balance: newBalance.toString(),
-							updatedAt: new Date()
+							updatedAt: new Date(),
 						})
 						.where(eq(schema.wallets.id, userWallet[0].id))
 
@@ -480,7 +546,7 @@ export const actions: Actions = {
 			return {
 				success: true,
 				message: 'Order placed successfully!',
-				redirect: '/orders'
+				redirect: '/orders',
 			}
 		} catch (error) {
 			console.error('Error placing order:', error)
@@ -505,10 +571,12 @@ export const actions: Actions = {
 			let basket = await db
 				.select()
 				.from(schema.baskets)
-				.where(and(
-					eq(schema.baskets.createdBy, locals.user.id),
-					eq(schema.baskets.canteenId, canteenId)
-				))
+				.where(
+					and(
+						eq(schema.baskets.createdBy, locals.user.id),
+						eq(schema.baskets.canteenId, canteenId),
+					),
+				)
 				.limit(1)
 
 			if (basket.length === 0) {
@@ -529,7 +597,7 @@ export const actions: Actions = {
 				.update(schema.baskets)
 				.set({
 					basketAccessCode: accessCode,
-					updatedAt: new Date()
+					updatedAt: new Date(),
 				})
 				.where(eq(schema.baskets.id, basket[0].id))
 
@@ -561,7 +629,7 @@ export const actions: Actions = {
 					owner: {
 						id: schema.user.id,
 						name: schema.user.name,
-					}
+					},
 				})
 				.from(schema.baskets)
 				.leftJoin(schema.user, eq(schema.baskets.createdBy, schema.user.id))
@@ -582,10 +650,12 @@ export const actions: Actions = {
 			let userBasket = await db
 				.select()
 				.from(schema.baskets)
-				.where(and(
-					eq(schema.baskets.createdBy, locals.user.id),
-					eq(schema.baskets.canteenId, canteenId)
-				))
+				.where(
+					and(
+						eq(schema.baskets.createdBy, locals.user.id),
+						eq(schema.baskets.canteenId, canteenId),
+					),
+				)
 				.limit(1)
 
 			if (userBasket.length === 0) {
@@ -604,7 +674,7 @@ export const actions: Actions = {
 					.update(schema.baskets)
 					.set({
 						basketAccessCode: accessCode.toUpperCase(),
-						updatedAt: new Date()
+						updatedAt: new Date(),
 					})
 					.where(eq(schema.baskets.id, userBasket[0].id))
 			}
@@ -612,7 +682,7 @@ export const actions: Actions = {
 			return {
 				success: true,
 				message: `Successfully joined ${owner?.name}'s basket!`,
-				ownerName: owner?.name
+				ownerName: owner?.name,
 			}
 		} catch (error) {
 			console.error('Error joining basket:', error)
@@ -636,10 +706,12 @@ export const actions: Actions = {
 			const userBasket = await db
 				.select()
 				.from(schema.baskets)
-				.where(and(
-					eq(schema.baskets.createdBy, locals.user.id),
-					eq(schema.baskets.canteenId, canteenId)
-				))
+				.where(
+					and(
+						eq(schema.baskets.createdBy, locals.user.id),
+						eq(schema.baskets.canteenId, canteenId),
+					),
+				)
 				.limit(1)
 
 			if (userBasket.length === 0) {
@@ -650,7 +722,7 @@ export const actions: Actions = {
 				.update(schema.baskets)
 				.set({
 					basketAccessCode: null,
-					updatedAt: new Date()
+					updatedAt: new Date(),
 				})
 				.where(eq(schema.baskets.id, userBasket[0].id))
 
@@ -659,5 +731,5 @@ export const actions: Actions = {
 			console.error('Error leaving basket:', error)
 			return fail(500, { error: 'Failed to leave basket' })
 		}
-	}
+	},
 }

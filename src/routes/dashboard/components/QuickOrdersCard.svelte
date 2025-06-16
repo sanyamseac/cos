@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from 'bits-ui'
-	import { formatPrice } from '$lib/utils';
+	import { formatPrice } from '$lib/utils'
 	import { Lightning } from 'phosphor-svelte'
 	import { Plus } from 'lucide-svelte'
 
@@ -37,17 +37,20 @@
 					class="flex flex-col items-center rounded-xl bg-gray-50 p-4 transition-all duration-200 hover:scale-105 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700"
 				>
 					<div class="mb-2 text-3xl">
-						<img src={order.image} alt={order.name} class="h-12 w-12 rounded" />					</div>
+						<img src={order.image} alt={order.name} class="h-12 w-12 rounded" />
+					</div>
 					<p class="mb-1 text-center text-sm font-medium text-gray-800 dark:text-white">
 						{order.name}
 					</p>
 					<p class="mb-2 text-xs text-gray-500 dark:text-gray-400">{order.canteen}</p>
 					<div class="flex w-full items-center justify-between">
-						<span class="font-bold text-gray-800 dark:text-white">{formatPrice(order.price)}</span>
-						<Button.Root
-							class="h-6 border-0 rounded bg-gradient-to-r from-indigo-500 to-purple-600 px-3 text-xs text-white hover:from-indigo-600 hover:to-purple-700"
+						<span class="font-bold text-gray-800 dark:text-white"
+							>{formatPrice(order.price)}</span
 						>
-							<Plus size=15 class="inline-block" />
+						<Button.Root
+							class="h-6 rounded border-0 bg-gradient-to-r from-indigo-500 to-purple-600 px-3 text-xs text-white hover:from-indigo-600 hover:to-purple-700"
+						>
+							<Plus size="15" class="inline-block" />
 						</Button.Root>
 					</div>
 				</div>

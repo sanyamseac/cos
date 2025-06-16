@@ -1,10 +1,6 @@
 // Clean API endpoint for sending notifications
 import type { RequestHandler } from './$types'
-import {
-	sendToUser,
-	broadcast,
-	type NotificationPayload,
-} from '$lib/server/notificationService'
+import { sendToUser, broadcast, type NotificationPayload } from '$lib/server/notificationService'
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {

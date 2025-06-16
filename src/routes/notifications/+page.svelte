@@ -160,7 +160,7 @@
 		notificationTitle = preset.title
 		notificationBody = preset.body
 	}
-	
+
 	function sendTestToSelf() {
 		targetUserId = data.user.id
 		notificationTitle = '🧪 Test Notification'

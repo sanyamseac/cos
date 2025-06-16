@@ -8,7 +8,7 @@
 	import ShareBasketModal from './components/ShareBasketModal.svelte'
 	import JoinBasketModal from './components/JoinBasketModal.svelte'
 	import Elements from '$lib/components/Elements.svelte'
-	import {  UserMinus, Trash2, Users, EyeOff, Eye } from 'lucide-svelte'
+	import { UserMinus, Trash2, Users, EyeOff, Eye } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
 	import { getWalletBalance } from '$lib/utils/basketUtils'
 	import { formatPrice, calculateBasketTotal } from '$lib/utils/priceUtils'
@@ -18,17 +18,19 @@
 	let { data }: { data: PageData } = $props()
 
 	const allItemsGroupedByCanteen = $derived(() => {
-		return data.basketsByCanteen?.map(canteenGroup => {
-			const allItems = canteenGroup.baskets.flatMap((basket: any) => basket.items)
-			return {
-				canteen: canteenGroup.canteen,
-				baskets: canteenGroup.baskets,
-				allItems: allItems,
-				totalItems: allItems.length,
-				isShared: canteenGroup.isShared,
-				accessCode: canteenGroup.accessCode
-			}
-		}) || []
+		return (
+			data.basketsByCanteen?.map((canteenGroup) => {
+				const allItems = canteenGroup.baskets.flatMap((basket: any) => basket.items)
+				return {
+					canteen: canteenGroup.canteen,
+					baskets: canteenGroup.baskets,
+					allItems: allItems,
+					totalItems: allItems.length,
+					isShared: canteenGroup.isShared,
+					accessCode: canteenGroup.accessCode,
+				}
+			}) || []
+		)
 	})
 
 	let paymentMethods = $state({} as Record<number, boolean>)
@@ -36,7 +38,7 @@
 
 	$effect(() => {
 		const methods: Record<number, boolean> = {}
-		data.basketsByCanteen?.forEach(canteenGroup => {
+		data.basketsByCanteen?.forEach((canteenGroup) => {
 			methods[canteenGroup.canteen.id] = false
 		})
 		paymentMethods = methods
@@ -75,16 +77,24 @@
 	function submitOrderForm(canteenGroup: any) {
 		selectedCanteenGroup = canteenGroup
 		if (orderFormRef) {
-			const canteenIdInput = orderFormRef.querySelector('input[name="canteenId"]') as HTMLInputElement
-			const accessCodeInput = orderFormRef.querySelector('input[name="accessCode"]') as HTMLInputElement
-			const paymentMethodInput = orderFormRef.querySelector('input[name="paymentMethod"]') as HTMLInputElement
-			
+			const canteenIdInput = orderFormRef.querySelector(
+				'input[name="canteenId"]',
+			) as HTMLInputElement
+			const accessCodeInput = orderFormRef.querySelector(
+				'input[name="accessCode"]',
+			) as HTMLInputElement
+			const paymentMethodInput = orderFormRef.querySelector(
+				'input[name="paymentMethod"]',
+			) as HTMLInputElement
+
 			if (canteenIdInput) canteenIdInput.value = canteenGroup.canteen.id.toString()
 			if (accessCodeInput) accessCodeInput.value = canteenGroup.accessCode || 'individual'
 			if (paymentMethodInput) {
-				paymentMethodInput.value = getPaymentMethod(canteenGroup.canteen.id) ? 'wallet' : 'postpaid'
+				paymentMethodInput.value = getPaymentMethod(canteenGroup.canteen.id)
+					? 'wallet'
+					: 'postpaid'
 			}
-			
+
 			orderFormRef.requestSubmit()
 		}
 	}
@@ -108,10 +118,13 @@
 >
 	<Elements />
 
-	<div class="relative z-10 space-y-8 px-4 py-6 md:px-8 md:py-10">	
-		<BasketHeader 
-			basketCount={allItemsGroupedByCanteen().reduce((total: number, group: any) => total + group.totalItems, 0)} 
-			grandTotal={grandTotal()} 
+	<div class="relative z-10 space-y-8 px-4 py-6 md:px-8 md:py-10">
+		<BasketHeader
+			basketCount={allItemsGroupedByCanteen().reduce(
+				(total: number, group: any) => total + group.totalItems,
+				0,
+			)}
+			grandTotal={grandTotal()}
 			hasBaskets={allItemsGroupedByCanteen().length > 0}
 			onShareBasket={openShareModal}
 			onJoinBasket={openJoinModal}
@@ -122,37 +135,58 @@
 		{:else}
 			<div class="space-y-6">
 				{#each allItemsGroupedByCanteen() as canteenGroup}
-					<div class="rounded-xl bg-white p-4 md:p-6 shadow-sm dark:bg-gray-800">	
-						<div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
+					<div class="rounded-xl bg-white p-4 shadow-sm md:p-6 dark:bg-gray-800">
+						<div
+							class="mb-4 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700"
+						>
 							<div>
-								<div class="flex items-center gap-2 mb-1">
+								<div class="mb-1 flex items-center gap-2">
 									<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
 										{canteenGroup.canteen.name}
 									</h2>
 									{#if hasSharedBaskets(canteenGroup)}
-										<div class="flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1">
-											<Users size={16} class="text-blue-600 dark:text-blue-400" />
-											<span class="hidden text-sm font-medium text-blue-700 dark:text-blue-300 md:inline">Shared</span>
+										<div
+											class="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900/30"
+										>
+											<Users
+												size={16}
+												class="text-blue-600 dark:text-blue-400"
+											/>
+											<span
+												class="hidden text-sm font-medium text-blue-700 md:inline dark:text-blue-300"
+												>Shared</span
+											>
 										</div>
 									{/if}
 								</div>
-								<div class="flex items-center gap-3 mt-1">
+								<div class="mt-1 flex items-center gap-3">
 									<p class="text-sm text-gray-600 dark:text-gray-300">
-										{canteenGroup.totalItems} item{canteenGroup.totalItems !== 1 ? 's' : ''}
+										{canteenGroup.totalItems} item{canteenGroup.totalItems !== 1
+											? 's'
+											: ''}
 									</p>
 									{#if canteenGroup.baskets.length > 1}
-										<div class="flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-1">
+										<div
+											class="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 dark:bg-gray-700"
+										>
 											<span class="text-xs text-gray-700 dark:text-gray-300">
-												{canteenGroup.baskets.length} basket{canteenGroup.baskets.length !== 1 ? 's' : ''}
+												{canteenGroup.baskets.length} basket{canteenGroup
+													.baskets.length !== 1
+													? 's'
+													: ''}
 											</span>
 										</div>
 									{/if}
 								</div>
-							</div>							
+							</div>
 							<div class="flex items-center gap-2">
 								{#if hasSharedBaskets(canteenGroup)}
 									<form method="POST" action="?/leaveBasket" use:enhance>
-										<input type="hidden" name="canteenId" value={canteenGroup.canteen.id} />
+										<input
+											type="hidden"
+											name="canteenId"
+											value={canteenGroup.canteen.id}
+										/>
 										<button
 											onclick={() => invalidateAll()}
 											class="flex items-center gap-1 rounded-lg bg-blue-100 px-3 py-1 text-sm text-blue-600 transition-all hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
@@ -162,7 +196,11 @@
 									</form>
 								{/if}
 								<form method="POST" action="?/clearBasket" use:enhance>
-									<input type="hidden" name="canteenId" value={canteenGroup.canteen.id} />
+									<input
+										type="hidden"
+										name="canteenId"
+										value={canteenGroup.canteen.id}
+									/>
 									<button
 										type="submit"
 										class="flex items-center gap-1 rounded-lg bg-red-100 px-3 py-1 text-sm text-red-600 transition-all hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800"
@@ -173,11 +211,15 @@
 							</div>
 						</div>
 						{#if canteenGroup.accessCode}
-							<div class="border-b border-gray-200 pb-4 dark:border-gray-700 mb-6">
+							<div class="mb-6 border-b border-gray-200 pb-4 dark:border-gray-700">
 								<div class="flex flex-row justify-between gap-3">
-									<h3 class="font-medium text-base text-gray-900 dark:text-white">AccessCode</h3>
+									<h3 class="text-base font-medium text-gray-900 dark:text-white">
+										AccessCode
+									</h3>
 									<div class="flex items-center gap-2">
-										<span class="font-mono text-base font-bold text-gray-900 dark:text-white">
+										<span
+											class="font-mono text-base font-bold text-gray-900 dark:text-white"
+										>
 											{showPin ? canteenGroup.accessCode : '••••••••'}
 										</span>
 										<Toggle.Root
@@ -203,7 +245,9 @@
 						</div>
 
 						<div class="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
-							<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+							<div
+								class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+							>
 								<div class="flex-1">
 									<p class="text-sm text-gray-600 dark:text-gray-300">
 										Total for {canteenGroup.canteen.name}
@@ -215,26 +259,39 @@
 								<div class="flex flex-col gap-2 sm:flex-row sm:items-end">
 									<PaymentMethodSelector
 										canteenId={canteenGroup.canteen.id}
-										walletBalance={getWalletBalance(canteenGroup.canteen.id, data.wallets)}
+										walletBalance={getWalletBalance(
+											canteenGroup.canteen.id,
+											data.wallets,
+										)}
 										isWalletPayment={getPaymentMethod(canteenGroup.canteen.id)}
 										basketTotal={calculateBasketTotal(canteenGroup.allItems)}
-										hasSufficientBalance={getWalletBalance(canteenGroup.canteen.id, data.wallets) >= calculateBasketTotal(canteenGroup.allItems)}
-										onPaymentMethodChange={(value) => setPaymentMethod(canteenGroup.canteen.id, value)}
+										hasSufficientBalance={getWalletBalance(
+											canteenGroup.canteen.id,
+											data.wallets,
+										) >= calculateBasketTotal(canteenGroup.allItems)}
+										onPaymentMethodChange={(value) =>
+											setPaymentMethod(canteenGroup.canteen.id, value)}
 									/>
 									<button
 										onclick={() => openOrderConfirm(canteenGroup)}
-										disabled={(getPaymentMethod(canteenGroup.canteen.id) && getWalletBalance(canteenGroup.canteen.id, data.wallets) < calculateBasketTotal(canteenGroup.allItems)) || !canteenGroup.canteen.open}
+										disabled={(getPaymentMethod(canteenGroup.canteen.id) &&
+											getWalletBalance(
+												canteenGroup.canteen.id,
+												data.wallets,
+											) < calculateBasketTotal(canteenGroup.allItems)) ||
+											!canteenGroup.canteen.open}
 										class="w-full rounded-lg bg-green-600 px-6 py-3 font-medium text-white transition-all hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
 									>
-										{canteenGroup.canteen.open ?
-											getPaymentMethod(canteenGroup.canteen.id) 
-												? (getWalletBalance(canteenGroup.canteen.id, data.wallets) >= calculateBasketTotal(canteenGroup.allItems) 
-													? 'Place Order (Wallet)' 
+										{canteenGroup.canteen.open
+											? getPaymentMethod(canteenGroup.canteen.id)
+												? getWalletBalance(
+														canteenGroup.canteen.id,
+														data.wallets,
+													) >= calculateBasketTotal(canteenGroup.allItems)
+													? 'Place Order (Wallet)'
 													: 'Insufficient Balance'
-												)
 												: 'Place Order (Pay Later)'
-											: 'Canteen Closed'
-										}
+											: 'Canteen Closed'}
 									</button>
 								</div>
 							</div>
@@ -242,14 +299,15 @@
 					</div>
 				{/each}
 			</div>
-		{/if}	</div>
+		{/if}
+	</div>
 </div>
 
 <!-- Hidden form for order submission -->
-<form 
-	bind:this={orderFormRef} 
-	method="POST" 
-	action="?/placeOrder" 
+<form
+	bind:this={orderFormRef}
+	method="POST"
+	action="?/placeOrder"
 	use:enhance={() => {
 		return async ({ result }) => {
 			showOrderConfirm = false
@@ -287,9 +345,7 @@
 
 <ShareBasketModal
 	bind:open={showShareModal}
-	canteens={data.basketsByCanteen?.map(group => group.canteen) || []}
+	canteens={data.basketsByCanteen?.map((group) => group.canteen) || []}
 />
 
-<JoinBasketModal
-	bind:open={showJoinModal}
-/>
+<JoinBasketModal bind:open={showJoinModal} />

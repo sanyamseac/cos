@@ -223,7 +223,11 @@
 									<div class="flex items-start justify-between">
 										<div class="flex-1">
 											<div class="mb-2 flex items-center gap-2">
-												<img src={item.image} alt={item.name} class="h-8 w-8 rounded" />
+												<img
+													src={item.image}
+													alt={item.name}
+													class="h-8 w-8 rounded"
+												/>
 												<FoodType type={item.type} size={20} />
 												<h3
 													class="text-lg font-medium text-gray-900 dark:text-white"
@@ -305,8 +309,8 @@
 		entityName={crudModalValues.entity}
 		item={crudModalValues.item}
 		fields={crudModalFields}
-		addAction='?/addMenuItem'
-		updateAction='?/updateMenuItem'
+		addAction="?/addMenuItem"
+		updateAction="?/updateMenuItem"
 		onClose={closeCrudModal}
 	/>
 </div>

@@ -8,8 +8,7 @@ import type { PageServerLoad } from './$types'
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
-	if (!auth.CONSUMER.includes(event.locals.user.role))
-		throw error (403, 'Access denied')
+	if (!auth.CONSUMER.includes(event.locals.user.role)) throw error(403, 'Access denied')
 
 	const orderId = Number(event.params.orderId)
 	if (!orderId || isNaN(orderId)) {
@@ -24,10 +23,9 @@ export const load: PageServerLoad = async (event) => {
 			})
 			.from(schema.orders)
 			.leftJoin(schema.canteens, eq(schema.orders.canteenId, schema.canteens.id))
-			.where(and(
-				eq(schema.orders.id, orderId),
-				eq(schema.orders.userId, event.locals.user.id)
-			))
+			.where(
+				and(eq(schema.orders.id, orderId), eq(schema.orders.userId, event.locals.user.id)),
+			)
 			.limit(1)
 
 		if (orders.length === 0) {
@@ -60,16 +58,16 @@ export const load: PageServerLoad = async (event) => {
 
 				return {
 					...item,
-					addons: addons.filter(addon => addon.addon?.id)
+					addons: addons.filter((addon) => addon.addon?.id),
 				}
-			})
+			}),
 		)
 
-		return { 
+		return {
 			user: event.locals.user,
 			order: orderData.order,
 			canteen: orderData.canteen,
-			orderItems: orderItemsWithAddons
+			orderItems: orderItemsWithAddons,
 		}
 	} catch (err) {
 		console.error('Error loading order details:', err)

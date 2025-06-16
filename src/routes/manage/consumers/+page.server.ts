@@ -9,10 +9,10 @@ export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user) {
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
 	}
-		if (!auth.ADMIN.includes(event.locals.user.role)) {
+	if (!auth.ADMIN.includes(event.locals.user.role)) {
 		throw fail(403, { message: 'Access denied' })
 	}
-	
+
 	try {
 		const usersWithStats = await db
 			.select({
@@ -27,9 +27,7 @@ export const load: PageServerLoad = async (event) => {
 			.leftJoin(schema.wallets, eq(schema.user.id, schema.wallets.userId))
 			.leftJoin(schema.orders, eq(schema.user.id, schema.orders.userId))
 			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
-			.groupBy(
-				schema.user.id
-			)
+			.groupBy(schema.user.id)
 			.orderBy(schema.user.name)
 
 		return {

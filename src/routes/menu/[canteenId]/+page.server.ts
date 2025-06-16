@@ -17,9 +17,7 @@ export const load: PageServerLoad = async (event) => {
 		const canteen = await db
 			.select()
 			.from(schema.canteens)
-			.where(
-				and(eq(schema.canteens.acronym, canteenAcronym)),
-			)
+			.where(and(eq(schema.canteens.acronym, canteenAcronym)))
 			.then((results) => results[0])
 
 		if (!canteen) {
@@ -32,10 +30,12 @@ export const load: PageServerLoad = async (event) => {
 			db
 				.select()
 				.from(schema.menuItems)
-				.where(and(
-					eq(schema.menuItems.canteenId, canteenId),
-					eq(schema.menuItems.active, true)
-				))
+				.where(
+					and(
+						eq(schema.menuItems.canteenId, canteenId),
+						eq(schema.menuItems.active, true),
+					),
+				)
 				.orderBy(desc(schema.menuItems.available), asc(schema.menuItems.name)),
 			db
 				.select()
@@ -66,13 +66,16 @@ export const load: PageServerLoad = async (event) => {
 			addons: addonsByItem[item.id] || [],
 		}))
 
-		const menuCategories = menuItemsWithDetails.reduce((acc: Record<string, typeof menuItemsWithDetails>, item) => {
-			if (!acc[item.category]) {
-				acc[item.category] = []
-			}
-			acc[item.category].push(item)
-			return acc
-		}, {})
+		const menuCategories = menuItemsWithDetails.reduce(
+			(acc: Record<string, typeof menuItemsWithDetails>, item) => {
+				if (!acc[item.category]) {
+					acc[item.category] = []
+				}
+				acc[item.category].push(item)
+				return acc
+			},
+			{},
+		)
 
 		return {
 			user: event.locals.user,
@@ -95,7 +98,10 @@ export const actions: Actions = {
 		const menuItemId = Number(formData.get('menuItemId'))
 		const variantId = formData.get('variantId') ? Number(formData.get('variantId')) : undefined
 		const quantity = Number(formData.get('quantity')) || 1
-		const addonIds = formData.getAll('addonIds').map(id => Number(id)).filter(id => !isNaN(id))
+		const addonIds = formData
+			.getAll('addonIds')
+			.map((id) => Number(id))
+			.filter((id) => !isNaN(id))
 
 		if (!menuItemId || isNaN(menuItemId)) {
 			throw fail(400, { error: 'Invalid menu item' })
@@ -125,8 +131,8 @@ export const actions: Actions = {
 				.where(
 					and(
 						eq(schema.baskets.createdBy, locals.user.id),
-						eq(schema.baskets.canteenId, canteenId)
-					)
+						eq(schema.baskets.canteenId, canteenId),
+					),
 				)
 				.limit(1)
 
@@ -149,8 +155,10 @@ export const actions: Actions = {
 					and(
 						eq(schema.basketItems.basketId, basket[0].id),
 						eq(schema.basketItems.menuItemId, menuItemId),
-						variantId ? eq(schema.basketItems.variantId, variantId) : isNull(schema.basketItems.variantId)
-					)
+						variantId
+							? eq(schema.basketItems.variantId, variantId)
+							: isNull(schema.basketItems.variantId),
+					),
 				)
 
 			let existingItem = null
@@ -161,11 +169,13 @@ export const actions: Actions = {
 					.from(schema.basketAddons)
 					.where(eq(schema.basketAddons.basketItemId, item.id))
 
-				const itemAddonIds = itemAddons.map(addon => addon.addonId).sort()
+				const itemAddonIds = itemAddons.map((addon) => addon.addonId).sort()
 				const newAddonIds = (addonIds || []).sort()
 
-				if (itemAddonIds.length === newAddonIds.length && 
-					itemAddonIds.every((id, index) => id === newAddonIds[index])) {
+				if (
+					itemAddonIds.length === newAddonIds.length &&
+					itemAddonIds.every((id, index) => id === newAddonIds[index])
+				) {
 					existingItem = item
 					break
 				}
@@ -189,9 +199,9 @@ export const actions: Actions = {
 					.returning()
 
 				if (addonIds && addonIds.length > 0) {
-					const addonValues = addonIds.map(addonId => ({
+					const addonValues = addonIds.map((addonId) => ({
 						basketItemId: newBasketItem.id,
-						addonId
+						addonId,
 					}))
 					await db.insert(schema.basketAddons).values(addonValues)
 				}
@@ -202,5 +212,5 @@ export const actions: Actions = {
 			console.error('Error adding item to basket:', error)
 			throw fail(500, { error: 'Failed to add item to basket' })
 		}
-	}
+	},
 }

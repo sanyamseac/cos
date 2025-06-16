@@ -61,7 +61,7 @@
 			{value}
 		</p>
 		{#if trend}
-			<div class="mt-3 flex items-center gap-1 mb-1">
+			<div class="mt-3 mb-1 flex items-center gap-1">
 				{#if trendUp}
 					<ChartLineUp class="text-white" />
 				{:else}

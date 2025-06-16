@@ -10,69 +10,69 @@ import { sendToUser, type NotificationPayload } from '$lib/server/notificationSe
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
-	
-	if (!auth.ADMIN.includes(event.locals.user.role))
-		throw error(403, 'Access denied')
+
+	if (!auth.ADMIN.includes(event.locals.user.role)) throw error(403, 'Access denied')
 
 	const consumerId = event.params.consumerId
 
 	try {
-		const [consumer, canteens, wallets, walletTransactions, orders, baskets] = await Promise.all([
-			db
-				.select()
-				.from(schema.user)
-				.where(eq(schema.user.id, consumerId)),
-			
-            db
-                .select()
-                .from(schema.canteens)
-                .where(eq(schema.canteens.active, true)),
-            
-            db
-                .select({
-                    wallet: schema.wallets,
-                    canteen: schema.canteens,
-                })
-                .from(schema.wallets)
-                .leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
-                .where(eq(schema.wallets.userId, consumerId)),
-            
-            db
-                .select({
-                    transaction: schema.walletTransactions,
-                    wallet: schema.wallets,
-                    canteen: schema.canteens,
-                    performedBy: schema.user,
-                })
-                .from(schema.walletTransactions)
-                .leftJoin(schema.wallets, eq(schema.walletTransactions.walletId, schema.wallets.id))
-                .leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
-                .leftJoin(schema.user, eq(schema.walletTransactions.performedBy, schema.user.id))
-                .where(eq(schema.wallets.userId, consumerId))
-                .orderBy(desc(schema.walletTransactions.createdAt))
-                .limit(20),
-            
-            db
-                .select({
-                    order: schema.orders,
-                    canteen: schema.canteens,
-                })
-                .from(schema.orders)
-                .leftJoin(schema.canteens, eq(schema.orders.canteenId, schema.canteens.id))
-                .where(eq(schema.orders.userId, consumerId))
-                .orderBy(desc(schema.orders.createdAt))
-                .limit(10),
-            
-            db
-                .select({
-                    basket: schema.baskets,
-                    canteen: schema.canteens,
-                })
-                .from(schema.baskets)
-                .leftJoin(schema.canteens, eq(schema.baskets.canteenId, schema.canteens.id))
-                .where(eq(schema.baskets.createdBy, consumerId))
-                .orderBy(desc(schema.baskets.updatedAt))
-        ])
+		const [consumer, canteens, wallets, walletTransactions, orders, baskets] =
+			await Promise.all([
+				db.select().from(schema.user).where(eq(schema.user.id, consumerId)),
+
+				db.select().from(schema.canteens).where(eq(schema.canteens.active, true)),
+
+				db
+					.select({
+						wallet: schema.wallets,
+						canteen: schema.canteens,
+					})
+					.from(schema.wallets)
+					.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
+					.where(eq(schema.wallets.userId, consumerId)),
+
+				db
+					.select({
+						transaction: schema.walletTransactions,
+						wallet: schema.wallets,
+						canteen: schema.canteens,
+						performedBy: schema.user,
+					})
+					.from(schema.walletTransactions)
+					.leftJoin(
+						schema.wallets,
+						eq(schema.walletTransactions.walletId, schema.wallets.id),
+					)
+					.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
+					.leftJoin(
+						schema.user,
+						eq(schema.walletTransactions.performedBy, schema.user.id),
+					)
+					.where(eq(schema.wallets.userId, consumerId))
+					.orderBy(desc(schema.walletTransactions.createdAt))
+					.limit(20),
+
+				db
+					.select({
+						order: schema.orders,
+						canteen: schema.canteens,
+					})
+					.from(schema.orders)
+					.leftJoin(schema.canteens, eq(schema.orders.canteenId, schema.canteens.id))
+					.where(eq(schema.orders.userId, consumerId))
+					.orderBy(desc(schema.orders.createdAt))
+					.limit(10),
+
+				db
+					.select({
+						basket: schema.baskets,
+						canteen: schema.canteens,
+					})
+					.from(schema.baskets)
+					.leftJoin(schema.canteens, eq(schema.baskets.canteenId, schema.canteens.id))
+					.where(eq(schema.baskets.createdBy, consumerId))
+					.orderBy(desc(schema.baskets.updatedAt)),
+			])
 
 		return {
 			user: event.locals.user,
@@ -95,7 +95,8 @@ export const actions: Actions = {
 			throw fail(401, { message: 'Unauthorized' })
 		}
 
-		if (!auth.ADMIN.includes(event.locals.user.role)) return fail(403, { message: 'Access denied' })
+		if (!auth.ADMIN.includes(event.locals.user.role))
+			return fail(403, { message: 'Access denied' })
 
 		const formData = await event.request.formData()
 		const consumerId = event.params.consumerId
@@ -112,7 +113,12 @@ export const actions: Actions = {
 			let wallet = await db
 				.select()
 				.from(schema.wallets)
-				.where(and(eq(schema.wallets.userId, consumerId), eq(schema.wallets.canteenId, canteenId)))
+				.where(
+					and(
+						eq(schema.wallets.userId, consumerId),
+						eq(schema.wallets.canteenId, canteenId),
+					),
+				)
 				.limit(1)
 
 			if (!wallet.length) {

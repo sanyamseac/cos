@@ -9,7 +9,7 @@
 
 	let {
 		item,
-		onItemClick
+		onItemClick,
 	}: {
 		item: any
 		onItemClick: (item: any) => void
@@ -17,30 +17,30 @@
 </script>
 
 <div
-	class="group overflow-hidden rounded-lg border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 bg-white dark:bg-gray-800"
+	class="group overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
 >
-	<div class="p-3 sm:p-4 flex items-center justify-between gap-3">
-		<img src={item.image} alt={item.name} class="h-12 w-12 md:h-10 md:w-10 rounded" />
-		<div class="flex-1 min-w-0">
-			<div class="mb-1 sm:mb-2 flex items-center gap-2">
-				<h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white truncate">
+	<div class="flex items-center justify-between gap-3 p-3 sm:p-4">
+		<img src={item.image} alt={item.name} class="h-12 w-12 rounded md:h-10 md:w-10" />
+		<div class="min-w-0 flex-1">
+			<div class="mb-1 flex items-center gap-2 sm:mb-2">
+				<h3 class="truncate text-base font-medium text-gray-900 sm:text-lg dark:text-white">
 					{item.name}
 				</h3>
 			</div>
 
 			{#if item.description}
-				<p class="mb-2 sm:mb-3 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+				<p class="mb-2 line-clamp-2 text-sm text-gray-600 sm:mb-3 dark:text-gray-300">
 					{item.description}
 				</p>
 			{/if}
 
-			<div class="flex text-base sm:text-lg font-medium text-gray-700 dark:text-gray-300">
-				{formatPrice(item.price)} | <FoodType type={item.type} size={20} class="ml-2"/>
+			<div class="flex text-base font-medium text-gray-700 sm:text-lg dark:text-gray-300">
+				{formatPrice(item.price)} | <FoodType type={item.type} size={20} class="ml-2" />
 			</div>
 		</div>
 
 		<Button.Root
-			class="flex h-14 w-14 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition-all hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-800 flex-shrink-0 self-center"
+			class="flex h-14 w-14 flex-shrink-0 items-center justify-center self-center rounded-full bg-indigo-100 text-indigo-600 transition-all hover:bg-indigo-200 sm:h-8 sm:w-8 dark:bg-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-800"
 			onclick={(event: Event) => {
 				event.stopPropagation()
 				onItemClick(item)
@@ -53,12 +53,12 @@
 				{#if item.available}
 					<Plus
 						size={16}
-						class="absolute -bottom-1 -right-0 bg-indigo-600 text-white rounded-full p-0.5 dark:bg-indigo-400"
+						class="absolute -right-0 -bottom-1 rounded-full bg-indigo-600 p-0.5 text-white dark:bg-indigo-400"
 					/>
 				{:else}
 					<Ban
 						size={16}
-						class="absolute -bottom-1 -right-0 bg-indigo-600 text-white rounded-full p-0.5 dark:bg-indigo-400"
+						class="absolute -right-0 -bottom-1 rounded-full bg-indigo-600 p-0.5 text-white dark:bg-indigo-400"
 					/>
 				{/if}
 			</div>

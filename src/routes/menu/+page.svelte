@@ -41,7 +41,11 @@
 								<div class="mb-4 flex items-start justify-between">
 									<div class="flex items-center gap-4">
 										<div class="text-3xl">
-											<img src={canteen.image} alt={canteen.name} class="h-12 w-12 rounded" />
+											<img
+												src={canteen.image}
+												alt={canteen.name}
+												class="h-12 w-12 rounded"
+											/>
 										</div>
 										<div>
 											<h3

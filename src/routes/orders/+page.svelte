@@ -19,7 +19,7 @@
 			month: 'short',
 			day: 'numeric',
 			hour: '2-digit',
-			minute: '2-digit'
+			minute: '2-digit',
 		})
 	}
 
@@ -64,9 +64,7 @@
 	}
 
 	function getPaymentMethodColor(prepaid: boolean) {
-		return prepaid 
-			? 'text-green-600 dark:text-green-400' 
-			: 'text-blue-600 dark:text-blue-400'
+		return prepaid ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'
 	}
 </script>
 
@@ -86,27 +84,36 @@
 			Orders
 		</h1>
 
-		<div class="mx-auto max-w-4xl mt-10">
+		<div class="mx-auto mt-10 max-w-4xl">
 			{#if data.orders && data.orders.length > 0}
 				<div class="space-y-4">
 					{#each data.orders as { order, canteen }, index}
 						{@const StatusIcon = getStatusIcon(order.status)}
-						<div 
+						<div
 							class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
 							in:fly={{ y: 20, delay: index * 100, duration: 300 }}
 						>
-							<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+							<div
+								class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+							>
 								<div class="flex-1">
 									<div class="mb-2 flex flex-wrap items-center gap-2">
-										<h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+										<h3
+											class="text-lg font-semibold text-gray-900 dark:text-white"
+										>
 											Order #{order.orderNumber}
 										</h3>
-										<span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium {getStatusColor(order.status)}">
+										<span
+											class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium {getStatusColor(
+												order.status,
+											)}"
+										>
 											<StatusIcon size={12} />
-											{order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+											{order.status.charAt(0).toUpperCase() +
+												order.status.slice(1)}
 										</span>
 									</div>
-									
+
 									<div class="space-y-1 text-sm text-gray-600 dark:text-gray-300">
 										<p class="flex items-center gap-2">
 											<span class="font-medium">Canteen:</span>
@@ -114,13 +121,15 @@
 										</p>
 										<p class="flex items-center gap-2">
 											<span class="font-medium">Amount:</span>
-											<span class="font-semibold text-gray-900 dark:text-white">
+											<span
+												class="font-semibold text-gray-900 dark:text-white"
+											>
 												{formatCurrency(order.totalAmount)}
 											</span>
 										</p>
 										<p class="flex items-center gap-2">
 											<span class="font-medium">Payment:</span>
-											<span class="{getPaymentMethodColor(order.prepaid)}">
+											<span class={getPaymentMethodColor(order.prepaid)}>
 												{getPaymentMethodText(order.prepaid)}
 											</span>
 										</p>
@@ -146,7 +155,9 @@
 				</div>
 			{:else}
 				<div class="py-16 text-center" in:fade={{ duration: 300 }}>
-					<div class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+					<div
+						class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800"
+					>
 						<Receipt size={32} class="text-gray-400" />
 					</div>
 					<h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">

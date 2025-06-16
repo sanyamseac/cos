@@ -8,8 +8,7 @@ import type { PageServerLoad } from './$types'
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
-	if (!auth.CONSUMER.includes(event.locals.user.role))
-		throw error(403,' Access denied')
+	if (!auth.CONSUMER.includes(event.locals.user.role)) throw error(403, ' Access denied')
 
 	try {
 		// Get user's orders with canteen information
@@ -23,9 +22,9 @@ export const load: PageServerLoad = async (event) => {
 			.where(eq(schema.orders.userId, event.locals.user.id))
 			.orderBy(desc(schema.orders.createdAt))
 
-		return { 
+		return {
 			user: event.locals.user,
-			orders
+			orders,
 		}
 	} catch (err) {
 		console.error('Error loading orders:', err)

@@ -18,28 +18,40 @@
 	const canEdit = $derived(item.canEdit !== false) // Default to true for backward compatibility
 </script>
 
-<div class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-	<div class="flex items-start justify-between gap-4 mb-3">
+<div
+	class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+>
+	<div class="mb-3 flex items-start justify-between gap-4">
 		<div class="flex items-start gap-2">
-			<img src={item.menuItem?.image || '/default-item.png'} alt={item.menuItem?.name || 'Unknown Item'} class="h-12 w-12 rounded" />
-			<div class="flex-1 min-w-0">
-				<div class="flex items-center gap-2 mb-1">
-					<h3 class="ml-1 font-semibold text-gray-900 dark:text-white text-base sm:text-lg truncate">
+			<img
+				src={item.menuItem?.image || '/default-item.png'}
+				alt={item.menuItem?.name || 'Unknown Item'}
+				class="h-12 w-12 rounded"
+			/>
+			<div class="min-w-0 flex-1">
+				<div class="mb-1 flex items-center gap-2">
+					<h3
+						class="ml-1 truncate text-base font-semibold text-gray-900 sm:text-lg dark:text-white"
+					>
 						{item.menuItem?.name || 'Unknown Item'}
 					</h3>
 					<FoodType type={item.menuItem.type} size={20} />
 				</div>
-				
+
 				{#if showAddedBy && item.addedByUser}
-					<div class="flex items-center gap-1 w-max rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 mb-2">
+					<div
+						class="mb-2 flex w-max items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 dark:bg-blue-900/30"
+					>
 						<User size={10} class="text-blue-600 dark:text-blue-400" />
-						<span class="text-xs text-blue-700 dark:text-blue-300">{item.addedByUser.name}</span>
+						<span class="text-xs text-blue-700 dark:text-blue-300"
+							>{item.addedByUser.name}</span
+						>
 					</div>
 				{/if}
 			</div>
 		</div>
-		
-		<div class="text-right flex-shrink-0">
+
+		<div class="flex-shrink-0 text-right">
 			<div class="text-lg font-bold text-gray-900 dark:text-white">
 				{formatPrice(itemTotal)}
 			</div>
@@ -61,8 +73,8 @@
 
 		{#if item.addons.length > 0}
 			<div class="text-sm">
-				<span class="text-gray-600 dark:text-gray-300 block mb-1">Add-ons:</span>
-				<div class="space-y-1 pl-2 border-l-2 border-gray-200 dark:border-gray-600">
+				<span class="mb-1 block text-gray-600 dark:text-gray-300">Add-ons:</span>
+				<div class="space-y-1 border-l-2 border-gray-200 pl-2 dark:border-gray-600">
 					{#each item.addons as addon}
 						<div class="flex items-center justify-between">
 							<div>
@@ -79,7 +91,9 @@
 		{/if}
 	</div>
 
-	<div class="flex items-center justify-between gap-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+	<div
+		class="flex items-center justify-between gap-4 border-t border-gray-100 pt-3 dark:border-gray-700"
+	>
 		<div class="flex items-center gap-3">
 			<span class="text-sm text-gray-600 dark:text-gray-300">Quantity:</span>
 			<div class="flex items-center gap-2">
@@ -121,7 +135,7 @@
 					class="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
 				>
 					<Trash2 size={14} />
-					<span class="hidden rs:inline">Remove</span>
+					<span class="rs:inline hidden">Remove</span>
 				</Button.Root>
 			</form>
 		{/if}

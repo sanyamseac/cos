@@ -1,7 +1,7 @@
-import BadgeRoot from './Badge.svelte';
+import BadgeRoot from './Badge.svelte'
 
 export const Badge = {
-    Root: BadgeRoot
-};
+	Root: BadgeRoot,
+}
 
-export default Badge;
+export default Badge

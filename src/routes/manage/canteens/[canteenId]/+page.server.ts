@@ -18,9 +18,7 @@ export const load: PageServerLoad = async (event) => {
 		const canteen = await db
 			.select()
 			.from(schema.canteens)
-			.where(
-				and(eq(schema.canteens.acronym, canteenAcronym)),
-			)
+			.where(and(eq(schema.canteens.acronym, canteenAcronym)))
 			.then((results) => results[0])
 
 		if (!canteen) {
@@ -30,12 +28,9 @@ export const load: PageServerLoad = async (event) => {
 		const canteenId = canteen.id
 
 		const [menuItems, variants, addons] = await Promise.all([
-			db
-				.select()
-				.from(schema.menuItems)
-				.where(eq(schema.menuItems.canteenId, canteenId)),
+			db.select().from(schema.menuItems).where(eq(schema.menuItems.canteenId, canteenId)),
 			db.select().from(schema.variants),
-			db.select().from(schema.addons)
+			db.select().from(schema.addons),
 		])
 
 		const variantsByItem: Record<number, any[]> = {}
@@ -55,13 +50,16 @@ export const load: PageServerLoad = async (event) => {
 			addons: addonsByItem[item.id] || [],
 		}))
 
-		const menuCategories = menuItemsWithDetails.reduce((acc: Record<string, typeof menuItemsWithDetails>, item) => {
-			if (!acc[item.category]) {
-				acc[item.category] = []
-			}
-			acc[item.category].push(item)
-			return acc
-		}, {})
+		const menuCategories = menuItemsWithDetails.reduce(
+			(acc: Record<string, typeof menuItemsWithDetails>, item) => {
+				if (!acc[item.category]) {
+					acc[item.category] = []
+				}
+				acc[item.category].push(item)
+				return acc
+			},
+			{},
+		)
 
 		return {
 			user: event.locals.user,
@@ -76,7 +74,8 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	addMenuItem: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role))
+			throw fail(403, { message: 'Unauthorized' })
 
 		try {
 			const body = await request.formData()
@@ -116,7 +115,8 @@ export const actions: Actions = {
 				throw fail(400, { error: 'CanteenId, category, name, and price are required' })
 			}
 
-			const available = availableValue === 'true' || availableValue === 'on' || (!availableValue && true)
+			const available =
+				availableValue === 'true' || availableValue === 'on' || (!availableValue && true)
 			const active = activeValue === 'true' || activeValue === 'on' || (!activeValue && true)
 
 			const [newItem] = await db
@@ -130,7 +130,9 @@ export const actions: Actions = {
 					type,
 					active,
 					description: description,
-					image: filename ? `/content/MenuItemImages/${filename}` : '/defaultMenuItem.png',
+					image: filename
+						? `/content/MenuItemImages/${filename}`
+						: '/defaultMenuItem.png',
 				})
 				.returning()
 
@@ -142,7 +144,8 @@ export const actions: Actions = {
 	},
 
 	updateMenuItem: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role))
+			throw fail(403, { message: 'Unauthorized' })
 
 		try {
 			const body = await request.formData()
@@ -200,7 +203,8 @@ export const actions: Actions = {
 
 	// Addons
 	addAddon: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role))
+			throw fail(403, { message: 'Unauthorized' })
 
 		try {
 			const body = await request.formData()
@@ -235,7 +239,8 @@ export const actions: Actions = {
 	},
 
 	updateAddon: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role))
+			throw fail(403, { message: 'Unauthorized' })
 
 		try {
 			const body = await request.formData()
@@ -278,7 +283,8 @@ export const actions: Actions = {
 
 	// Variants
 	addVariant: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role))
+			throw fail(403, { message: 'Unauthorized' })
 
 		try {
 			const body = await request.formData()
@@ -311,7 +317,8 @@ export const actions: Actions = {
 	},
 
 	updateVariant: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role))
+			throw fail(403, { message: 'Unauthorized' })
 
 		try {
 			const body = await request.formData()

@@ -21,25 +21,27 @@
 	const basketTotal = $derived(calculateBasketTotal(basket.items))
 	const hasSufficientBalance = $derived(walletBalance >= basketTotal)
 	const canPlaceOrder = $derived(!paymentMethod || (paymentMethod && hasSufficientBalance))
-	const isSharedBasket = $derived(basket.basketAccess?.members && basket.basketAccess.members.length > 1)
+	const isSharedBasket = $derived(
+		basket.basketAccess?.members && basket.basketAccess.members.length > 1,
+	)
 
 	const itemsByUser = $derived(() => {
 		if (!isSharedBasket) return []
-		
+
 		const userGroups = basket.items.reduce((groups: any, item: any) => {
 			const userId = item.addedByUser?.id || 'unknown'
 			if (!groups[userId]) {
 				groups[userId] = {
 					user: item.addedByUser || { id: 'unknown', name: 'Unknown User' },
 					items: [],
-					total: 0
+					total: 0,
 				}
 			}
 			groups[userId].items.push(item)
 			groups[userId].total += calculateBasketTotal([item])
 			return groups
 		}, {})
-		
+
 		return Object.values(userGroups)
 	})
 
@@ -51,7 +53,9 @@
 	}
 
 	function isOwner(userId: string): boolean {
-		return basket.basketAccess?.members?.find((m: any) => m.user.id === userId)?.isOwner || false
+		return (
+			basket.basketAccess?.members?.find((m: any) => m.user.id === userId)?.isOwner || false
+		)
 	}
 </script>
 
@@ -63,15 +67,20 @@
 			<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
 				{basket.canteen.name}
 			</h2>
-			<div class="flex items-center gap-3 mt-1">
+			<div class="mt-1 flex items-center gap-3">
 				<p class="text-sm text-gray-600 dark:text-gray-300">
 					{basket.items.length} item{basket.items.length !== 1 ? 's' : ''}
 				</p>
 				{#if isSharedBasket}
-					<div class="flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-1">
+					<div
+						class="flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 dark:bg-blue-900/30"
+					>
 						<Users size={14} class="text-blue-600 dark:text-blue-400" />
 						<span class="text-xs text-blue-700 dark:text-blue-300">
-							{basket.basketAccess.members.length} member{basket.basketAccess.members.length !== 1 ? 's' : ''}
+							{basket.basketAccess.members.length} member{basket.basketAccess.members
+								.length !== 1
+								? 's'
+								: ''}
 						</span>
 					</div>
 				{/if}
@@ -111,7 +120,7 @@
 	<div class="space-y-4">
 		{#if isSharedBasket}
 			{#each itemsByUser as userGroup}
-				<div class="border-l-4 border-indigo-200 dark:border-indigo-700 pl-4">
+				<div class="border-l-4 border-indigo-200 pl-4 dark:border-indigo-700">
 					<div class="mb-3 flex items-center gap-2">
 						{#if isOwner(userGroup.user.id)}
 							<Crown size={16} class="text-yellow-500" />
@@ -119,7 +128,9 @@
 						<h4 class="font-medium text-gray-900 dark:text-white">
 							{userGroup.user.name}
 							{#if isOwner(userGroup.user.id)}
-								<span class="text-xs text-yellow-600 dark:text-yellow-400">(Owner)</span>
+								<span class="text-xs text-yellow-600 dark:text-yellow-400"
+									>(Owner)</span
+								>
 							{/if}
 						</h4>
 						<span class="text-sm text-gray-500 dark:text-gray-400">

@@ -42,34 +42,37 @@ export const actions: Actions = {
 			throw fail(400, { message: 'Invalid username or password' })
 		}
 
-		let user:any = null
+		let user: any = null
 		if (username.includes('@canteens.iiit.ac.in')) {
 			const canteen = username.split('@')[0]
 			const canteenDetails = await db
 				.select({
 					canteen: schema.canteens,
-					auth: schema.canteenAuth
+					auth: schema.canteenAuth,
 				})
 				.from(schema.canteens)
 				.innerJoin(schema.canteenAuth, eq(schema.canteens.id, schema.canteenAuth.canteenId))
 				.where(eq(schema.canteens.acronym, canteen))
 				.limit(1)
-			
-			if (canteenDetails.length === 0)
-				throw fail(404, { message: 'Canteen not found' })
+
+			if (canteenDetails.length === 0) throw fail(404, { message: 'Canteen not found' })
 
 			const canteenPasswordHash = canteenDetails[0].auth.passwordHash
-			if (canteenPasswordHash !== encodeHexLowerCase(sha256(new TextEncoder().encode(password)))) {
+			if (
+				canteenPasswordHash !==
+				encodeHexLowerCase(sha256(new TextEncoder().encode(password)))
+			) {
 				throw fail(401, { message: 'Invalid canteen password' })
 			}
 
-			const response = await db.select({
-				id: schema.user.id,
-				name: schema.user.name,
-				email: schema.user.email,
-				role: schema.user.role,
-				profilePicture: schema.user.profilePicture,
-			})
+			const response = await db
+				.select({
+					id: schema.user.id,
+					name: schema.user.name,
+					email: schema.user.email,
+					role: schema.user.role,
+					profilePicture: schema.user.profilePicture,
+				})
 				.from(schema.user)
 				.where(eq(schema.user.email, username))
 				.limit(1)
@@ -77,66 +80,65 @@ export const actions: Actions = {
 			user = response[0]
 			if (!user) throw fail(404, { message: 'Canteen user not found' })
 		} else {
-			if (!username.includes('test')){
-			const tgtResponse = await fetch(`${cas}/v1/tickets`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-				body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
-			})
+			if (!username.includes('test')) {
+				const tgtResponse = await fetch(`${cas}/v1/tickets`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+					},
+					body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+				})
 
-			if (!tgtResponse.ok) {
-				console.error('Failed to obtain TGT:', await tgtResponse.text())
-				throw fail(401, { message: 'Authentication failed' })
+				if (!tgtResponse.ok) {
+					console.error('Failed to obtain TGT:', await tgtResponse.text())
+					throw fail(401, { message: 'Authentication failed' })
+				}
+
+				const tgtUrl = tgtResponse.headers.get('Location')
+				if (!tgtUrl) {
+					console.error('No TGT URL provided in response')
+					throw fail(500, { message: 'Authentication system error' })
+				}
+
+				const stResponse = await fetch(tgtUrl, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+					},
+					body: `service=${encodeURIComponent(event.url.origin)}`,
+				})
+
+				if (!stResponse.ok) {
+					console.error('Failed to obtain service ticket:', await stResponse.text())
+					throw fail(401, { message: 'Failed to obtain service ticket' })
+				}
+
+				const serviceTicket = await stResponse.text()
+
+				const validationUrl = `${cas}/serviceValidate?service=${event.url.origin}&ticket=${serviceTicket}&format=JSON`
+				const response = await fetch(validationUrl)
+				if (!response.ok) {
+					error(401, `Failed to login: ${response.status}`)
+				}
+
+				const json = await response.json()
+				const details = json.serviceResponse?.authenticationSuccess?.attributes
+				const errors = json.serviceResponse?.authenticationFailure
+				if (!details) {
+					if (errors) error(401, `Failed to login: ${errors.code}`)
+					else error(401, 'Failed to parse CAS response.')
+				}
+
+				user = {
+					name: details['Name'][0],
+					email: details['E-Mail'][0],
+				}
+			} else {
+				user = {
+					name: username,
+					email: username,
+				}
 			}
-
-			const tgtUrl = tgtResponse.headers.get('Location')
-			if (!tgtUrl) {
-				console.error('No TGT URL provided in response')
-				throw fail(500, { message: 'Authentication system error' })
-			}
-
-			const stResponse = await fetch(tgtUrl, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-				body: `service=${encodeURIComponent(event.url.origin)}`,
-			})
-
-			if (!stResponse.ok) {
-				console.error('Failed to obtain service ticket:', await stResponse.text())
-				throw fail(401, { message: 'Failed to obtain service ticket' })
-			}
-
-			const serviceTicket = await stResponse.text()
-
-			const validationUrl = `${cas}/serviceValidate?service=${event.url.origin}&ticket=${serviceTicket}&format=JSON`
-			const response = await fetch(validationUrl)
-			if (!response.ok) {
-				error(401, `Failed to login: ${response.status}`)
-			}
-
-			const json = await response.json()
-			const details = json.serviceResponse?.authenticationSuccess?.attributes
-			const errors = json.serviceResponse?.authenticationFailure
-			if (!details) {
-				if (errors) error(401, `Failed to login: ${errors.code}`)
-				else error(401, 'Failed to parse CAS response.')
-			}
-
-			user = {
-				name: details['Name'][0],
-				email: details['E-Mail'][0],
-			}
-		}
-		else {
-			user = {
-				name: username,
-				email: username,
-			}
-		}
 
 			const results = await db
 				.select({
@@ -155,7 +157,7 @@ export const actions: Actions = {
 					...user,
 					id: generateId(),
 					role: 'consumer',
-					profilePicture: getRandomDefaultAvatar()
+					profilePicture: getRandomDefaultAvatar(),
 				}
 				await db.insert(schema.user).values(newUser)
 				user = newUser

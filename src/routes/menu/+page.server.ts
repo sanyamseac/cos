@@ -22,5 +22,4 @@ export const load: PageServerLoad = async (event) => {
 	}
 }
 
-export const actions: Actions = {
-}
+export const actions: Actions = {}

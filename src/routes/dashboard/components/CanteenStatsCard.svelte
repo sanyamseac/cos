@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { formatPrice } from "$lib/utils"
-	import { ChartColumnBig } from "lucide-svelte"
+	import { formatPrice } from '$lib/utils'
+	import { ChartColumnBig } from 'lucide-svelte'
 
 	interface CanteenStat {
 		name: string

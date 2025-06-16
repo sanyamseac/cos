@@ -10,7 +10,7 @@
 		addingToCart,
 		getFoodTypeIcon,
 		onClose,
-		showCartMessage = $bindable(false)
+		showCartMessage = $bindable(false),
 	}: {
 		item: any
 		addingToCart?: boolean
@@ -105,13 +105,15 @@
 					>
 						{#each item.variants as variant}
 							{@const id = useId()}
-							<div class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">
+							<div
+								class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+							>
 								<div class="flex items-center">
 									<RadioGroup.Item
 										{id}
 										value={variant.id.toString()}
 										disabled={!variant.available}
-										class="flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
+										class="flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
 									>
 										{#snippet children({ checked })}
 											{#if checked}
@@ -119,14 +121,22 @@
 											{/if}
 										{/snippet}
 									</RadioGroup.Item>
-									<Label.Root 
-										for={id} 
-										class="ml-3 cursor-pointer text-gray-900 dark:text-white {(!variant.available || !variant.active) ? 'cursor-not-allowed opacity-50' : ''}"
+									<Label.Root
+										for={id}
+										class="ml-3 cursor-pointer text-gray-900 dark:text-white {!variant.available ||
+										!variant.active
+											? 'cursor-not-allowed opacity-50'
+											: ''}"
 									>
 										{variant.name}
 									</Label.Root>
 								</div>
-								<span class="font-medium text-gray-900 dark:text-white {(!variant.available || !variant.active) ? 'opacity-50' : ''}">
+								<span
+									class="font-medium text-gray-900 dark:text-white {!variant.available ||
+									!variant.active
+										? 'opacity-50'
+										: ''}"
+								>
 									{formatPrice(Number(variant.price) + Number(item.price))}
 								</span>
 							</div>
@@ -142,7 +152,9 @@
 				<div class="space-y-2">
 					{#each item.addons as addon}
 						<div
-							class="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700 {addon.available ? '' : 'opacity-50 cursor-not-allowed'}"
+							class="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700 {addon.available
+								? ''
+								: 'cursor-not-allowed opacity-50'}"
 						>
 							<Checkbox.Root
 								class="flex items-center gap-2"
@@ -152,7 +164,9 @@
 								value={addon.id.toString()}
 							>
 								{#snippet children({ checked })}
-									<div class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500">
+									<div
+										class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
+									>
 										{#if checked}
 											<div class="h-3 w-3 rounded bg-white" />
 										{/if}

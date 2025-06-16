@@ -14,7 +14,7 @@
 		ordersThisMonth: stats?.ordersThisMonth || 0,
 		favoriteCanteen: stats?.favoriteCanteen || 'Start ordering to see your favorite!',
 		spentTrend: stats?.spentTrend || { value: '0', isUp: true },
-		ordersTrend: stats?.ordersTrend || { value: 0, isUp: true }
+		ordersTrend: stats?.ordersTrend || { value: 0, isUp: true },
 	}
 </script>
 
@@ -46,7 +46,8 @@
 			<StatsCard
 				title="Spent This Month"
 				value={formatPrice(displayStats.totalSpent, 0)}
-				trend="{displayStats.spentTrend.isUp ? '+' : ''}{displayStats.spentTrend.value}% from last month"
+				trend="{displayStats.spentTrend.isUp ? '+' : ''}{displayStats.spentTrend
+					.value}% from last month"
 				trendUp={displayStats.spentTrend.isUp}
 				size="medium"
 				gradient="emerald"
@@ -54,7 +55,8 @@
 			<StatsCard
 				title="Orders This Month"
 				value={displayStats.ordersThisMonth.toString()}
-				trend="{displayStats.ordersTrend.isUp ? '+' : ''}{displayStats.ordersTrend.value} from last month"
+				trend="{displayStats.ordersTrend.isUp ? '+' : ''}{displayStats.ordersTrend
+					.value} from last month"
 				trendUp={displayStats.ordersTrend.isUp}
 				size="medium"
 				gradient="blue"

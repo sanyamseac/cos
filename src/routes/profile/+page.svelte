@@ -98,7 +98,7 @@
 	onMount(async () => {
 		themeMode = (localStorage.getItem('theme') as string) || 'system'
 		updateTheme(themeMode)
-		
+
 		if (serviceWorkerManager.isSupported) {
 			try {
 				const subscription = await serviceWorkerManager.getPushSubscription()

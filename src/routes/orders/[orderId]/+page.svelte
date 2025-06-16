@@ -1,6 +1,19 @@
 <script lang="ts">
 	import { Button, Toggle } from 'bits-ui'
-	import { Clock, Receipt, Package, CheckCircle, XCircle, ArrowLeft, Eye, EyeOff, MapPin, Calendar, CreditCard, Wallet } from 'lucide-svelte'
+	import {
+		Clock,
+		Receipt,
+		Package,
+		CheckCircle,
+		XCircle,
+		ArrowLeft,
+		Eye,
+		EyeOff,
+		MapPin,
+		Calendar,
+		CreditCard,
+		Wallet,
+	} from 'lucide-svelte'
 	import type { PageData } from './$types'
 	import { goto } from '$app/navigation'
 	import { fly, fade } from 'svelte/transition'
@@ -18,7 +31,7 @@
 			month: 'long',
 			day: 'numeric',
 			hour: '2-digit',
-			minute: '2-digit'
+			minute: '2-digit',
 		})
 	}
 
@@ -66,36 +79,36 @@
 				label: 'Order Placed',
 				description: 'Your order has been placed successfully',
 				timestamp: order.createdAt,
-				completed: true
+				completed: true,
 			},
 			{
 				status: 'confirmed',
 				label: 'Order Confirmed',
 				description: 'Your order has been confirmed by the canteen',
 				timestamp: order.confirmedAt,
-				completed: ['confirmed', 'preparing', 'ready', 'completed'].includes(currentStatus)
+				completed: ['confirmed', 'preparing', 'ready', 'completed'].includes(currentStatus),
 			},
 			{
 				status: 'preparing',
 				label: 'Preparing',
 				description: 'Your order is being prepared',
 				timestamp: order.preparedAt,
-				completed: ['preparing', 'ready', 'completed'].includes(currentStatus)
+				completed: ['preparing', 'ready', 'completed'].includes(currentStatus),
 			},
 			{
 				status: 'ready',
 				label: 'Ready for Pickup',
 				description: 'Your order is ready for pickup',
 				timestamp: order.readyAt,
-				completed: ['ready', 'completed'].includes(currentStatus)
+				completed: ['ready', 'completed'].includes(currentStatus),
 			},
 			{
 				status: 'completed',
 				label: 'Order Completed',
 				description: 'Your order has been delivered/picked up',
 				timestamp: order.completedAt,
-				completed: currentStatus === 'completed'
-			}
+				completed: currentStatus === 'completed',
+			},
 		]
 
 		// If cancelled, show only placed and cancelled
@@ -107,8 +120,8 @@
 					label: 'Order Cancelled',
 					description: 'Your order has been cancelled',
 					timestamp: order.cancelledAt,
-					completed: true
-				}
+					completed: true,
+				},
 			]
 		}
 
@@ -118,13 +131,15 @@
 	function calculateItemTotal(item: any) {
 		const basePrice = Number(item.orderItem.unitPrice)
 		const variantPrice = Number(item.orderItem.variantPrice || 0)
-		const addonsPrice = item.addons.reduce((sum: number, addon: any) => 
-			sum + Number(addon.orderAddon.unitPrice), 0)
+		const addonsPrice = item.addons.reduce(
+			(sum: number, addon: any) => sum + Number(addon.orderAddon.unitPrice),
+			0,
+		)
 		return (basePrice + variantPrice + addonsPrice) * item.orderItem.quantity
 	}
 
 	const timelineSteps = $derived(getTimelineSteps(data.order.status, data.order))
-    const StatusIcon = getStatusIcon(data.order.status)
+	const StatusIcon = getStatusIcon(data.order.status)
 </script>
 
 <svelte:head>
@@ -148,22 +163,35 @@
 		</div>
 
 		<div class="mx-auto max-w-6xl space-y-6">
-			<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800" in:fly={{ y: 20, duration: 300 }}>
+			<div
+				class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+				in:fly={{ y: 20, duration: 300 }}
+			>
 				<div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 					<div>
 						<div class="mb-3 flex flex-wrap items-center gap-3">
-							<h1 class="text-2xl font-bold text-gray-900 dark:text-white md:text-3xl">
+							<h1
+								class="text-2xl font-bold text-gray-900 md:text-3xl dark:text-white"
+							>
 								Order #{data.order.orderNumber}
-							</h1>						<span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium {getStatusColor(data.order.status)}">
+							</h1>
+							<span
+								class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium {getStatusColor(
+									data.order.status,
+								)}"
+							>
 								{#if data.order}
 									{@const StatusIcon = getStatusIcon(data.order.status)}
 									<StatusIcon size={14} />
-									{data.order.status.charAt(0).toUpperCase() + data.order.status.slice(1)}
+									{data.order.status.charAt(0).toUpperCase() +
+										data.order.status.slice(1)}
 								{/if}
 							</span>
 						</div>
-						
-						<div class="grid grid-cols-1 gap-3 text-sm text-gray-600 dark:text-gray-300 md:grid-cols-2">
+
+						<div
+							class="grid grid-cols-1 gap-3 text-sm text-gray-600 md:grid-cols-2 dark:text-gray-300"
+						>
 							<div class="flex items-center gap-2">
 								<MapPin size={16} class="text-gray-400" />
 								<span class="font-medium">Canteen:</span>
@@ -178,11 +206,15 @@
 								{#if data.order.prepaid}
 									<Wallet size={16} class="text-green-600" />
 									<span class="font-medium">Payment:</span>
-									<span class="text-green-600 dark:text-green-400">Prepaid (Wallet)</span>
+									<span class="text-green-600 dark:text-green-400"
+										>Prepaid (Wallet)</span
+									>
 								{:else}
 									<CreditCard size={16} class="text-blue-600" />
 									<span class="font-medium">Payment:</span>
-									<span class="text-blue-600 dark:text-blue-400">Pay on Delivery</span>
+									<span class="text-blue-600 dark:text-blue-400"
+										>Pay on Delivery</span
+									>
 								{/if}
 							</div>
 							<div class="flex items-center gap-2">
@@ -196,12 +228,18 @@
 					</div>
 
 					<!-- PIN Section -->
-					<div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700">
+					<div
+						class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700"
+					>
 						<div class="flex items-center justify-between gap-3">
 							<div>
-								<h3 class="font-medium text-gray-900 dark:text-white">Pickup PIN</h3>
+								<h3 class="font-medium text-gray-900 dark:text-white">
+									Pickup PIN
+								</h3>
 								<div class="flex items-center gap-2">
-									<span class="font-mono text-lg font-bold text-gray-900 dark:text-white">
+									<span
+										class="font-mono text-lg font-bold text-gray-900 dark:text-white"
+									>
 										{showPin ? data.order.otp : '••••'}
 									</span>
 									<Toggle.Root
@@ -225,30 +263,49 @@
 			<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				<!-- Order Timeline -->
 				<div class="lg:col-span-1">
-					<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800" in:fly={{ y: 20, delay: 100, duration: 300 }}>
-						<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-white">Order Timeline</h2>
-						
+					<div
+						class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+						in:fly={{ y: 20, delay: 100, duration: 300 }}
+					>
+						<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
+							Order Timeline
+						</h2>
+
 						<div class="space-y-4">
 							{#each timelineSteps as step, index}
-							{@const StatusIcon = getStatusIcon(step.status)}
+								{@const StatusIcon = getStatusIcon(step.status)}
 								<div class="flex gap-3">
 									<div class="flex flex-col items-center">
-										<div class="flex h-8 w-8 items-center justify-center rounded-full {step.completed ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'}">
+										<div
+											class="flex h-8 w-8 items-center justify-center rounded-full {step.completed
+												? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300'
+												: 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'}"
+										>
 											<StatusIcon size={14} />
 										</div>
 										{#if index < timelineSteps.length - 1}
-											<div class="mt-1 h-8 w-px {step.completed ? 'bg-green-200 dark:bg-green-800' : 'bg-gray-200 dark:bg-gray-600'}"></div>
+											<div
+												class="mt-1 h-8 w-px {step.completed
+													? 'bg-green-200 dark:bg-green-800'
+													: 'bg-gray-200 dark:bg-gray-600'}"
+											></div>
 										{/if}
 									</div>
 									<div class="min-w-0 flex-1 pb-4">
-										<h4 class="text-sm font-medium {step.completed ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}">
+										<h4
+											class="text-sm font-medium {step.completed
+												? 'text-gray-900 dark:text-white'
+												: 'text-gray-500 dark:text-gray-400'}"
+										>
 											{step.label}
 										</h4>
 										<p class="text-xs text-gray-500 dark:text-gray-400">
 											{step.description}
 										</p>
 										{#if step.timestamp}
-											<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+											<p
+												class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+											>
 												{formatDate(step.timestamp)}
 											</p>
 										{/if}
@@ -261,30 +318,51 @@
 
 				<!-- Order Items -->
 				<div class="lg:col-span-2">
-					<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800" in:fly={{ y: 20, delay: 200, duration: 300 }}>
-						<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-white">Order Items</h2>
+					<div
+						class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+						in:fly={{ y: 20, delay: 200, duration: 300 }}
+					>
+						<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
+							Order Items
+						</h2>
 						<div class="space-y-4">
 							{#each data.orderItems || [] as item, index}
-								<div class=" rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-									<div class="flex items-start justify-between gap-4 mb-3">
-										<div class="flex items-start gap-2 items-center">
-											<img src={item.menuItem?.image || '/default-item.png'} alt={item.menuItem?.name || 'Unknown Item'} class="h-12 w-12 rounded" />
-											<div class="flex-1 min-w-0">
-												<div class="mt-3 flex items-center gap-2 mb-1">
-													<h3 class="ml-1 font-semibold text-gray-900 dark:text-white text-base sm:text-lg truncate">
+								<div
+									class=" rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+								>
+									<div class="mb-3 flex items-start justify-between gap-4">
+										<div class="flex items-center items-start gap-2">
+											<img
+												src={item.menuItem?.image || '/default-item.png'}
+												alt={item.menuItem?.name || 'Unknown Item'}
+												class="h-12 w-12 rounded"
+											/>
+											<div class="min-w-0 flex-1">
+												<div class="mt-3 mb-1 flex items-center gap-2">
+													<h3
+														class="ml-1 truncate text-base font-semibold text-gray-900 sm:text-lg dark:text-white"
+													>
 														{item.menuItem?.name || 'Unknown Item'}
 													</h3>
-													<FoodType type={item.menuItem?.type} size={20} />
+													<FoodType
+														type={item.menuItem?.type}
+														size={20}
+													/>
 												</div>
 											</div>
 										</div>
-										
-										<div class="text-right flex-shrink-0">
-											<div class="text-lg font-bold text-gray-900 dark:text-white">
+
+										<div class="flex-shrink-0 text-right">
+											<div
+												class="text-lg font-bold text-gray-900 dark:text-white"
+											>
 												{formatPrice(item.orderItem.subtotal)}
 											</div>
 											<div class="text-xs text-gray-500 dark:text-gray-400">
-												{item.orderItem.quantity} × {formatPrice(Number(item.orderItem.subtotal) / item.orderItem.quantity)}
+												{item.orderItem.quantity} × {formatPrice(
+													Number(item.orderItem.subtotal) /
+														item.orderItem.quantity,
+												)}
 											</div>
 										</div>
 									</div>
@@ -292,24 +370,47 @@
 									<div class="mb-4 space-y-2">
 										{#if item.variant}
 											<div class="flex items-center justify-between text-sm">
-												<span class="text-gray-600 dark:text-gray-300">{item.variant.name}</span>
-												<span class="font-medium text-gray-900 dark:text-white">
-													{formatPrice(Number(item.menuItem?.price) + Number(item.variant.price))}
+												<span class="text-gray-600 dark:text-gray-300"
+													>{item.variant.name}</span
+												>
+												<span
+													class="font-medium text-gray-900 dark:text-white"
+												>
+													{formatPrice(
+														Number(item.menuItem?.price) +
+															Number(item.variant.price),
+													)}
 												</span>
 											</div>
 										{/if}
 
 										{#if item.addons.length > 0}
 											<div class="text-sm">
-												<span class="text-gray-600 dark:text-gray-300 block mb-1">Add-ons:</span>
-												<div class="space-y-1 pl-2 border-l-2 border-gray-200 dark:border-gray-600">
+												<span
+													class="mb-1 block text-gray-600 dark:text-gray-300"
+													>Add-ons:</span
+												>
+												<div
+													class="space-y-1 border-l-2 border-gray-200 pl-2 dark:border-gray-600"
+												>
 													{#each item.addons as addon}
-														<div class="flex items-center justify-between">
+														<div
+															class="flex items-center justify-between"
+														>
 															<div>
-																<span class="text-gray-700 dark:text-gray-300">{addon.addon?.name}</span>
-																<FoodType type={addon.addon?.type} size={14} class="inline" />
+																<span
+																	class="text-gray-700 dark:text-gray-300"
+																	>{addon.addon?.name}</span
+																>
+																<FoodType
+																	type={addon.addon?.type}
+																	size={14}
+																	class="inline"
+																/>
 															</div>
-															<span class="font-medium text-gray-900 dark:text-white">
+															<span
+																class="font-medium text-gray-900 dark:text-white"
+															>
 																{formatPrice(addon.addon?.price)}
 															</span>
 														</div>
@@ -321,10 +422,12 @@
 								</div>
 							{/each}
 						</div>
-						
+
 						<!-- Order Total -->
 						<div class="mt-6 border-t border-gray-200 pt-4 dark:border-gray-600">
-							<div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
+							<div
+								class="flex justify-between text-lg font-bold text-gray-900 dark:text-white"
+							>
 								<span>Total Amount</span>
 								<span>{formatPrice(data.order.totalAmount)}</span>
 							</div>

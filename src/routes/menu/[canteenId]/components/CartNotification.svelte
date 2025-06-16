@@ -14,7 +14,7 @@
 {#if show && message}
 	<div
 		transition:fade={{ duration: 300 }}
-	class="fixed bottom-20 left-1/2 transform -translate-x-1/2 flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-center text-white shadow-lg whitespace-nowrap"
+		class="fixed bottom-20 left-1/2 flex -translate-x-1/2 transform items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-center whitespace-nowrap text-white shadow-lg"
 	>
 		<div class="flex items-center gap-2">
 			<ShoppingBasket size={24} />

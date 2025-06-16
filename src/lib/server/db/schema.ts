@@ -109,8 +109,7 @@ export const basketItems = pgTable('basket_items', {
 	menuItemId: integer('menu_item_id')
 		.notNull()
 		.references(() => menuItems.id, { onDelete: 'cascade' }),
-	variantId: integer('variant_id')
-		.references(() => variants.id, { onDelete: 'cascade' }),
+	variantId: integer('variant_id').references(() => variants.id, { onDelete: 'cascade' }),
 	quantity: integer('quantity').notNull().default(1),
 	addedBy: text('added_by')
 		.notNull()
@@ -136,9 +135,7 @@ export const orders = pgTable('orders', {
 	canteenId: integer('canteen_id')
 		.notNull()
 		.references(() => canteens.id, { onDelete: 'cascade' }),
-	status: text('status')
-		.notNull()
-		.default('pending'), // pending, confirmed, preparing, ready, completed, cancelled
+	status: text('status').notNull().default('pending'), // pending, confirmed, preparing, ready, completed, cancelled
 	totalAmount: numeric('total_amount', { precision: 10, scale: 2 }).notNull(),
 	notes: text('notes'),
 	prepaid: boolean('prepaid').notNull().default(false),
@@ -151,8 +148,7 @@ export const orders = pgTable('orders', {
 	readyAt: timestamp('ready_at'),
 	completedAt: timestamp('completed_at'),
 	cancelledAt: timestamp('cancelled_at'),
-	cancelledBy: text('cancelled_by')
-		.references(() => user.id, { onDelete: 'set null' }),
+	cancelledBy: text('cancelled_by').references(() => user.id, { onDelete: 'set null' }),
 })
 
 export const orderItems = pgTable('order_items', {
@@ -163,8 +159,7 @@ export const orderItems = pgTable('order_items', {
 	menuItemId: integer('menu_item_id')
 		.notNull()
 		.references(() => menuItems.id, { onDelete: 'cascade' }),
-	variantId: integer('variant_id')
-		.references(() => variants.id, { onDelete: 'cascade' }),
+	variantId: integer('variant_id').references(() => variants.id, { onDelete: 'cascade' }),
 	quantity: integer('quantity').notNull().default(1),
 	unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
 	variantPrice: numeric('variant_price', { precision: 10, scale: 2 }).default('0.00'),
@@ -217,7 +212,6 @@ export type PushSubscription = typeof pushSubscriptionsTable.$inferSelect
 export type Variant = typeof variants.$inferSelect
 export type Addon = typeof addons.$inferSelect
 export type Basket = typeof baskets.$inferSelect
-export type BasketAccess = typeof basketAccess.$inferSelect
 export type BasketItem = typeof basketItems.$inferSelect
 export type BasketAddon = typeof basketAddons.$inferSelect
 export type Order = typeof orders.$inferSelect

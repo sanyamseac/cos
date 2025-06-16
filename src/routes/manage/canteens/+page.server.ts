@@ -28,7 +28,8 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	addCanteen: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role))
+			throw fail(403, { message: 'Unauthorized' })
 
 		try {
 			const body = await request.formData()
@@ -64,13 +65,13 @@ export const actions: Actions = {
 					image: `/content/canteenImages/${filename}`,
 				})
 				.returning()
-			
+
 			// Insert canteen auth credentials
 			await db.insert(schema.canteenAuth).values({
 				canteenId: newCanteen.id,
 				passwordHash: encodeHexLowerCase(sha256(new TextEncoder().encode(password))),
 			})
-			
+
 			await db.insert(schema.user).values({
 				id: generateId(),
 				name: newCanteen.name,
@@ -87,7 +88,8 @@ export const actions: Actions = {
 	},
 
 	updateCanteen: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role))
+			throw fail(403, { message: 'Unauthorized' })
 
 		try {
 			const body = await request.formData()
@@ -141,7 +143,8 @@ export const actions: Actions = {
 	},
 
 	resetPassword: async ({ request, locals }) => {
-		if (!locals.user || !auth.ADMIN.includes(locals.user.role)) throw fail(403, {message: 'Unauthorized'})
+		if (!locals.user || !auth.ADMIN.includes(locals.user.role))
+			throw fail(403, { message: 'Unauthorized' })
 
 		try {
 			const body = await request.formData()
@@ -176,5 +179,5 @@ export const actions: Actions = {
 			console.error('Error resetting password:', error)
 			throw fail(500, { error: 'Failed to reset password' })
 		}
-	}
+	},
 }

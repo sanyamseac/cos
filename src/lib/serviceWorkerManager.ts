@@ -41,7 +41,7 @@ class ServiceWorkerManager {
 			registration: this.registration,
 		}
 	}
-	
+
 	//
 	async initializeServiceWorker(): Promise<ServiceWorkerRegistration | null> {
 		if (!this.isSupported) {
@@ -188,7 +188,7 @@ class ServiceWorkerManager {
 			console.error('Failed to subscribe to push notifications:', error)
 			return null
 		}
-	} 
+	}
 
 	// Ensure Service Worker is active and ready
 	private async ensureServiceWorkerActive(): Promise<void> {

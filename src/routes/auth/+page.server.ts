@@ -51,7 +51,7 @@ export const load: PageServerLoad = async (event) => {
 			...user,
 			id: generateId(),
 			role: 'consumer',
-			profilePicture: getRandomDefaultAvatar()
+			profilePicture: getRandomDefaultAvatar(),
 		}
 		await db.insert(schema.user).values(newUser)
 		user = newUser

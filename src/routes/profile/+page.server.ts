@@ -17,7 +17,12 @@ export const load: PageServerLoad = async (event) => {
 			})
 			.from(schema.wallets)
 			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
-			.where(and(eq(schema.wallets.userId, event.locals.user.id), eq(schema.canteens.active, true)))
+			.where(
+				and(
+					eq(schema.wallets.userId, event.locals.user.id),
+					eq(schema.canteens.active, true),
+				),
+			)
 
 		const recentTransactions = await db
 			.select({
@@ -39,7 +44,7 @@ export const load: PageServerLoad = async (event) => {
 		}
 	} catch (err) {
 		console.error('Error loading profile data:', err)
-		throw error(500,'Failed to load profile data')
+		throw error(500, 'Failed to load profile data')
 	}
 }
 
