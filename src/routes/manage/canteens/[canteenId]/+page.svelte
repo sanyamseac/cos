@@ -6,6 +6,7 @@
 	import CrudModal from '$lib/components/CrudModal.svelte'
 	import Addon from './components/addon.svelte'
 	import Variant from './components/variant.svelte'
+	import FoodType from '$lib/components/FoodType.svelte'
 
 	let { data }: { data: PageData } = $props()
 	$effect(() => {
@@ -106,6 +107,12 @@
 			label: 'Active',
 			type: 'switch' as const,
 			value: crudModalValues.editing ? crudModalValues.item?.active : true,
+		},
+		{
+			name: 'image',
+			label: 'Image',
+			type: 'file' as const,
+			accept: 'image/*',
 		},
 	])
 </script>
@@ -216,9 +223,8 @@
 									<div class="flex items-start justify-between">
 										<div class="flex-1">
 											<div class="mb-2 flex items-center gap-2">
-												<span class="text-lg" title={item.type}
-													>{getFoodTypeIcon(item.type)}</span
-												>
+												<img src={item.image} alt={item.name} class="h-8 w-8 rounded" />
+												<FoodType type={item.type} size={20} />
 												<h3
 													class="text-lg font-medium text-gray-900 dark:text-white"
 												>

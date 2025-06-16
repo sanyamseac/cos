@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CrudModal from '$lib/components/CrudModal.svelte'
+	import FoodType from '$lib/components/FoodType.svelte'
     import { Button } from 'bits-ui';
     import { Plus, Edit } from 'lucide-svelte';
 
@@ -105,13 +106,9 @@
                     class="flex items-center justify-between rounded-md bg-gray-50 p-2 dark:bg-gray-700"
                 >
                     <div class="flex items-center gap-2">
-                        <span
-                            class="text-sm"
-                            title={addon.type}
-                            >{getFoodTypeIcon(
-                                addon.type,
-                            )}</span
-                        >
+                        <FoodType 
+                            type={addon.type}
+                            size={16} />
                         <span class="text-sm font-medium"
                             >{addon.name}</span
                         >

@@ -23,7 +23,6 @@
 	const canPlaceOrder = $derived(!paymentMethod || (paymentMethod && hasSufficientBalance))
 	const isSharedBasket = $derived(basket.basketAccess?.members && basket.basketAccess.members.length > 1)
 
-	// Group items by user for shared baskets
 	const itemsByUser = $derived(() => {
 		if (!isSharedBasket) return []
 		
@@ -57,7 +56,6 @@
 </script>
 
 <div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-	<!-- Canteen Header -->
 	<div
 		class="mb-4 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700"
 	>
@@ -110,10 +108,8 @@
 		</div>
 	</div>
 
-	<!-- Basket Items -->
 	<div class="space-y-4">
 		{#if isSharedBasket}
-			<!-- Shared basket: show items grouped by user -->
 			{#each itemsByUser as userGroup}
 				<div class="border-l-4 border-indigo-200 dark:border-indigo-700 pl-4">
 					<div class="mb-3 flex items-center gap-2">
@@ -138,7 +134,6 @@
 				</div>
 			{/each}
 		{:else}
-			<!-- Regular basket: show items normally -->
 			{#each basket.items as item}
 				<BasketItem {item} />
 			{/each}
@@ -157,7 +152,6 @@
 				</p>
 			</div>
 
-			<!-- Payment Method Switch -->
 			<div class="flex flex-col gap-2 sm:flex-row sm:items-end">
 				<PaymentMethodSelector
 					canteenId={basket.canteen.id}
@@ -166,7 +160,6 @@
 					{basketTotal}
 					{hasSufficientBalance}
 				/>
-				<!-- Place Order Button -->
 				<Button.Root
 					onclick={() => onPlaceOrder(basket)}
 					disabled={!canPlaceOrder}

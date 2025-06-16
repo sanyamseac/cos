@@ -141,7 +141,7 @@ export const load: PageServerLoad = async (event) => {
 					name: item.menuItem!.name,
 					price: parseFloat(item.menuItem!.price),
 					canteen: item.canteen!.name,
-					image: getCategoryEmoji(item.menuItem!.category, item.menuItem!.type)
+					image: item.menuItem!.image || '/defaultMenuItem.png',
 				})),
 			canteenStats: canteenStatsResult
 				.filter(item => item.canteen)
@@ -156,29 +156,4 @@ export const load: PageServerLoad = async (event) => {
 		console.error('Error loading dashboard data:', err)
 		throw error(500, 'Failed to load dashboard data')
 	}
-}
-
-function getCategoryEmoji(category: string, type: string): string {
-	const categoryLower = category.toLowerCase()
-	const typeLower = type.toLowerCase()
-	
-	// Map categories to emojis
-	if (categoryLower.includes('sandwich') || categoryLower.includes('burger')) return '🥪'
-	if (categoryLower.includes('salad')) return '🥗'
-	if (categoryLower.includes('coffee') || categoryLower.includes('beverage')) return '☕'
-	if (categoryLower.includes('pizza')) return '🍕'
-	if (categoryLower.includes('fish')) return '🐟'
-	if (categoryLower.includes('wrap') || categoryLower.includes('roll')) return '🌯'
-	if (categoryLower.includes('rice') || categoryLower.includes('biryani')) return '🍚'
-	if (categoryLower.includes('noodles') || categoryLower.includes('pasta')) return '🍜'
-	if (categoryLower.includes('soup')) return '🍲'
-	if (categoryLower.includes('dessert') || categoryLower.includes('sweet')) return '🍰'
-	if (categoryLower.includes('snack')) return '🍿'
-	
-	// Default based on type
-	if (typeLower === 'veg') return '🥬'
-	if (typeLower === 'non-veg') return '🍖'
-	
-	// Default emoji
-	return '🍽️'
 }

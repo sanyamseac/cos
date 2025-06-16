@@ -4,6 +4,7 @@
 	import { Button, Switch, Select, Avatar, Accordion } from 'bits-ui'
 	import { User, Mail, Shield, Bell, Lock, Palette, Camera, LogOut } from 'lucide-svelte'
 	import ProfilePictureDialog from './components/ProfilePictureDialog.svelte'
+	import Elements from '$lib/components/Elements.svelte'
 	import { onMount } from 'svelte'
 	import { notificationService } from '$lib/notifications'
 	import { serviceWorkerManager } from '$lib/serviceWorkerManager'
@@ -124,21 +125,9 @@
 <div
 	class="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pb-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
 >
-	<!-- Decorative background elements -->
-	<div class="absolute inset-0 opacity-20">
-		<div
-			class="absolute top-10 left-10 h-32 w-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 blur-3xl"
-		></div>
-		<div
-			class="absolute top-1/3 right-20 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 blur-3xl"
-		></div>
-		<div
-			class="absolute bottom-20 left-1/4 h-40 w-40 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 blur-3xl"
-		></div>
-	</div>
+	<Elements />
 
-	<div class="relative z-10 space-y-8 p-6">
-		<!-- Header -->
+	<div class="relative z-10 space-y-8 px-4 py-6">
 		<div class="flex items-center justify-between">
 			<div>
 				<h1

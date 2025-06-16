@@ -7,6 +7,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte'
 	import ShareBasketModal from './components/ShareBasketModal.svelte'
 	import JoinBasketModal from './components/JoinBasketModal.svelte'
+	import Elements from '$lib/components/Elements.svelte'
 	import {  UserMinus, Trash2, Users, EyeOff, Eye } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
 	import { getWalletBalance } from '$lib/utils/basketUtils'
@@ -14,7 +15,7 @@
 	import { goto, invalidateAll } from '$app/navigation'
 	import { Toggle } from 'bits-ui'
 
-	let { data, form }: { data: PageData, form: any } = $props()
+	let { data }: { data: PageData } = $props()
 
 	const allItemsGroupedByCanteen = $derived(() => {
 		return data.basketsByCanteen?.map(canteenGroup => {
@@ -103,21 +104,11 @@
 </svelte:head>
 
 <div
-	class="relative min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pb-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+	class="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pb-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
 >
-	<!-- Decorative background elements -->
-	<div class="absolute inset-0 opacity-20">
-		<div
-			class="absolute top-10 left-10 h-32 w-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 blur-3xl"
-		></div>
-		<div
-			class="absolute top-1/3 right-20 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 blur-3xl"
-		></div>
-		<div
-			class="absolute bottom-20 left-1/4 h-40 w-40 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 blur-3xl"
-		></div>
-	</div>
-	<div class="relative z-10 space-y-6 p-4 sm:p-6">		
+	<Elements />
+
+	<div class="relative z-10 space-y-8 px-4 py-6 md:px-8 md:py-10">	
 		<BasketHeader 
 			basketCount={allItemsGroupedByCanteen().reduce((total: number, group: any) => total + group.totalItems, 0)} 
 			grandTotal={grandTotal()} 
@@ -131,7 +122,7 @@
 		{:else}
 			<div class="space-y-6">
 				{#each allItemsGroupedByCanteen() as canteenGroup}
-					<div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">						<!-- Canteen Header -->
+					<div class="rounded-xl bg-white p-4 md:p-6 shadow-sm dark:bg-gray-800">	
 						<div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
 							<div>
 								<div class="flex items-center gap-2 mb-1">
@@ -205,17 +196,12 @@
 							</div>
 						{/if}
 
-						<!-- All Items for this Canteen -->
 						<div class="space-y-3">
 							{#each canteenGroup.allItems as item, index}
-								<BasketItem {item} showAddedBy={true} />
-								{#if index < canteenGroup.allItems.length - 1}
-									<hr class="border-gray-200 dark:border-gray-700" />
-								{/if}
+								<BasketItem {item} showAddedBy={hasSharedBaskets(canteenGroup)} />
 							{/each}
 						</div>
 
-						<!-- Payment and Order Section -->
 						<div class="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
 							<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 								<div class="flex-1">
@@ -225,7 +211,7 @@
 									<p class="text-xl font-bold text-gray-900 dark:text-white">
 										{formatPrice(calculateBasketTotal(canteenGroup.allItems))}
 									</p>
-								</div>								<!-- Payment Method and Order Button -->
+								</div>
 								<div class="flex flex-col gap-2 sm:flex-row sm:items-end">
 									<PaymentMethodSelector
 										canteenId={canteenGroup.canteen.id}
@@ -237,15 +223,17 @@
 									/>
 									<button
 										onclick={() => openOrderConfirm(canteenGroup)}
-										disabled={getPaymentMethod(canteenGroup.canteen.id) && getWalletBalance(canteenGroup.canteen.id, data.wallets) < calculateBasketTotal(canteenGroup.allItems)}
+										disabled={(getPaymentMethod(canteenGroup.canteen.id) && getWalletBalance(canteenGroup.canteen.id, data.wallets) < calculateBasketTotal(canteenGroup.allItems)) || !canteenGroup.canteen.open}
 										class="w-full rounded-lg bg-green-600 px-6 py-3 font-medium text-white transition-all hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
 									>
-										{getPaymentMethod(canteenGroup.canteen.id) 
-											? (getWalletBalance(canteenGroup.canteen.id, data.wallets) >= calculateBasketTotal(canteenGroup.allItems) 
-												? 'Place Order (Wallet)' 
-												: 'Insufficient Balance'
-											)
-											: 'Place Order (Pay Later)'
+										{canteenGroup.canteen.open ?
+											getPaymentMethod(canteenGroup.canteen.id) 
+												? (getWalletBalance(canteenGroup.canteen.id, data.wallets) >= calculateBasketTotal(canteenGroup.allItems) 
+													? 'Place Order (Wallet)' 
+													: 'Insufficient Balance'
+												)
+												: 'Place Order (Pay Later)'
+											: 'Canteen Closed'
 										}
 									</button>
 								</div>
@@ -285,7 +273,6 @@
 	<input type="hidden" name="paymentMethod" />
 </form>
 
-<!-- Order Confirmation Dialog -->
 <ConfirmDialog
 	bind:open={showOrderConfirm}
 	title="Confirm Your Order"

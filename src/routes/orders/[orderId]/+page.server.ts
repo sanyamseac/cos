@@ -17,7 +17,6 @@ export const load: PageServerLoad = async (event) => {
 	}
 
 	try {
-		// Get order with canteen information
 		const orders = await db
 			.select({
 				order: schema.orders,
@@ -37,7 +36,6 @@ export const load: PageServerLoad = async (event) => {
 
 		const orderData = orders[0]
 
-		// Get order items with menu item details, variants, and addons
 		const orderItems = await db
 			.select({
 				orderItem: schema.orderItems,
@@ -49,7 +47,6 @@ export const load: PageServerLoad = async (event) => {
 			.leftJoin(schema.variants, eq(schema.orderItems.variantId, schema.variants.id))
 			.where(eq(schema.orderItems.orderId, orderId))
 
-		// Get addons for each order item
 		const orderItemsWithAddons = await Promise.all(
 			orderItems.map(async (item) => {
 				const addons = await db

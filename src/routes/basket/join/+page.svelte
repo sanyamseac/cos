@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/stores'
 	import { enhance } from '$app/forms'
 	import { Button } from 'bits-ui'
 	import { goto } from '$app/navigation'

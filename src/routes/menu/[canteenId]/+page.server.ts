@@ -3,24 +3,22 @@ import * as auth from '$lib/server/session'
 import type { PageServerLoad } from './$types'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, asc, desc } from 'drizzle-orm'
 import type { Actions } from '@sveltejs/kit'
 import { generateId } from '$lib/helper'
 
 export const load: PageServerLoad = async (event) => {
-	// Check authentication and role
 	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
 	if (!auth.CONSUMER.includes(event.locals.user.role)) throw error(403, 'Access denied')
 
 	const canteenAcronym = event.params.canteenId
 	try {
-		// Get canteen info
 		const canteen = await db
 			.select()
 			.from(schema.canteens)
 			.where(
-				and(eq(schema.canteens.acronym, canteenAcronym), eq(schema.canteens.active, true)),
+				and(eq(schema.canteens.acronym, canteenAcronym)),
 			)
 			.then((results) => results[0])
 
@@ -30,25 +28,45 @@ export const load: PageServerLoad = async (event) => {
 
 		const canteenId = canteen.id
 
-		// Get menu items for the canteen
-		const menuItems = await db
-			.select()
-			.from(schema.menuItems)
-			.where(
-				and(eq(schema.menuItems.canteenId, canteenId), eq(schema.menuItems.active, true)),
-			)
+		const [menuItems, variants, addons] = await Promise.all([
+			db
+				.select()
+				.from(schema.menuItems)
+				.where(and(
+					eq(schema.menuItems.canteenId, canteenId),
+					eq(schema.menuItems.active, true)
+				))
+				.orderBy(desc(schema.menuItems.available), asc(schema.menuItems.name)),
+			db
+				.select()
+				.from(schema.variants)
+				.where(eq(schema.variants.active, true))
+				.orderBy(desc(schema.variants.available), asc(schema.variants.price)),
+			db
+				.select()
+				.from(schema.addons)
+				.where(eq(schema.addons.active, true))
+				.orderBy(desc(schema.addons.available), asc(schema.addons.price)),
+		])
 
-		// Get all variants for the menu items
-		const variants = await db
-			.select()
-			.from(schema.variants)
-			.where(eq(schema.variants.active, true))
+		const variantsByItem: Record<number, any[]> = {}
+		for (const v of variants) {
+			if (!variantsByItem[v.itemId]) variantsByItem[v.itemId] = []
+			variantsByItem[v.itemId].push(v)
+		}
+		const addonsByItem: Record<number, any[]> = {}
+		for (const a of addons) {
+			if (!addonsByItem[a.itemId]) addonsByItem[a.itemId] = []
+			addonsByItem[a.itemId].push(a)
+		}
 
-		// Get all addons for the menu items
-		const addons = await db.select().from(schema.addons).where(eq(schema.addons.active, true))
+		const menuItemsWithDetails = menuItems.map((item) => ({
+			...item,
+			variants: variantsByItem[item.id] || [],
+			addons: addonsByItem[item.id] || [],
+		}))
 
-		// Organize menu items by category
-		const menuCategories = menuItems.reduce((acc: Record<string, typeof menuItems>, item) => {
+		const menuCategories = menuItemsWithDetails.reduce((acc: Record<string, typeof menuItemsWithDetails>, item) => {
 			if (!acc[item.category]) {
 				acc[item.category] = []
 			}
@@ -60,9 +78,6 @@ export const load: PageServerLoad = async (event) => {
 			user: event.locals.user,
 			canteen,
 			menuCategories,
-			variants,
-			addons,
-			menuItems,
 		}
 	} catch (err) {
 		console.error('Error fetching canteen data:', err)
@@ -87,7 +102,6 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Get canteen ID from the acronym
 			const canteenAcronym = params.canteenId
 			if (!canteenAcronym) {
 				throw fail(400, { error: 'Invalid canteen ID' })
@@ -105,7 +119,6 @@ export const actions: Actions = {
 
 			const canteenId = canteen[0].id
 
-			// Get or create basket for this user and canteen
 			let basket = await db
 				.select()
 				.from(schema.baskets)
@@ -118,7 +131,6 @@ export const actions: Actions = {
 				.limit(1)
 
 			if (basket.length === 0) {
-				// Create a new basket
 				const [newBasket] = await db
 					.insert(schema.baskets)
 					.values({
@@ -130,7 +142,6 @@ export const actions: Actions = {
 				basket = [newBasket]
 			}
 
-			// Check if the same item with same variant and same addons already exists in basket
 			const potentialItems = await db
 				.select()
 				.from(schema.basketItems)
@@ -144,7 +155,6 @@ export const actions: Actions = {
 
 			let existingItem = null
 
-			// Check each potential item to see if it has the same addons
 			for (const item of potentialItems) {
 				const itemAddons = await db
 					.select({ addonId: schema.basketAddons.addonId })
@@ -154,7 +164,6 @@ export const actions: Actions = {
 				const itemAddonIds = itemAddons.map(addon => addon.addonId).sort()
 				const newAddonIds = (addonIds || []).sort()
 
-				// Check if addon arrays are the same
 				if (itemAddonIds.length === newAddonIds.length && 
 					itemAddonIds.every((id, index) => id === newAddonIds[index])) {
 					existingItem = item
@@ -163,13 +172,11 @@ export const actions: Actions = {
 			}
 
 			if (existingItem) {
-				// Update quantity if exact same item (including addons) already exists
 				await db
 					.update(schema.basketItems)
 					.set({ quantity: existingItem.quantity + quantity })
 					.where(eq(schema.basketItems.id, existingItem.id))
 			} else {
-				// Add new item to basket (this is a different combination of item + variant + addons)
 				const [newBasketItem] = await db
 					.insert(schema.basketItems)
 					.values({
@@ -181,7 +188,6 @@ export const actions: Actions = {
 					})
 					.returning()
 
-				// Add addons if provided
 				if (addonIds && addonIds.length > 0) {
 					const addonValues = addonIds.map(addonId => ({
 						basketItemId: newBasketItem.id,

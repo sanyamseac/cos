@@ -1,24 +1,27 @@
 <script lang="ts">
 	import { Button, Dialog, RadioGroup, Checkbox, Label, useId } from 'bits-ui'
-	import { Minus, Plus, X as Close, ShoppingCart } from 'lucide-svelte'
+	import { Minus, Plus, X as Close, ShoppingCart, ShoppingBasket } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
+	import { formatPrice } from '$lib/utils'
+	import FoodType from '$lib/components/FoodType.svelte'
 
 	let {
 		item = $bindable(),
 		addingToCart,
 		getFoodTypeIcon,
 		onClose,
+		showCartMessage = $bindable(false)
 	}: {
 		item: any
 		addingToCart?: boolean
 		getFoodTypeIcon: (type: string) => string
 		onClose: () => void
+		showCartMessage?: boolean
 	} = $props()
 
 	let submitting = $state(false)
 	let value = $state(item.selectedVariant?.id?.toString() || '')
 
-	// Format price calculations using $derived
 	const basePrice = $derived(Number(item.price))
 	const variantPrice = $derived(item.selectedVariant ? Number(item.selectedVariant.price) : 0)
 	const addonsPrice = $derived(
@@ -29,7 +32,6 @@
 	const totalPrice = $derived((basePrice + variantPrice + addonsPrice) * item.quantity)
 	const formattedTotalPrice = $derived(totalPrice.toFixed(2))
 
-	// Handle variant selection
 	function handleValueChange(newValue: string) {
 		value = newValue
 		const variant = item.variants.find((v: any) => v.id.toString() === newValue)
@@ -38,28 +40,16 @@
 		}
 	}
 
-	// Transform variants into radio group items
-	const variantItems = $derived(
-		item.variants.map((variant: any) => ({
-			value: variant.id.toString(),
-			label: variant.name,
-			disabled: !variant.available || !variant.active
-		}))
-	)
-
-	// Checkbox state management
 	function isAddonSelected(addon: any) {
 		return item.selectedAddons.some((a: any) => a.id === addon.id)
 	}
 
 	function handleAddonChange(addon: any, checked: boolean) {
 		if (checked) {
-			// Add addon if it's not already in the list
 			if (!isAddonSelected(addon)) {
 				item.selectedAddons = [...item.selectedAddons, addon]
 			}
 		} else {
-			// Remove addon if it's in the list
 			const index = item.selectedAddons.findIndex((a: any) => a.id === addon.id)
 			if (index >= 0) {
 				item.selectedAddons = [
@@ -70,9 +60,8 @@
 		}
 	}
 
-	// Quantity functions
 	function increaseQuantity() {
-		if (item.quantity < 10) {
+		if (item.quantity) {
 			item.quantity += 1
 		}
 	}
@@ -84,13 +73,11 @@
 	}
 </script>
 
-<!-- Item Details Dialog Content -->
 <div class="relative">
-	<!-- Close button -->
 	<Dialog.Close
 		class="absolute top-0 right-0 flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
 	>
-		<Close size={18} />
+		<Close size={26} />
 	</Dialog.Close>
 
 	<Dialog.Title class="pr-8 text-2xl font-bold text-gray-900 dark:text-white">
@@ -105,7 +92,6 @@
 	{/if}
 
 	<div class="mt-6 space-y-6">
-		<!-- Variants selection (if any) -->
 		{#if item.variants && item.variants.length > 0}
 			<div>
 				<h3 class="mb-3 text-lg font-medium text-gray-900 dark:text-white">
@@ -124,12 +110,12 @@
 									<RadioGroup.Item
 										{id}
 										value={variant.id.toString()}
-										disabled={!variant.available || !variant.active}
+										disabled={!variant.available}
 										class="flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
 									>
 										{#snippet children({ checked })}
 											{#if checked}
-												<div class="h-2 w-2 rounded-full bg-white" />
+												<div class="h-3 w-3 rounded-full bg-white" />
 											{/if}
 										{/snippet}
 									</RadioGroup.Item>
@@ -141,7 +127,7 @@
 									</Label.Root>
 								</div>
 								<span class="font-medium text-gray-900 dark:text-white {(!variant.available || !variant.active) ? 'opacity-50' : ''}">
-									₹{Number(variant.price).toFixed(2)}
+									{formatPrice(Number(variant.price) + Number(item.price))}
 								</span>
 							</div>
 						{/each}
@@ -150,51 +136,35 @@
 			</div>
 		{/if}
 
-		<!-- Addons selection (if any) -->
 		{#if item.addons && item.addons.length > 0}
 			<div>
 				<h3 class="mb-3 text-lg font-medium text-gray-900 dark:text-white">Add Extra</h3>
 				<div class="space-y-2">
 					{#each item.addons as addon}
 						<div
-							class="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+							class="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700 {addon.available ? '' : 'opacity-50 cursor-not-allowed'}"
 						>
 							<Checkbox.Root
 								class="flex items-center gap-2"
 								checked={isAddonSelected(addon)}
 								onCheckedChange={(checked) => handleAddonChange(addon, checked)}
+								disabled={!addon.available}
 								value={addon.id.toString()}
 							>
 								{#snippet children({ checked })}
-									<div
-										class="flex h-4 w-4 items-center justify-center rounded border-2 border-indigo-600 bg-white data-[state=checked]:bg-indigo-600 data-[state=checked]:text-white"
-									>
+									<div class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500">
 										{#if checked}
-											<svg
-												width="10"
-												height="8"
-												viewBox="0 0 10 8"
-												fill="none"
-												xmlns="http://www.w3.org/2000/svg"
-											>
-												<path
-													d="M9 1L3.5 6.5L1 4"
-													stroke="currentColor"
-													stroke-width="1.5"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-												/>
-											</svg>
+											<div class="h-3 w-3 rounded bg-white" />
 										{/if}
 									</div>
-									<span class="mr-1">{getFoodTypeIcon(addon.type)}</span>
 									<span class="text-gray-900 dark:text-white">
 										{addon.name}
 									</span>
+									<FoodType type={addon.type} size={16} />
 								{/snippet}
 							</Checkbox.Root>
 							<span class="font-medium text-gray-900 dark:text-white">
-								+₹{Number(addon.price).toFixed(2)}
+								{formatPrice(addon.price)}
 							</span>
 						</div>
 					{/each}
@@ -247,6 +217,10 @@
 					return async ({ result, update }) => {
 						submitting = false
 						if (result.type === 'success') {
+							showCartMessage = true
+							setTimeout(() => {
+								showCartMessage = false
+							}, 3000)
 							onClose()
 						}
 						await update()
@@ -273,8 +247,8 @@
 						></div>
 						Adding...
 					{:else}
-						<ShoppingCart size={18} />
-						Add to Cart
+						<ShoppingBasket size={18} />
+						Add to Basket
 					{/if}
 				</Button.Root>
 			</form>

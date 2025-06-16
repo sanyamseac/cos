@@ -70,11 +70,18 @@
 			)}
 		</p>
 	</div>
+{:else if isWalletPayment && hasSufficientBalance}
+	<div class="mt-3 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+		<p class="text-xs text-green-600 dark:text-green-400">
+			<Wallet size={16} class="mr-1 inline" />
+			Payment will be deducted from your wallet.
+		</p>
+	</div>
 {:else if !isWalletPayment}
 	<div class="mt-3 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
-		<p class="text-sm text-blue-600 dark:text-blue-400">
+		<p class="text-xs text-blue-600 dark:text-blue-400">
 			<CreditCard size={16} class="mr-1 inline" />
-			Payment will be collected when you collect your order.
+			Payment will be collected while collecting order.
 		</p>
 	</div>
 {/if}

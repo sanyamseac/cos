@@ -7,6 +7,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme {
+	--breakpoint-rs: 25rem;
+}
 @font-face {
 	font-family: 'Cal Sans';
 	font-style: normal;

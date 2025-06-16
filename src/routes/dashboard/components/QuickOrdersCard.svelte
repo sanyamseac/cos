@@ -36,7 +36,8 @@
 				<div
 					class="flex flex-col items-center rounded-xl bg-gray-50 p-4 transition-all duration-200 hover:scale-105 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700"
 				>
-					<div class="mb-2 text-3xl">{order.image}</div>
+					<div class="mb-2 text-3xl">
+						<img src={order.image} alt={order.name} class="h-12 w-12 rounded" />					</div>
 					<p class="mb-1 text-center text-sm font-medium text-gray-800 dark:text-white">
 						{order.name}
 					</p>

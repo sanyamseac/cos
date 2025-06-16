@@ -17,14 +17,9 @@ export const load: PageServerLoad = async (event) => {
 			.select({
 				basket: schema.baskets,
 				canteen: schema.canteens,
-				owner: {
-					id: schema.user.id,
-					name: schema.user.name,
-				}
 			})
 			.from(schema.baskets)
 			.leftJoin(schema.canteens, eq(schema.baskets.canteenId, schema.canteens.id))
-			.leftJoin(schema.user, eq(schema.baskets.createdBy, schema.user.id))
 			.where(eq(schema.baskets.createdBy, event.locals.user.id))
 
 		const userAccessCodes = userBaskets
@@ -37,14 +32,9 @@ export const load: PageServerLoad = async (event) => {
 				.select({
 					basket: schema.baskets,
 					canteen: schema.canteens,
-					owner: {
-						id: schema.user.id,
-						name: schema.user.name,
-					}
 				})
 				.from(schema.baskets)
 				.leftJoin(schema.canteens, eq(schema.baskets.canteenId, schema.canteens.id))
-				.leftJoin(schema.user, eq(schema.baskets.createdBy, schema.user.id))
 				.where(and(
 					sql`${schema.baskets.basketAccessCode} IS NOT NULL`,
 					sql`${schema.baskets.basketAccessCode} IN (${sql.join(userAccessCodes.map(code => sql`${code}`), sql`, `)})`,
@@ -56,7 +46,7 @@ export const load: PageServerLoad = async (event) => {
 
 		const basketsWithDetails = await Promise.all(
 			allBaskets.map(async (basketData) => {
-				const { basket, canteen, owner } = basketData
+				const { basket, canteen } = basketData
 				if (!basket || !canteen) return null
 
 				const items = await db
@@ -75,6 +65,7 @@ export const load: PageServerLoad = async (event) => {
 							price: schema.menuItems.price,
 							category: schema.menuItems.category,
 							type: schema.menuItems.type,
+							image: schema.menuItems.image,
 						},
 						variant: {
 							id: schema.variants.id,
@@ -113,8 +104,6 @@ export const load: PageServerLoad = async (event) => {
 					canteen,
 					basket: basket,
 					items: itemsWithAddons,
-					owner: owner,
-					isOwner: basket.createdBy === event.locals.user.id,
 					accessCode: basket.basketAccessCode
 				}
 			})

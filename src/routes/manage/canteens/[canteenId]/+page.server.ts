@@ -2,9 +2,11 @@ import { redirect, fail, error } from '@sveltejs/kit'
 import * as auth from '$lib/server/session'
 import type { PageServerLoad } from './$types'
 import { db } from '$lib/server/db'
+import * as fs from 'fs/promises'
 import * as schema from '$lib/server/db/schema'
 import { eq, and } from 'drizzle-orm'
 import type { Actions } from '@sveltejs/kit'
+import path from 'path'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -87,6 +89,21 @@ export const actions: Actions = {
 			const description = body.get('description')?.toString()
 			const type = body.get('type')?.toString() || 'veg'
 			const activeValue = body.get('active')?.toString()
+			const image = body.get('image') as File | null
+
+			if (image && !(image instanceof File)) {
+				console.error('Invalid image file:', image)
+				throw fail(400, { error: 'Invalid image file' })
+			}
+
+			let filename = ''
+			if (image) {
+				filename = name + path.extname(image.name)
+				const savePath = path.join('static', 'content', 'MenuItemImages', filename)
+				await fs.mkdir(path.dirname(savePath), { recursive: true })
+				const arrayBuffer = await image.arrayBuffer()
+				await fs.writeFile(savePath, Buffer.from(arrayBuffer))
+			}
 
 			if (!canteenIdStr || isNaN(canteenId) || !category || !name || !price) {
 				console.log('Validation failed:', {
@@ -99,8 +116,7 @@ export const actions: Actions = {
 				throw fail(400, { error: 'CanteenId, category, name, and price are required' })
 			}
 
-			const available =
-				availableValue === 'true' || availableValue === 'on' || (!availableValue && true)
+			const available = availableValue === 'true' || availableValue === 'on' || (!availableValue && true)
 			const active = activeValue === 'true' || activeValue === 'on' || (!activeValue && true)
 
 			const [newItem] = await db
@@ -113,7 +129,8 @@ export const actions: Actions = {
 					available,
 					type,
 					active,
-					description: description || null,
+					description: description,
+					image: filename ? `/content/MenuItemImages/${filename}` : '/defaultMenuItem.png',
 				})
 				.returning()
 
@@ -138,9 +155,19 @@ export const actions: Actions = {
 			const description = body.get('description')?.toString()
 			const type = body.get('type')?.toString()
 			const active = body.get('active')
+			const image = body.get('image') as File | null
 
 			if (!id) {
 				throw fail(400, { error: 'Menu item ID is required' })
+			}
+
+			let filename = ''
+			if (image) {
+				filename = name + path.extname(image.name)
+				const savePath = path.join('static', 'content', 'MenuItemImages', filename)
+				await fs.mkdir(path.dirname(savePath), { recursive: true })
+				const arrayBuffer = await image.arrayBuffer()
+				await fs.writeFile(savePath, Buffer.from(arrayBuffer))
 			}
 
 			const updateData: any = {}
@@ -152,6 +179,7 @@ export const actions: Actions = {
 			if (type) updateData.type = type
 			if (active !== null) updateData.active = active === 'true'
 			if (description) updateData.description = description
+			if (filename) updateData.image = `/content/MenuItemImages/${filename}`
 
 			const [updatedItem] = await db
 				.update(schema.menuItems)

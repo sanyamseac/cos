@@ -61,6 +61,7 @@ export const menuItems = pgTable('menu_items', {
 	available: boolean('is_available').notNull().default(true),
 	type: text('type').notNull().default('veg'),
 	active: boolean('active').notNull().default(true),
+	image: text('image'),
 })
 
 export const variants = pgTable('variants', {
@@ -99,22 +100,6 @@ export const baskets = pgTable('baskets', {
 	updatedAt: timestamp('updated_at').notNull().defaultNow(),
 	basketAccessCode: text('basket_access_code'),
 })
-
-export const basketAccess = pgTable('basket_access', {
-	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-	basketId: text('basket_id')
-		.notNull()
-		.references(() => baskets.id, { onDelete: 'cascade' }),
-	userId: text('user_id')
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
-	accessCode: text('access_code').unique(),
-	isOwner: boolean('is_owner').notNull().default(false),
-	joinedAt: timestamp('joined_at').notNull().defaultNow(),
-	expiresAt: timestamp('expires_at').notNull().default(sql`NOW() + INTERVAL '1 day'`),
-}, (table) => [
-	unique('unique_basket_user').on(table.basketId, table.userId),]
-)
 
 export const basketItems = pgTable('basket_items', {
 	id: integer('id').primaryKey().generatedAlwaysAsIdentity(),

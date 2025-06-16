@@ -3,8 +3,8 @@
 	import StatsCard from './components/StatsCard.svelte'
 	import QuickOrdersCard from './components/QuickOrdersCard.svelte'
 	import CanteenStatsCard from './components/CanteenStatsCard.svelte'
-	import { Button } from 'bits-ui'
 	import { formatPrice } from '$lib/utils'
+	import Elements from '$lib/components/Elements.svelte'
 
 	let { data } = $props()
 
@@ -21,20 +21,9 @@
 <div
 	class="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pb-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
 >
-	<!-- Decorative background elements -->
-	<div class="absolute inset-0 opacity-20">
-		<div
-			class="absolute top-10 left-10 h-32 w-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 blur-3xl"
-		></div>
-		<div
-			class="absolute top-1/3 right-20 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 blur-3xl"
-		></div>
-		<div
-			class="absolute bottom-20 left-1/4 h-40 w-40 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 blur-3xl"
-		></div>
-	</div>
+	<Elements />
 
-	<div class="relative z-10 space-y-8 p-6">
+	<div class="relative z-10 space-y-8 px-4 py-6 md:px-8 md:py-10">
 		<div class="flex items-center justify-between">
 			<div>
 				<h1
@@ -56,7 +45,7 @@
 		<div class="grid grid-cols-2 gap-6">
 			<StatsCard
 				title="Spent This Month"
-				value="{formatPrice(displayStats.totalSpent, 0)}"
+				value={formatPrice(displayStats.totalSpent, 0)}
 				trend="{displayStats.spentTrend.isUp ? '+' : ''}{displayStats.spentTrend.value}% from last month"
 				trendUp={displayStats.spentTrend.isUp}
 				size="medium"
