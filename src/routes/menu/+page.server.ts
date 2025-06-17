@@ -8,6 +8,12 @@ import { asc, desc, eq } from 'drizzle-orm'
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
+
+	// Redirect canteens to their dashboard
+	if (event.locals.user.role === 'canteen') {
+		return redirect(302, '/canteen/dashboard')
+	}
+
 	if (!auth.CONSUMER.includes(event.locals.user.role)) throw error(403, 'Forbidden')
 
 	let canteens = await db

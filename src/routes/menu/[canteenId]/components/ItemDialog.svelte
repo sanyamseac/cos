@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Dialog, RadioGroup, Checkbox, Label, useId } from 'bits-ui'
-	import { Minus, Plus, X as Close, ShoppingCart, ShoppingBasket } from 'lucide-svelte'
+	import { Minus, Plus, X as Close, ShoppingBasket, Check } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
 	import { formatPrice } from '$lib/utils'
 	import FoodType from '$lib/components/FoodType.svelte'
@@ -168,7 +168,7 @@
 										class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
 									>
 										{#if checked}
-											<div class="h-3 w-3 rounded bg-white" />
+											<Check size={12} class="text-foreground" />
 										{/if}
 									</div>
 									<span class="text-gray-900 dark:text-white">

@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Select, NavigationMenu } from 'bits-ui'
-	import { onMount } from 'svelte'
+	import { NavigationMenu } from 'bits-ui'
 	import { page } from '$app/state'
 	import {
 		Utensils,
@@ -9,31 +8,45 @@
 		User,
 		LogIn,
 		CookingPot,
-		Settings,
 	} from 'lucide-svelte'
 
-	const components: { title: string; href: string; img: any }[] = [
-		{
-			title: 'Dashboard',
-			href: '/dashboard',
-			img: Utensils,
-		},
-		{
-			title: 'Menu',
-			href: '/menu',
-			img: CookingPot,
-		},
-		{
-			title: 'Basket',
-			href: '/basket',
-			img: ShoppingBasket,
-		},
-		{
-			title: 'Orders',
-			href: '/orders',
-			img: History,
-		},
-	]
+	const getNavigationComponents = (userRole: string | undefined) => {
+		if (userRole === 'canteen') {
+			return [
+				{
+					title: 'Dashboard',
+					href: '/canteen/dashboard',
+					img: Utensils,
+				},
+			]
+		}
+
+		// Default components for consumers and other users
+		return [
+			{
+				title: 'Dashboard',
+				href: '/dashboard',
+				img: Utensils,
+			},
+			{
+				title: 'Menu',
+				href: '/menu',
+				img: CookingPot,
+			},
+			{
+				title: 'Basket',
+				href: '/basket',
+				img: ShoppingBasket,
+			},
+			{
+				title: 'Orders',
+				href: '/orders',
+				img: History,
+			},
+		]
+	}
+
+	$: components = getNavigationComponents(page.data.user?.role)
 </script>
 
 <nav

@@ -14,7 +14,10 @@ const cas = 'https://login.iiit.ac.in/cas'
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
-		const destination = event.url.searchParams.get('redirect') ?? '/'
+		let destination = event.url.searchParams.get('redirect') ?? '/'
+		if (event.locals.user.role === 'canteen') {
+			destination = '/canteen/dashboard'
+		}
 		return redirect(302, destination)
 	}
 	return {}
@@ -177,7 +180,12 @@ export const actions: Actions = {
 			secure: !dev,
 		})
 
-		const destination = event.url.searchParams.get('redirect') ?? '/'
+		// Set appropriate redirect based on user role
+		let destination = event.url.searchParams.get('redirect') ?? '/'
+		if (user.role === 'canteen') {
+			destination = '/canteen/dashboard'
+		}
+
 		return redirect(302, destination)
 	},
 
