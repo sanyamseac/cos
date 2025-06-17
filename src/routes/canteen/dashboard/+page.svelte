@@ -13,6 +13,7 @@
 	} from 'lucide-svelte'
 	import { enhance } from '$app/forms'
 	import Elements from '$lib/components/Elements.svelte'
+	import { invalidate, invalidateAll } from '$app/navigation'
 
 	let { data, form } = $props()
 
@@ -111,7 +112,7 @@
 		})
 			.then((response) => {
 				if (response.ok) {
-					location.reload() // Refresh to show updated data
+					invalidateAll()
 				}
 			})
 			.finally(() => {

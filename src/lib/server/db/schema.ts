@@ -7,6 +7,7 @@ export const user = pgTable('user', {
 	email: text('email').notNull().unique(),
 	role: text('role').notNull().default('consumer'),
 	profilePicture: text('profile_picture'),
+	emailPreference: text('email_preference').notNull().default('important'),
 })
 
 export const session = pgTable('session', {

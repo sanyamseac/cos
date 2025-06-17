@@ -3,8 +3,10 @@ import * as auth from '$lib/server/session'
 import type { PageServerLoad, Actions } from './$types'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
-import { eq, and, sql, or, not } from 'drizzle-orm'
+import { eq, and, sql, or, not, inArray } from 'drizzle-orm'
 import { generateId } from '$lib/helper'
+import { sendToUser, type NotificationPayload } from '$lib/server/notificationService'
+import { sendEmail } from '$lib/server/emailService'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -546,6 +548,90 @@ export const actions: Actions = {
 
 				for (const basket of baskets) {
 					await tx.delete(schema.baskets).where(eq(schema.baskets.id, basket.id))
+				}
+
+				const affectedUserIds = [...new Set(createdOrders.map(order => order.order.userId))]
+				const affectedUsers = await tx
+					.select({
+						id: schema.user.id,
+						name: schema.user.name,
+						email: schema.user.email,
+						emailNotifications: schema.user.emailPreferences,
+					})
+					.from(schema.user)
+					.where(inArray(schema.user.id, affectedUserIds))
+
+				const [canteenInfo] = await tx
+					.select({
+						name: schema.canteens.name,
+						acronym: schema.canteens.acronym,
+					})
+					.from(schema.canteens)
+					.where(eq(schema.canteens.id, canteenId))
+
+				for (const user of affectedUsers) {
+					const userOrder = createdOrders.find(order => order.order.userId === user.id)
+					if (!userOrder) continue
+
+					const { order, userTotal } = userOrder
+					const isSharedOrder = isSharedBasket && affectedUsers.length > 1
+
+					// Send push notification (always send)
+					const notificationPayload: NotificationPayload = {
+						title: 'Order Placed Successfully',
+						body: isSharedOrder 
+							? `Your shared order ${order.orderNumber} at ${canteenInfo.name} has been placed. Total: RM${userTotal.toFixed(2)}`
+							: `Your order ${order.orderNumber} at ${canteenInfo.name} has been placed. Total: RM${userTotal.toFixed(2)}`,
+						data: {
+							type: 'order_placed',
+							orderId: order.id.toString(),
+							orderNumber: order.orderNumber,
+							canteenId: canteenId.toString(),
+						},
+					}
+
+					try {
+						sendToUser(user.id, notificationPayload)
+					} catch (notifError) {
+						console.error(`Failed to send push notification to user ${user.id}:`, notifError)
+					}
+
+					if (user.emailNotifications === 'all' && user.email) {
+						const emailSubject = isSharedOrder 
+							? `Shared Order Placed - ${order.orderNumber}`
+							: `Order Placed - ${order.orderNumber}`
+
+						const emailBody = `
+							<h2>Order Confirmation</h2>
+							<p>Hi ${user.name},</p>
+							<p>${isSharedOrder ? 'Your shared order' : 'Your order'} has been successfully placed!</p>
+							
+							<div style="background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px;">
+								<h3>Order Details:</h3>
+								<p><strong>Order Number:</strong> ${order.orderNumber}</p>
+								<p><strong>Canteen:</strong> ${canteenInfo.name}</p>
+								<p><strong>Total Amount:</strong> RM${userTotal.toFixed(2)}</p>
+								<p><strong>Payment Method:</strong> ${paymentMethod === 'wallet' ? 'Wallet' : 'Postpaid'}</p>
+								<p><strong>OTP:</strong> ${order.otp}</p>
+								${isSharedOrder ? `<p><strong>Group Order ID:</strong> ${linkingNumber}</p>` : ''}
+							</div>
+							
+							<p>You can track your order status in the app.</p>
+							<p>Thank you for your order!</p>
+						`
+
+						try {
+							sendEmail(
+								user.email,
+								{
+									subject: emailSubject,
+									plainText: `Order Confirmation - ${order.orderNumber}\n\nHi ${user.name},\n\n${isSharedOrder ? 'Your shared order' : 'Your order'} has been successfully placed!\n\nOrder Details:\nOrder Number: ${order.orderNumber}\nCanteen: ${canteenInfo.name}\nTotal Amount: RM${userTotal.toFixed(2)}\nPayment Method: ${paymentMethod === 'wallet' ? 'Wallet' : 'Postpaid'}\nOTP: ${order.otp}${isSharedOrder ? `\nGroup Order ID: ${linkingNumber}` : ''}\n\nYou can track your order status in the app.\nThank you for your order!`,
+									html: emailBody,
+								})
+						} catch (emailError) {
+							console.error(`Failed to send email to user ${user.id}:`, emailError)
+						}
+					}
 				}
 			})
 

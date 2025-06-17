@@ -4,6 +4,8 @@ import type { Actions, PageServerLoad } from './$types'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { eq, desc, and } from 'drizzle-orm'
+import { updated } from '$app/state'
+import { PgUpdateBuilder } from 'drizzle-orm/pg-core'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -79,4 +81,25 @@ export const actions: Actions = {
 			throw fail(500, { message: 'Failed to update profile picture' })
 		}
 	},
+	updateEmailPreference: async (event) => {
+		if (!event.locals.user) throw fail(401, { message: 'Unauthorized' })
+
+		const data = await event.request.formData()
+		const emailPreference = data.get('emailPreference') as string
+
+		if (!emailPreference || !['all', 'important'].includes(emailPreference)) {
+			throw fail(400, { message: 'Email preferences are required' })
+		}
+
+		try {
+			await db
+				.update(schema.user)
+				.set({ emailPreference })
+				.where(eq(schema.user.id, event.locals.user.id))
+			return { success: true }
+		} catch (error) {
+			console.error('Error updating email preferences:', error)
+			throw fail(500, { message: 'Failed to update email preferences' })
+		}
+	}
 }

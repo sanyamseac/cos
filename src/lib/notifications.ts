@@ -71,6 +71,9 @@ class NotificationService {
 
 	// Enable push notifications (Service Worker based)
 	async enablePushNotifications(userId: string): Promise<boolean> {
+		if (this.permission === 'default') {
+			await this.requestPermission()
+		}
 		if (!this.useServiceWorker || !this.isPermitted) {
 			console.warn('Cannot enable push notifications: requirements not met')
 			return false
@@ -187,6 +190,3 @@ class NotificationService {
 
 // Export a singleton instance
 export const notificationService = new NotificationService()
-
-// Utility functions for common notification scenarios
-export const requestNotificationPermission = () => notificationService.requestPermission()

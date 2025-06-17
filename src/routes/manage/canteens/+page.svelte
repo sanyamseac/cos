@@ -25,7 +25,8 @@
 	let selectedCanteen = $state(null)
 	let unlocked = $state(false)
 	let showConfirmDialog = $state(false)
-	let resetForm: HTMLFormElement | null = $state(null)
+	let selectedCanteenForReset: any = $state(null)
+	let resetForms: Record<string, HTMLFormElement | null> = $state({})
 	const code = $derived(unlocked ? form?.password || form?.newPassword : '••••••••')
 	const canteenFields = $derived([
 		{
@@ -96,12 +97,13 @@
 	}
 
 	function handleResetPassword(canteen: any) {
+		selectedCanteenForReset = canteen
 		showConfirmDialog = true
 	}
 
 	function confirmResetPassword() {
-		if (resetForm) {
-			resetForm.requestSubmit()
+		if (selectedCanteenForReset && resetForms[selectedCanteenForReset.id]) {
+			resetForms[selectedCanteenForReset.id].requestSubmit()
 		}
 		closeConfirmDialog()
 	}
@@ -109,6 +111,7 @@
 	function closeConfirmDialog() {
 		showConfirmDialog = false
 		resetForm = null
+		selectedCanteenForReset = null
 	}
 </script>
 
@@ -208,7 +211,7 @@
 											<Edit size={14} />
 										</Button.Root>
 										<form
-											bind:this={resetForm}
+											bind:this={resetForms[canteen.id]}
 											action="?/resetPassword"
 											use:enhance
 											method="post"
@@ -216,7 +219,7 @@
 											<input type="hidden" name="id" value={canteen.id} />
 											<Button.Root
 												type="button"
-												onclick={() => handleResetPassword(canteen)}
+												onclick={() => {selectedCanteenForReset = canteen; handleResetPassword(canteen)}}
 												class="ml-2 flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600 transition-all hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-300 dark:hover:bg-yellow-800"
 												title="Reset password"
 											>
@@ -263,7 +266,7 @@
 										Username: {canteen.acronym}@canteens.iiit.ac.in
 									</span>
 								</div>
-								{#if form?.password || form?.newPassword}
+								{#if form?.canteen.id === canteen.id && (form?.password || form?.newPassword)}
 									<div
 										class="mt-2 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 dark:border-gray-600 dark:bg-gray-700"
 									>
@@ -343,7 +346,7 @@
 	<ConfirmDialog
 		bind:open={showConfirmDialog}
 		title="Reset Password"
-		description={`Are you sure you want to reset the password? This action cannot be undone.`}
+		description={`Are you sure you want to reset the password for ${selectedCanteenForReset.name}? This action cannot be undone.`}
 		onClose={closeConfirmDialog}
 		onConfirm={confirmResetPassword}
 		confirmText="Yes, Reset"

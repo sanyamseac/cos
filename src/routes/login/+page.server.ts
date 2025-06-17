@@ -39,10 +39,10 @@ export const actions: Actions = {
 		const password = formData.get('password')
 
 		if (!username || !password) {
-			throw fail(400, { message: 'Username and password are required' })
+			return fail(400, { message: 'Username and password are required' })
 		}
 		if (typeof username !== 'string' || typeof password !== 'string') {
-			throw fail(400, { message: 'Invalid username or password' })
+			return fail(400, { message: 'Invalid username or password' })
 		}
 
 		let user: any = null
@@ -58,14 +58,14 @@ export const actions: Actions = {
 				.where(eq(schema.canteens.acronym, canteen))
 				.limit(1)
 
-			if (canteenDetails.length === 0) throw fail(404, { message: 'Canteen not found' })
+			if (canteenDetails.length === 0) return fail(404, { message: 'Canteen not found' })
 
 			const canteenPasswordHash = canteenDetails[0].auth.passwordHash
 			if (
 				canteenPasswordHash !==
 				encodeHexLowerCase(sha256(new TextEncoder().encode(password)))
 			) {
-				throw fail(401, { message: 'Invalid canteen password' })
+				return fail(401, { message: 'Invalid canteen password' })
 			}
 
 			const response = await db
@@ -81,7 +81,7 @@ export const actions: Actions = {
 				.limit(1)
 
 			user = response[0]
-			if (!user) throw fail(404, { message: 'Canteen user not found' })
+			if (!user) return fail(404, { message: 'Canteen user not found' })
 		} else {
 			if (!username.includes('test')) {
 				const tgtResponse = await fetch(`${cas}/v1/tickets`, {
@@ -94,13 +94,13 @@ export const actions: Actions = {
 
 				if (!tgtResponse.ok) {
 					console.error('Failed to obtain TGT:', await tgtResponse.text())
-					throw fail(401, { message: 'Authentication failed' })
+					return fail(401, { message: 'Authentication failed' })
 				}
 
 				const tgtUrl = tgtResponse.headers.get('Location')
 				if (!tgtUrl) {
 					console.error('No TGT URL provided in response')
-					throw fail(500, { message: 'Authentication system error' })
+					return fail(500, { message: 'Authentication system error' })
 				}
 
 				const stResponse = await fetch(tgtUrl, {
@@ -113,7 +113,7 @@ export const actions: Actions = {
 
 				if (!stResponse.ok) {
 					console.error('Failed to obtain service ticket:', await stResponse.text())
-					throw fail(401, { message: 'Failed to obtain service ticket' })
+					return fail(401, { message: 'Failed to obtain service ticket' })
 				}
 
 				const serviceTicket = await stResponse.text()
@@ -191,7 +191,7 @@ export const actions: Actions = {
 
 	logout: async (event) => {
 		if (!event.locals.session) {
-			throw fail(401)
+			return fail(401)
 		}
 		await auth.invalidateSession(event.locals.session.id)
 		event.cookies.delete(auth.sessionCookieName, { path: '/' })
