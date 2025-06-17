@@ -552,12 +552,7 @@ export const actions: Actions = {
 
 				const affectedUserIds = [...new Set(createdOrders.map(order => order.order.userId))]
 				const affectedUsers = await tx
-					.select({
-						id: schema.user.id,
-						name: schema.user.name,
-						email: schema.user.email,
-						emailNotifications: schema.user.emailPreferences,
-					})
+					.select()
 					.from(schema.user)
 					.where(inArray(schema.user.id, affectedUserIds))
 
@@ -596,41 +591,39 @@ export const actions: Actions = {
 						console.error(`Failed to send push notification to user ${user.id}:`, notifError)
 					}
 
-					if (user.emailNotifications === 'all' && user.email) {
-						const emailSubject = isSharedOrder 
-							? `Shared Order Placed - ${order.orderNumber}`
-							: `Order Placed - ${order.orderNumber}`
+					const emailSubject = isSharedOrder 
+						? `Shared Order Placed - ${order.orderNumber}`
+						: `Order Placed - ${order.orderNumber}`
 
-						const emailBody = `
-							<h2>Order Confirmation</h2>
-							<p>Hi ${user.name},</p>
-							<p>${isSharedOrder ? 'Your shared order' : 'Your order'} has been successfully placed!</p>
-							
-							<div style="background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px;">
-								<h3>Order Details:</h3>
-								<p><strong>Order Number:</strong> ${order.orderNumber}</p>
-								<p><strong>Canteen:</strong> ${canteenInfo.name}</p>
-								<p><strong>Total Amount:</strong> RM${userTotal.toFixed(2)}</p>
-								<p><strong>Payment Method:</strong> ${paymentMethod === 'wallet' ? 'Wallet' : 'Postpaid'}</p>
-								<p><strong>OTP:</strong> ${order.otp}</p>
-								${isSharedOrder ? `<p><strong>Group Order ID:</strong> ${linkingNumber}</p>` : ''}
-							</div>
-							
-							<p>You can track your order status in the app.</p>
-							<p>Thank you for your order!</p>
-						`
+					const emailBody = `
+						<h2>Order Confirmation</h2>
+						<p>Hi ${user.name},</p>
+						<p>${isSharedOrder ? 'Your shared order' : 'Your order'} has been successfully placed!</p>
+						
+						<div style="background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px;">
+							<h3>Order Details:</h3>
+							<p><strong>Order Number:</strong> ${order.orderNumber}</p>
+							<p><strong>Canteen:</strong> ${canteenInfo.name}</p>
+							<p><strong>Total Amount:</strong> RM${userTotal.toFixed(2)}</p>
+							<p><strong>Payment Method:</strong> ${paymentMethod === 'wallet' ? 'Wallet' : 'Postpaid'}</p>
+							<p><strong>OTP:</strong> ${order.otp}</p>
+							${isSharedOrder ? `<p><strong>Group Order ID:</strong> ${linkingNumber}</p>` : ''}
+						</div>
+						
+						<p>You can track your order status in the app.</p>
+						<p>Thank you for your order!</p>
+					`
 
-						try {
-							sendEmail(
-								user.email,
-								{
-									subject: emailSubject,
-									plainText: `Order Confirmation - ${order.orderNumber}\n\nHi ${user.name},\n\n${isSharedOrder ? 'Your shared order' : 'Your order'} has been successfully placed!\n\nOrder Details:\nOrder Number: ${order.orderNumber}\nCanteen: ${canteenInfo.name}\nTotal Amount: RM${userTotal.toFixed(2)}\nPayment Method: ${paymentMethod === 'wallet' ? 'Wallet' : 'Postpaid'}\nOTP: ${order.otp}${isSharedOrder ? `\nGroup Order ID: ${linkingNumber}` : ''}\n\nYou can track your order status in the app.\nThank you for your order!`,
-									html: emailBody,
-								})
-						} catch (emailError) {
-							console.error(`Failed to send email to user ${user.id}:`, emailError)
-						}
+					try {
+						sendEmail(
+							user,
+							{
+								subject: emailSubject,
+								plainText: `Order Confirmation - ${order.orderNumber}\n\nHi ${user.name},\n\n${isSharedOrder ? 'Your shared order' : 'Your order'} has been successfully placed!\n\nOrder Details:\nOrder Number: ${order.orderNumber}\nCanteen: ${canteenInfo.name}\nTotal Amount: RM${userTotal.toFixed(2)}\nPayment Method: ${paymentMethod === 'wallet' ? 'Wallet' : 'Postpaid'}\nOTP: ${order.otp}${isSharedOrder ? `\nGroup Order ID: ${linkingNumber}` : ''}\n\nYou can track your order status in the app.\nThank you for your order!`,
+								html: emailBody,
+							})
+					} catch (emailError) {
+						console.error(`Failed to send email to user ${user.id}:`, emailError)
 					}
 				}
 			})
