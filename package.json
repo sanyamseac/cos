@@ -48,6 +48,7 @@
 		"pg": "^8.16.0",
 		"phosphor-svelte": "^3.0.1",
 		"postgres": "^3.4.5",
+		"sveltekit-sse": "^0.13.19",
 		"tailwindcss-animate": "^1.0.7",
 		"web-push": "^3.6.7"
 	}

@@ -20,10 +20,75 @@
 	import Elements from '$lib/components/Elements.svelte'
 	import { formatPrice } from '$lib/utils/priceUtils'
 	import FoodType from '$lib/components/FoodType.svelte'
+	import { source } from 'sveltekit-sse'
+	import { onMount, onDestroy } from 'svelte'
 
 	let { data }: { data: PageData } = $props()
 
 	let showPin = $state(false)
+
+	// SSE connection for real-time order updates
+	let sseConnection: any = null
+	let order = $state(data.order)
+
+	// Initialize SSE connection
+	onMount(() => {
+		console.log('Initializing SSE connection for order detail page')
+
+		sseConnection = source('/api/sse/orders', {
+			close({ connect }) {
+				console.log('Order detail SSE connection closed, attempting to reconnect...')
+				setTimeout(() => connect(), 3000) // Reconnect after 3 seconds
+			},
+		})
+
+		// Listen for order updates
+		const orderUpdates = sseConnection.select('order_update')
+		orderUpdates.subscribe((updateData: string) => {
+			console.log('Raw SSE order update received:', updateData)
+			if (updateData && updateData.trim()) {
+				try {
+					const update = JSON.parse(updateData)
+					console.log('Received order update for order detail:', update)
+
+					// Update this specific order if it matches
+					if (order && order.id.toString() === update.orderId.toString()) {
+						console.log(
+							`Updating order detail ${update.orderId} from ${order.status} to ${update.status}`,
+						)
+						order = {
+							...order,
+							status: update.status,
+							updatedAt: new Date(update.timestamp),
+						}
+					}
+				} catch (error) {
+					console.error('Error parsing order update:', error, 'Raw data:', updateData)
+				}
+			}
+		})
+
+		// Listen for connection confirmations
+		const connected = sseConnection.select('connected')
+		connected.subscribe((data: string) => {
+			if (data) {
+				console.log('Order detail SSE connected:', data)
+				try {
+					const connectionInfo = JSON.parse(data)
+					console.log('Order detail connection info:', connectionInfo)
+				} catch (e) {
+					console.log('Order detail connection confirmation received:', data)
+				}
+			}
+		})
+	})
+
+	// Cleanup SSE connection
+	onDestroy(() => {
+		if (sseConnection) {
+			sseConnection.close()
+		}
+	})
 
 	function formatDate(dateString: string) {
 		return new Date(dateString).toLocaleDateString('en-IN', {
@@ -173,18 +238,17 @@
 							<h1
 								class="text-2xl font-bold text-gray-900 md:text-3xl dark:text-white"
 							>
-								Order #{data.order.orderNumber}
+								Order #{order?.orderNumber || 'Loading...'}
 							</h1>
 							<span
 								class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium {getStatusColor(
-									data.order.status,
+									order?.status || 'pending',
 								)}"
 							>
-								{#if data.order}
-									{@const StatusIcon = getStatusIcon(data.order.status)}
+								{#if order}
+									{@const StatusIcon = getStatusIcon(order.status)}
 									<StatusIcon size={14} />
-									{data.order.status.charAt(0).toUpperCase() +
-										data.order.status.slice(1)}
+									{order.status.charAt(0).toUpperCase() + order.status.slice(1)}
 								{/if}
 							</span>
 						</div>

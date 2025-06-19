@@ -5,8 +5,81 @@
 	import { goto } from '$app/navigation'
 	import { fly, fade } from 'svelte/transition'
 	import Elements from '$lib/components/Elements.svelte'
+	import { source } from 'sveltekit-sse'
+	import { onMount, onDestroy } from 'svelte'
 
 	let { data }: { data: PageData } = $props()
+
+	// SSE connection for real-time updates
+	let sseConnection: any = null
+	let orders = $state(data.orders || [])
+
+	// Initialize SSE connection
+	onMount(() => {
+		console.log('Initializing SSE connection for orders page')
+
+		sseConnection = source('/api/sse/orders', {
+			close({ connect }) {
+				console.log('SSE connection closed, attempting to reconnect...')
+				setTimeout(() => connect(), 3000) // Reconnect after 3 seconds
+			},
+		})
+
+		// Listen for order updates
+		const orderUpdates = sseConnection.select('order_update')
+		orderUpdates.subscribe((updateData: string) => {
+			console.log('Raw SSE data received:', updateData)
+			if (updateData && updateData.trim()) {
+				try {
+					const update = JSON.parse(updateData)
+					console.log('Received order update:', update)
+
+					// Update the orders array with the new status
+					orders = orders.map((orderData) => {
+						if (orderData.order.id.toString() === update.orderId.toString()) {
+							console.log(
+								`Updating order ${update.orderId} from ${orderData.order.status} to ${update.status}`,
+							)
+							return {
+								...orderData,
+								order: {
+									...orderData.order,
+									status: update.status,
+									updatedAt: new Date(update.timestamp),
+								},
+							}
+						}
+						return orderData
+					})
+				} catch (error) {
+					console.error('Error parsing order update:', error, 'Raw data:', updateData)
+				}
+			}
+		})
+
+		// Listen for connection confirmations
+		const connected = sseConnection.select('connected')
+		connected.subscribe((data: string) => {
+			if (data) {
+				console.log('SSE connected:', data)
+				try {
+					const connectionInfo = JSON.parse(data)
+					console.log('Connection info:', connectionInfo)
+				} catch (e) {
+					console.log('Connection confirmation received:', data)
+				}
+			}
+		})
+	})
+
+	// Cleanup SSE connection
+	onDestroy(() => {
+		if (sseConnection) {
+			sseConnection.close()
+		}
+	})
+
+	// ...existing code...
 
 	// Helper functions
 	function formatCurrency(amount: string | number) {

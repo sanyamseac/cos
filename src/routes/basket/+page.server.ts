@@ -7,6 +7,7 @@ import { eq, and, sql, or, not, inArray } from 'drizzle-orm'
 import { generateId } from '$lib/helper'
 import { sendToUser, type NotificationPayload } from '$lib/server/notificationService'
 import { sendEmail } from '$lib/server/emailService'
+import { emitNewOrderToCanteen } from '$lib/server/sse-events'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -488,6 +489,19 @@ export const actions: Actions = {
 
 					createdOrders.push({ order, userItems, userTotal })
 
+					// Emit SSE event for new order to canteen staff
+					try {
+						emitNewOrderToCanteen({
+							id: order.id.toString(),
+							orderNumber: order.orderNumber,
+							canteenId: canteenId.toString(),
+							userId: userId,
+							totalAmount: userTotal.toString()
+						})
+					} catch (sseError) {
+						console.error('Failed to emit new order SSE event:', sseError)
+					}
+
 					for (const basketItem of userItems as any[]) {
 						const basePrice = Number(basketItem.menuItem!.price)
 						const variantPrice = basketItem.variant
@@ -574,7 +588,7 @@ export const actions: Actions = {
 					// Send push notification (always send)
 					const notificationPayload: NotificationPayload = {
 						title: 'Order Placed Successfully',
-						body: isSharedOrder 
+						body: isSharedOrder
 							? `Your shared order ${order.orderNumber} at ${canteenInfo.name} has been placed. Total: RM${userTotal.toFixed(2)}`
 							: `Your order ${order.orderNumber} at ${canteenInfo.name} has been placed. Total: RM${userTotal.toFixed(2)}`,
 						data: {
@@ -591,7 +605,7 @@ export const actions: Actions = {
 						console.error(`Failed to send push notification to user ${user.id}:`, notifError)
 					}
 
-					const emailSubject = isSharedOrder 
+					const emailSubject = isSharedOrder
 						? `Shared Order Placed - ${order.orderNumber}`
 						: `Order Placed - ${order.orderNumber}`
 

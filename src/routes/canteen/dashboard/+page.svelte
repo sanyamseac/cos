@@ -14,10 +14,56 @@
 	import { enhance } from '$app/forms'
 	import Elements from '$lib/components/Elements.svelte'
 	import { invalidate, invalidateAll } from '$app/navigation'
+	import { source } from 'sveltekit-sse'
+	import { onMount, onDestroy } from 'svelte'
 
 	let { data, form } = $props()
 
 	let selectedOrder: any = $state(null)
+
+	// SSE connection for real-time updates
+	let sseConnection: any = null
+
+	// Initialize SSE connection for canteen dashboard
+	onMount(() => {
+		sseConnection = source('/api/sse/orders', {
+			close({ connect }) {
+				console.log('Canteen SSE connection closed, attempting to reconnect...')
+				setTimeout(() => connect(), 3000) // Reconnect after 3 seconds
+			},
+		})
+
+		// Listen for new orders
+		const newOrders = sseConnection.select('new_order')
+		newOrders.subscribe((orderData: string) => {
+			if (orderData) {
+				try {
+					const newOrder = JSON.parse(orderData)
+					console.log('Received new order:', newOrder)
+
+					// Refresh the dashboard data to show new order
+					invalidateAll()
+				} catch (error) {
+					console.error('Error parsing new order:', error)
+				}
+			}
+		})
+
+		// Listen for connection confirmations
+		const connected = sseConnection.select('connected')
+		connected.subscribe((connectionData: string) => {
+			if (connectionData) {
+				console.log('Canteen SSE connected:', connectionData)
+			}
+		})
+	})
+
+	// Cleanup SSE connection
+	onDestroy(() => {
+		if (sseConnection) {
+			sseConnection.close()
+		}
+	})
 	let pinDialogOpen = $state(false)
 	let pinInput = $state('')
 	let orderDetailsOpen = $state(false)

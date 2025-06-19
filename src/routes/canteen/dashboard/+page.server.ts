@@ -4,6 +4,7 @@ import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { eq, desc, sum, and, gte, lt, sql, inArray } from 'drizzle-orm'
 import type { PageServerLoad, Actions } from './$types'
+import { emitOrderStatusUpdate } from '$lib/server/sse-events'
 
 export const load: PageServerLoad = async (event) => {
     if (!event.locals.user)
@@ -170,6 +171,7 @@ export const actions: Actions = {
             }
 
             const order = orderResult[0]
+            const previousStatus = order.status
 
             // If marking as completed, validate PIN
             if (newStatus === 'completed') {
@@ -197,6 +199,20 @@ export const actions: Actions = {
                 .update(schema.orders)
                 .set(updateData)
                 .where(eq(schema.orders.id, Number(orderId)))
+
+            // Emit SSE event for order status update
+            try {
+                emitOrderStatusUpdate({
+                    id: orderId.toString(),
+                    orderNumber: order.orderNumber,
+                    status: newStatus.toString(),
+                    canteenId: order.canteenId.toString(),
+                    userId: order.userId.toString()
+                }, previousStatus)
+                console.log(`SSE event emitted for order ${orderId} to user ${order.userId}`)
+            } catch (sseError) {
+                console.error('Failed to emit order status update SSE event:', sseError)
+            }
 
             return { success: true, message: `Order ${newStatus} successfully` }
         } catch (err) {
