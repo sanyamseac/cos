@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Rubik:ital,wght@0,300..900;1,300..900&family=Sansation:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Zilla+Slab:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
@@ -16,6 +18,7 @@
 }
 
 :root {
+	font-family: 'Quicksand', sans-serif;
 	/* Colors */
 	--background: hsl(0 0% 100%);
 	--background-alt: hsl(0 0% 100%);
@@ -151,6 +154,9 @@
 	--font-mono: 'Source Code Pro', 'monospace';
 	--font-alt: 'Courier', 'sans-serif';
 	--font-display: 'Cal Sans', 'sans-serif';
+	--font-sensation: 'Sansation', 'sans-serif';
+	--font-selection: 'Selection', 'sans-serif';
+	--font-quicksand: 'Quicksand', 'sans-serif';
 
 	@keyframes accordion-down {
 		from {

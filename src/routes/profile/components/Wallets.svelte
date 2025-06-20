@@ -10,19 +10,14 @@
 
 {#if data.wallets && data.wallets.length > 0}
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-		<div
-			class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-		>
-			<div class="mb-6 flex items-center gap-3">
-				<div class="rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 p-2">
-					<Wallet />
-				</div>
+		<div>
+			<div class="mb-6 flex items-center gap-3 border-b dark:border-gray-600 w-max">
 				<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Wallet Balances</h3>
 			</div>
 			<div class="space-y-3">
 				{#each data.wallets as { wallet, canteen }}
 					<div
-						class="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700"
+						class="flex items-center justify-between rounded-lg px-2"
 					>
 						<div>
 							<p class="font-medium text-gray-800 dark:text-white">
@@ -60,17 +55,10 @@
 			</div>
 		</div>
 
-		<div
-			class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-		>
-			<div class="mb-6 flex items-center justify-between gap-3">
-				<div class="flex items-center gap-3">
-					<div class="rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 p-2">
-						<ReceiptIndianRupee />
-					</div>
-					<h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-						Recent Transactions
-					</h3>
+		<div>
+			<div class="flex items-center justify-between mb-6">
+				<div class="flex items-center gap-3 border-b dark:border-gray-600 w-max">
+					<h3 class="text-lg font-semibold text-gray-800 dark:text-white">Recent Transactions</h3>
 				</div>
 				<Button.Root
 					onclick={() => goto('/profile/transactions')}
@@ -80,68 +68,66 @@
 					<ChevronRight size={16} />
 				</Button.Root>
 			</div>
-			<div class="space-y-4">
-				{#if data.recentTransactions && data.recentTransactions.length > 0}
-					<ScrollArea.Root class="relative overflow-hidden">
-						<ScrollArea.Viewport class="h-full max-h-[300px] w-full space-y-2">
-							{#each data.recentTransactions as { transaction, canteen }}
-								<div
-									class="mr-4 mb-3 flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-600"
-								>
-									<div class="flex-1">
-										<p class="font-medium text-gray-800 dark:text-white">
-											{canteen?.name || 'Unknown Canteen'}
-										</p>
-										<p class="text-sm text-gray-600 dark:text-gray-400">
-											{transaction.reference || 'No reference'}
-										</p>
-										<p class="text-xs text-gray-500">
-											{new Date(transaction.createdAt).toLocaleDateString(
-												'en-IN',
-												{
-													year: 'numeric',
-													month: 'short',
-													day: 'numeric',
-													hour: '2-digit',
-													minute: '2-digit',
-												},
-											)}
-										</p>
-									</div>
-									<div class="text-right">
-										<p
-											class="font-bold {parseFloat(transaction.amount) > 0
-												? 'text-green-600'
-												: 'text-red-700'}"
-										>
-											{formatPrice(Math.abs(parseFloat(transaction.amount)))}
-										</p>
-									</div>
+			{#if data.recentTransactions && data.recentTransactions.length > 0}
+				<ScrollArea.Root class="relative overflow-hidden">
+					<ScrollArea.Viewport class="rounded-xl h-full max-h-[300px] w-full space-y-2 bg-white py-2 px-4 dark:bg-gray-800 shadow-sm">
+						{#each data.recentTransactions as { transaction, canteen }}
+							<div
+								class="mb-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 py-2 last:border-0"
+							>
+								<div class="flex-1">
+									<p class="font-medium text-gray-800 dark:text-white">
+										{canteen?.name || 'Unknown Canteen'}
+									</p>
+									<p class="text-sm text-gray-600 dark:text-gray-400">
+										{transaction.reference || 'No reference'}
+									</p>
+									<p class="text-xs text-gray-500">
+										{new Date(transaction.createdAt).toLocaleDateString(
+											'en-IN',
+											{
+												year: 'numeric',
+												month: 'short',
+												day: 'numeric',
+												hour: '2-digit',
+												minute: '2-digit',
+											},
+										)}
+									</p>
 								</div>
-							{/each}
-						</ScrollArea.Viewport>
-						<ScrollArea.Scrollbar
-							orientation="vertical"
-							class="hover:bg-dark-100 data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:fade-out-0 data-[state=visible]:fade-in-0 flex w-2.5 touch-none rounded-full border-l border-l-transparent p-px transition-all duration-200 select-none hover:w-3"
-						>
-							<ScrollArea.Thumb class="bg-muted-foreground flex-1 rounded-full" />
-						</ScrollArea.Scrollbar>
-						<ScrollArea.Scrollbar
-							orientation="horizontal"
-							class="bg-muted hover:bg-dark-10 flex h-2.5 touch-none rounded-full border-t border-t-transparent p-px transition-all duration-200 select-none hover:h-3 "
-						>
-							<ScrollArea.Thumb class="bg-muted-foreground rounded-full" />
-						</ScrollArea.Scrollbar>
-						<ScrollArea.Corner />
-					</ScrollArea.Root>
-				{:else}
-					<div class="py-8 text-center text-gray-500">
-						<p>No transactions found</p>
-					</div>
-				{/if}
-			</div>
+								<div class="text-right">
+									<p
+										class="font-bold {parseFloat(transaction.amount) > 0
+											? 'text-green-600'
+											: 'text-red-700'}"
+									>
+										{formatPrice(Math.abs(parseFloat(transaction.amount)))}
+									</p>
+								</div>
+							</div>
+						{/each}
+					</ScrollArea.Viewport>
+					<ScrollArea.Scrollbar
+						orientation="vertical"
+						class="hover:bg-dark-100 data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:fade-out-0 data-[state=visible]:fade-in-0 flex w-2.5 touch-none rounded-full border-l border-l-transparent p-px transition-all duration-200 select-none hover:w-3"
+					>
+						<ScrollArea.Thumb class="bg-muted-foreground flex-1 rounded-full" />
+					</ScrollArea.Scrollbar>
+					<ScrollArea.Scrollbar
+						orientation="horizontal"
+						class="bg-muted hover:bg-dark-10 flex h-2.5 touch-none rounded-full border-t border-t-transparent p-px transition-all duration-200 select-none hover:h-3 "
+					>
+						<ScrollArea.Thumb class="bg-muted-foreground rounded-full" />
+					</ScrollArea.Scrollbar>
+					<ScrollArea.Corner />
+				</ScrollArea.Root>
+			{:else}
+				<div class="py-8 text-center text-gray-500">
+					<p>No transactions found</p>
+				</div>
+			{/if}
 		</div>
-	</div>
+	 </div>	
 {:else}
 	<div
 		class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"

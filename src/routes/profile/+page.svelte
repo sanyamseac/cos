@@ -28,36 +28,39 @@
 	<Elements />
 
 	<div class="relative z-10 space-y-8 px-4 py-6">
-		<div class="flex items-center justify-between">
+		<div class="flex items-center justify-between pb-4">
 			<div>
 				<h1
-					class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent"
+					class="text-4xl font-sensation text-gray-800 dark:text-white sm:text-5xl md:text-6xl"
 				>
-					Profile
+					profile
 				</h1>
-			</div>
-			<div>
-				<form method="post" action="login?/logout" use:enhance>
-					<Button.Root
-						class="rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-2 py-2 font-semibold text-white shadow-lg transition-all duration-300 hover:from-red-600 hover:to-red-700 hover:shadow-xl"
-					>
-						<div class="flex items-center justify-center px-2">
-							Logout
-							<LogOut class="ml-3 h-4 w-4" />
-						</div>
-					</Button.Root>
-				</form>
 			</div>
 		</div>
 
 		<Profile {data} bind:isEditingPic />
+		<hr class="mt-6 mb-7 border-gray-400 dark:border-gray-500" />
 
-		<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+		<div class="grid grid-cols-1 gap-5.5 md:grid-cols-2">
 			<Notifications {data} />
 			<Preferences {data} />
 		</div>
+		<hr class="border-gray-400 dark:border-gray-500" />
 
 		<Wallets {data} />
+		<hr class="border-gray-400 dark:border-gray-500" />
+		<div>
+			<form method="post" action="login?/logout" use:enhance>
+				<Button.Root
+					class="rounded-xl w-full bg-gradient-to-r from-red-600 to-red-700 px-2 py-2 font-semibold text-white shadow-lg transition-all duration-300 hover:from-red-800 hover:to-red-900 hover:shadow-xl"
+				>
+					<div class="flex items-center text-gray-200 justify-center px-2">
+						Logout
+						<LogOut class="ml-3 h-4 w-4" />
+					</div>
+				</Button.Root>
+			</form>
+		</div>
 		<Legal />
 	</div>
 </div>

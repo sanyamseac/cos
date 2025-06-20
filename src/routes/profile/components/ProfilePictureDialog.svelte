@@ -46,7 +46,10 @@
 	}
 
 	function handleSave() {
-		open = false
+		return async ({ result }) => {
+			open = false
+			await invalidateAll()
+		}
 	}
 
 	function handleClose() {
@@ -201,10 +204,10 @@
 				>
 					Cancel
 				</Button.Root>
-				<form method="post" action="?/updateProfilePicture" use:enhance>
+				<form method="post" action="?/updateProfilePicture" use:enhance={handleSave}>
 					<input type="hidden" name="profilePictureUrl" value={previewImage()} />
 					<Button.Root
-						onclick={handleSave}
+						type="submit"
 						class="rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2 font-semibold text-white shadow-lg transition-all duration-300 hover:from-indigo-600 hover:to-purple-700 hover:shadow-xl"
 					>
 						Save
