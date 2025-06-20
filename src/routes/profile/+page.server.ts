@@ -69,7 +69,7 @@ export const actions: Actions = {
 					const [header, base64Data] = profilePictureUrl.split(',')
 					const mimeType = header.match(/data:([^;]+)/)?.[1]
 					const fileExtension = mimeType?.split('/')[1] || 'jpg'
-					
+
 					const buffer = Buffer.from(base64Data, 'base64')
 					const fileName = `${event.locals.user.id}.${fileExtension}`
 					const savePath = path.join('static', 'content', 'UserImages', fileName)
@@ -145,5 +145,5 @@ export const actions: Actions = {
 			console.error('Error updating profile visibility:', error)
 			return fail(500, { message: 'Failed to update profile visibility' })
 		}
-	}
+	},
 }

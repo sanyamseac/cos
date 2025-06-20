@@ -496,7 +496,7 @@ export const actions: Actions = {
 							orderNumber: order.orderNumber,
 							canteenId: canteenId.toString(),
 							userId: userId,
-							totalAmount: userTotal.toString()
+							totalAmount: userTotal.toString(),
 						})
 					} catch (sseError) {
 						console.error('Failed to emit new order SSE event:', sseError)
@@ -564,7 +564,9 @@ export const actions: Actions = {
 					await tx.delete(schema.baskets).where(eq(schema.baskets.id, basket.id))
 				}
 
-				const affectedUserIds = [...new Set(createdOrders.map(order => order.order.userId))]
+				const affectedUserIds = [
+					...new Set(createdOrders.map((order) => order.order.userId)),
+				]
 				const affectedUsers = await tx
 					.select()
 					.from(schema.user)
@@ -579,7 +581,7 @@ export const actions: Actions = {
 					.where(eq(schema.canteens.id, canteenId))
 
 				for (const user of affectedUsers) {
-					const userOrder = createdOrders.find(order => order.order.userId === user.id)
+					const userOrder = createdOrders.find((order) => order.order.userId === user.id)
 					if (!userOrder) continue
 
 					const { order, userTotal } = userOrder
@@ -602,7 +604,10 @@ export const actions: Actions = {
 					try {
 						sendToUser(user.id, notificationPayload)
 					} catch (notifError) {
-						console.error(`Failed to send push notification to user ${user.id}:`, notifError)
+						console.error(
+							`Failed to send push notification to user ${user.id}:`,
+							notifError,
+						)
 					}
 
 					const emailSubject = isSharedOrder
@@ -629,13 +634,11 @@ export const actions: Actions = {
 					`
 
 					try {
-						sendEmail(
-							user,
-							{
-								subject: emailSubject,
-								plainText: `Order Confirmation - ${order.orderNumber}\n\nHi ${user.name},\n\n${isSharedOrder ? 'Your shared order' : 'Your order'} has been successfully placed!\n\nOrder Details:\nOrder Number: ${order.orderNumber}\nCanteen: ${canteenInfo.name}\nTotal Amount: RM${userTotal.toFixed(2)}\nPayment Method: ${paymentMethod === 'wallet' ? 'Wallet' : 'Postpaid'}\nOTP: ${order.otp}${isSharedOrder ? `\nGroup Order ID: ${linkingNumber}` : ''}\n\nYou can track your order status in the app.\nThank you for your order!`,
-								html: emailBody,
-							})
+						sendEmail(user, {
+							subject: emailSubject,
+							plainText: `Order Confirmation - ${order.orderNumber}\n\nHi ${user.name},\n\n${isSharedOrder ? 'Your shared order' : 'Your order'} has been successfully placed!\n\nOrder Details:\nOrder Number: ${order.orderNumber}\nCanteen: ${canteenInfo.name}\nTotal Amount: RM${userTotal.toFixed(2)}\nPayment Method: ${paymentMethod === 'wallet' ? 'Wallet' : 'Postpaid'}\nOTP: ${order.otp}${isSharedOrder ? `\nGroup Order ID: ${linkingNumber}` : ''}\n\nYou can track your order status in the app.\nThank you for your order!`,
+							html: emailBody,
+						})
 					} catch (emailError) {
 						console.error(`Failed to send email to user ${user.id}:`, emailError)
 					}

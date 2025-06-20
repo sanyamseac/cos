@@ -20,7 +20,7 @@
 
 	let selectedAvatarIndex = $state(-1)
 	let uploadedImage = $state<string | null>(null)
-	let fileInput: HTMLInputElement 
+	let fileInput: HTMLInputElement
 
 	const avatarUrls = Array.from({ length: 8 }, (_, i) => `/avatars/avatar-${i + 1}.svg`)
 

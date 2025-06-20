@@ -219,7 +219,10 @@
 											<input type="hidden" name="id" value={canteen.id} />
 											<Button.Root
 												type="button"
-												onclick={() => {selectedCanteenForReset = canteen; handleResetPassword(canteen)}}
+												onclick={() => {
+													selectedCanteenForReset = canteen
+													handleResetPassword(canteen)
+												}}
 												class="ml-2 flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600 transition-all hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-300 dark:hover:bg-yellow-800"
 												title="Reset password"
 											>

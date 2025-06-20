@@ -1,14 +1,7 @@
 <script lang="ts">
 	import { NavigationMenu } from 'bits-ui'
 	import { page } from '$app/state'
-	import {
-		Utensils,
-		History,
-		ShoppingBasket,
-		User,
-		LogIn,
-		CookingPot,
-	} from 'lucide-svelte'
+	import { Utensils, History, ShoppingBasket, User, LogIn, CookingPot } from 'lucide-svelte'
 
 	const getNavigationComponents = (userRole: string | undefined) => {
 		if (userRole === 'canteen') {
