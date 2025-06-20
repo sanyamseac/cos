@@ -61,7 +61,7 @@
 					setTimeout(() => (e.target as HTMLInputElement).form?.requestSubmit(), 500)}
 			>
 				<Switch.Thumb
-					class="inline-block h-4 w-4 transform rounded-full bg-gray-200 transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1"
+					class="inline-block h-4 w-4 bg-gray-400 data-[state=checked]:bg-gray-100 transform rounded-full bg-gray-200 transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1"
 				/>
 			</Switch.Root>
 		</form>
@@ -93,7 +93,7 @@
 				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-500 disabled:opacity-50 data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700"
 			>
 				<Switch.Thumb
-					class="inline-block h-4 w-4 transform rounded-full bg-gray-200 transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1"
+					class="inline-block h-4 w-4 bg-gray-400 data-[state=checked]:bg-gray-100 transform rounded-full bg-gray-200 transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1"
 				/>
 			</Switch.Root>
 		</div>

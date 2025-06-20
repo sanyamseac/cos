@@ -3,7 +3,7 @@
 	import { formatPrice } from '$lib/utils'
 	import { Button } from 'bits-ui'
 	import type { PageData } from './$types'
-	import { ArrowLeft, Search, X } from 'lucide-svelte'
+	import { ArrowLeft, ChevronLeft, Search, X } from 'lucide-svelte'
 	import { goto } from '$app/navigation'
 
 	let { data }: { data: PageData } = $props()
@@ -283,31 +283,28 @@
 	}
 </script>
 
+<svelte:head>
+    <title>Transactions</title>
+    <meta name="description" content="View and search your transaction history." />
+</svelte:head>
+
 <div
-	class="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pb-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+	class="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-green-50 to-purple-50 pb-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
 >
 	<Elements />
 
 	<div class="relative z-10 space-y-8 px-4 py-6">
-		<Button.Root
-			class="flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-			onclick={() => goto('/menu')}
-		>
-			<ArrowLeft size={16} />
-			<span>Back to Canteens</span>
-		</Button.Root>
-
-		<div class="space-y-2">
-			<h1
-				class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent"
-			>
-				Transactions
-			</h1>
-		</div>
+        <div>
+            <h1
+                class="text-4xl font-sensation text-gray-800 dark:text-white sm:text-5xl md:text-6xl"
+            >
+                transactions
+            </h1>
+        </div>
 
 		{#each filteredTransactions as { transaction, canteen }, index (transaction.id)}
 			<div
-				class="group animate-in slide-in-from-bottom-4 fade-in mb-4 transform rounded-xl border bg-white p-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg dark:bg-gray-800/80"
+				class="group m-0 border-b px-2 py-6 backdrop-blur-sm"
 				style="animation-delay: {index * 50}ms; animation-fill-mode: backwards;"
 			>
 				<div class="flex items-center justify-between">
@@ -343,33 +340,33 @@
 	</div>
 
 	<!-- Floating Search Button/Bar -->
-	<div class="fixed right-3 bottom-20 z-50">
-		<div class="flex items-center">
-			{#if isSearchOpen}
-				<input
-					class="animate-in slide-in-from-right-4 h-12 w-64 rounded-l-full border border-gray-200 bg-white/90 px-4 text-sm text-gray-700 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800/90 dark:text-gray-200 dark:focus:ring-indigo-400"
-					placeholder="Search transactions..."
-					bind:value={searchQuery}
-				/>
-			{/if}
-			<button
-				onclick={toggleSearch}
-				class="flex h-12 w-12 items-center justify-center {isSearchOpen
-					? 'rounded-r-full'
-					: 'rounded-full'} bg-indigo-600 shadow-lg transition-all duration-300 ease-out hover:bg-indigo-700"
-			>
-				<div
-					class="transition-transform duration-300 ease-out {isSearchOpen
-						? 'rotate-90'
-						: 'rotate-0'}"
-				>
-					{#if isSearchOpen}
-						<X size={24} color="white" />
-					{:else}
-						<Search size={24} color="white" />
-					{/if}
-				</div>
-			</button>
-		</div>
-	</div>
+    <div class="fixed right-3 bottom-20 z-50">
+        <div class="flex items-center">
+            {#if isSearchOpen}
+                <input
+                    class="h-12 w-64 rounded-l-full border border-gray-200 bg-white/90 px-4 text-sm text-gray-700 shadow-lg backdrop-blur-sm transition-all duration-500 ease-out focus:ring-0 dark:border-gray-600 dark:bg-gray-800/90 dark:text-gray-200 dark:focus:ring-green-400 animate-in slide-in-from-right-2 fade-in-0 duration-500"
+                    placeholder="Search transactions..."
+                    bind:value={searchQuery}
+                />
+            {/if}
+            <button
+                onclick={toggleSearch}
+                class="flex h-12 w-12 items-center justify-center {isSearchOpen
+                    ? 'rounded-r-full'
+                    : 'rounded-full'} bg-green-700 shadow-lg transition-all duration-500 ease-out"
+            >
+                <div
+                    class="transition-transform duration-500 ease-out {isSearchOpen
+                        ? 'rotate-90'
+                        : 'rotate-0'}"
+                >
+                    {#if isSearchOpen}
+                        <X size={24} color="white" />
+                    {:else}
+                        <Search size={24} color="white" />
+                    {/if}
+                </div>
+            </button>
+        </div>
+    </div>
 </div>

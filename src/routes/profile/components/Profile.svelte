@@ -7,7 +7,7 @@
 
 <div class="flex flex-col gap-4">
     <div class="relative flex items-center">
-        <Avatar.Root class="h-20 w-20">
+        <Avatar.Root class="h-25 w-25">
             <div class="flex h-full w-full items-center justify-center relative">
                 <Avatar.Image
                     src={data.user.profilePicture || undefined}
@@ -17,11 +17,11 @@
                 <Avatar.Fallback
                     class="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
                 >
-                    <User class="h-10 w-10" />
+                    <User />
 
                 </Avatar.Fallback>
                 <Button.Root
-                    class="absolute -right-2 -bottom-2 flex h-6 w-6 items-center justify-center rounded-md bg-blue-500 transition-colors hover:bg-blue-600"
+                    class="absolute -right-2 -bottom-2 flex h-6 w-6 items-center justify-center rounded-md bg-green-600 transition-colors hover:bg-green-700"
                     onclick={() => (isEditingPic = true)}
                 >
                     <Pencil class="h-3 w-3 text-white" />

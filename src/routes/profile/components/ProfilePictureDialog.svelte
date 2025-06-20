@@ -2,20 +2,16 @@
 	import { enhance } from '$app/forms'
 	import { invalidateAll } from '$app/navigation'
 	import { Button, Dialog } from 'bits-ui'
-	import { User, X } from 'lucide-svelte'
+	import { User } from 'lucide-svelte'
 
 	interface Props {
 		open: boolean
 		currentProfilePic?: string | null
-		userName?: string
-		userEmail?: string
 	}
 
 	let {
 		open = $bindable(),
 		currentProfilePic,
-		userName = 'User',
-		userEmail = '',
 	}: Props = $props()
 
 	let selectedAvatarIndex = $state(-1)
@@ -125,57 +121,29 @@
 					</div>
 				</div>
 
-				<!-- Profile Info Preview -->
-				<div class="w-full rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
-					<div class="flex items-center gap-3">
-						<div
-							class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700"
-						>
-							{#if previewImage()}
-								<img
-									src={previewImage()}
-									alt="Preview"
-									class="h-full w-full object-cover"
-								/>
-							{:else}
-								<User class="h-6 w-6 text-gray-500 dark:text-gray-400" />
-							{/if}
-						</div>
-						<div class="flex flex-col">
-							<h3 class="text-base font-semibold text-gray-800 dark:text-white">
-								{userName}
-							</h3>
-							{#if userEmail}
-								<p class="text-sm text-gray-600 dark:text-gray-400">{userEmail}</p>
-							{/if}
-						</div>
+				<div class="flex flex-col gap-2 w-full">
+					<input
+						bind:this={fileInput}
+						id="profilePic"
+						type="file"
+						accept="image/*"
+						onchange={handleFileUpload}
+						class="block w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-500 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-indigo-500 file:to-purple-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:from-indigo-600 hover:file:to-purple-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+					/>
+					<div class="text-xs text-gray-500 dark:text-gray-400">
+						Supports JPG, PNG, GIF up to 10MB
 					</div>
 				</div>
 
-				<!-- Upload Custom Picture -->
-				<div class="w-full space-y-3">
-					<h4 class="text-sm font-medium text-gray-800 dark:text-white">
-						Upload Custom Picture
-					</h4>
-					<div class="flex flex-col gap-2">
-						<input
-							bind:this={fileInput}
-							id="profilePic"
-							type="file"
-							accept="image/*"
-							onchange={handleFileUpload}
-							class="block w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-500 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-indigo-500 file:to-purple-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:from-indigo-600 hover:file:to-purple-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
-						/>
-						<div class="text-xs text-gray-500 dark:text-gray-400">
-							Supports JPG, PNG, GIF up to 5MB
-						</div>
-					</div>
+				<div class="flex w-full items-center gap-4">
+					<hr class="flex-1 border-gray-200 dark:border-gray-700" />
+					<span class="text-sm text-gray-500 dark:text-gray-400">or</span>
+					<hr class="flex-1 border-gray-200 dark:border-gray-700" />
 				</div>
-
 				<!-- Avatar Options -->
 				<div class="w-full space-y-3">
 					<h4 class="text-sm font-medium text-gray-800 dark:text-white">
-						Or choose a default avatar:
+						Choose a default avatar
 					</h4>
 					<div class="grid grid-cols-4 gap-3">
 						{#each avatarUrls as avatarUrl, i}
@@ -200,7 +168,7 @@
 			<div class="mt-6 flex w-full justify-end gap-3">
 				<Button.Root
 					onclick={handleClose}
-					class="border border-gray-200 bg-white px-6 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+					class="rounded-lg border border-gray-200 bg-white px-6 py-2 text-gray-700 shadow hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 hover:shadow-xl"
 				>
 					Cancel
 				</Button.Root>
@@ -208,7 +176,7 @@
 					<input type="hidden" name="profilePictureUrl" value={previewImage()} />
 					<Button.Root
 						type="submit"
-						class="rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2 font-semibold text-white shadow-lg transition-all duration-300 hover:from-indigo-600 hover:to-purple-700 hover:shadow-xl"
+						class="rounded-lg border bg-green-600 px-6 py-2 font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-xl"
 					>
 						Save
 					</Button.Root>
@@ -220,7 +188,6 @@
 				onclick={handleClose}
 				class="absolute top-4 right-4 rounded-md p-1 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none active:scale-[0.98] dark:hover:bg-gray-700 dark:focus-visible:ring-offset-gray-800"
 			>
-				<X class="h-5 w-5 text-gray-500 dark:text-gray-400" />
 				<span class="sr-only">Close</span>
 			</Dialog.Close>
 		</Dialog.Content>

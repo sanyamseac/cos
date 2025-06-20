@@ -37,7 +37,7 @@
 						</div>
 					</div>
 				{/each}
-				<div class="mt-4 rounded-lg bg-blue-50 p-3 dark:bg-blue-900">
+				<div class="mt-4 rounded-lg bg-green-100 p-3 dark:bg-green-700">
 					<div class="flex items-center justify-between">
 						<span class="font-medium text-blue-800 dark:text-blue-200"
 							>Total Balance</span
@@ -62,7 +62,7 @@
 				</div>
 				<Button.Root
 					onclick={() => goto('/profile/transactions')}
-					class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700"
+					class="flex items-center gap-2 rounded-lg border border-gray-300 shadow px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700"
 				>
 					View All
 					<ChevronRight size={16} />

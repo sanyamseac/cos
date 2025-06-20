@@ -15,11 +15,14 @@
 	let isEditingPic = $state(false)
 </script>
 
+<svelte:head>
+	<title>Profile</title>
+	<meta name="description" content="Manage your profile, preferences, and notifications." />
+</svelte:head>
+
 <ProfilePictureDialog
 	bind:open={isEditingPic}
 	currentProfilePic={data.user.profilePicture}
-	userName={data.user.name}
-	userEmail={data.user.email}
 />
 
 <div
@@ -36,6 +39,15 @@
 					profile
 				</h1>
 			</div>
+			<div>
+				<form method="post" action="login?/logout" use:enhance>
+					<Button.Root
+						class="px-2"
+					>
+						<LogOut class="ml-3 mt-0.5 h-7 w-7" />
+					</Button.Root>
+				</form>
+			</div>
 		</div>
 
 		<Profile {data} bind:isEditingPic />
@@ -49,18 +61,6 @@
 
 		<Wallets {data} />
 		<hr class="border-gray-400 dark:border-gray-500" />
-		<div>
-			<form method="post" action="login?/logout" use:enhance>
-				<Button.Root
-					class="rounded-xl w-full bg-gradient-to-r from-red-600 to-red-700 px-2 py-2 font-semibold text-white shadow-lg transition-all duration-300 hover:from-red-800 hover:to-red-900 hover:shadow-xl"
-				>
-					<div class="flex items-center text-gray-200 justify-center px-2">
-						Logout
-						<LogOut class="ml-3 h-4 w-4" />
-					</div>
-				</Button.Root>
-			</form>
-		</div>
 		<Legal />
 	</div>
 </div>
