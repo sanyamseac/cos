@@ -36,10 +36,10 @@
 		`End of day feast awaits, ${userName}`,
 		`Evening! Ready to git some dinner?`,
 		`Perfect timing ${userName}, let's wrap up with food`,
-		`Shutdown work mode, activate dinner mode 💾`,
+		`Shutdown work mode, activate dinner mode`,
 		`Final deployment of the day: food!`,
 		`Evening ${userName}, time to refactor your energy`,
-		`Day's almost done, but dinner's just beginning! 🍴`,
+		`Day's almost done, but dinner's just beginning!`,
 	]
 
 	const lateNightGreetings = [

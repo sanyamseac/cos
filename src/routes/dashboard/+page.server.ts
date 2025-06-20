@@ -79,6 +79,7 @@ export const load: PageServerLoad = async (event) => {
 			db
 				.select({
 					menuItem: schema.menuItems,
+					variant: schema.variants,
 					canteen: schema.canteens,
 					orderCount: count(),
 				})
@@ -86,14 +87,16 @@ export const load: PageServerLoad = async (event) => {
 				.leftJoin(schema.orders, eq(schema.orderItems.orderId, schema.orders.id))
 				.leftJoin(schema.menuItems, eq(schema.orderItems.menuItemId, schema.menuItems.id))
 				.leftJoin(schema.canteens, eq(schema.menuItems.canteenId, schema.canteens.id))
+				.leftJoin(schema.variants, eq(schema.orderItems.variantId, schema.variants.id))
 				.where(
 					and(
 						eq(schema.orders.userId, userId),
 						eq(schema.menuItems.available, true),
 						eq(schema.canteens.active, true),
+						eq(schema.variants.available, true),
 					),
 				)
-				.groupBy(schema.menuItems.id, schema.canteens.id)
+				.groupBy(schema.menuItems.id, schema.canteens.id, schema.variants.id)
 				.orderBy(desc(count()))
 				.limit(6),
 
@@ -149,9 +152,11 @@ export const load: PageServerLoad = async (event) => {
 				.filter((item) => item.menuItem && item.canteen)
 				.map((item) => ({
 					id: item.menuItem!.id,
+					variantId: item.variant!.id || null,
 					name: item.menuItem!.name,
 					price: parseFloat(item.menuItem!.price),
 					canteen: item.canteen!.name,
+					canteenAcronym: item.canteen!.acronym,
 					image: item.menuItem!.image || '/defaultMenuItem.png',
 				})),
 			canteenStats: canteenStatsResult
