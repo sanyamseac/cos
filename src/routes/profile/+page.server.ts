@@ -6,6 +6,8 @@ import * as schema from '$lib/server/db/schema'
 import { eq, desc, and } from 'drizzle-orm'
 import { updated } from '$app/state'
 import { PgUpdateBuilder } from 'drizzle-orm/pg-core'
+import fs from 'fs/promises'
+import path from 'path'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -55,14 +57,36 @@ export const actions: Actions = {
 		if (!event.locals.user) throw fail(401, { message: 'Unauthorized' })
 
 		const data = await event.request.formData()
-		const profilePictureUrl = data.get('profilePictureUrl') as string
+		let profilePictureUrl = data.get('profilePictureUrl') as string
 
 		if (!profilePictureUrl) {
-			throw fail(400, { message: 'Profile picture URL is required' })
+			return fail(400, { message: 'Profile picture URL is required' })
+		}
+
+		if (!profilePictureUrl.includes('/avatars/avatar-')) {
+			if (profilePictureUrl.startsWith('data:')) {
+				try {
+					const [header, base64Data] = profilePictureUrl.split(',')
+					const mimeType = header.match(/data:([^;]+)/)?.[1]
+					const fileExtension = mimeType?.split('/')[1] || 'jpg'
+					
+					const buffer = Buffer.from(base64Data, 'base64')
+					const fileName = `${event.locals.user.id}.${fileExtension}`
+					const savePath = path.join('static', 'content', 'UserImages', fileName)
+					await fs.mkdir(path.dirname(savePath), { recursive: true })
+					await fs.writeFile(savePath, buffer)
+
+					profilePictureUrl = `/content/UserImages/${fileName}`
+				} catch (error) {
+					console.error('Error saving profile picture:', error)
+					return fail(500, { message: 'Failed to save profile picture' })
+				}
+			} else {
+				return fail(400, { message: 'Invalid profile picture URL format' })
+			}
 		}
 
 		try {
-			// Update the profile picture in the database
 			await db
 				.update(schema.user)
 				.set({ profilePicture: profilePictureUrl })
@@ -100,6 +124,26 @@ export const actions: Actions = {
 		} catch (error) {
 			console.error('Error updating email preferences:', error)
 			throw fail(500, { message: 'Failed to update email preferences' })
+		}
+	},
+	updateProfileVisibility: async (event) => {
+		if (!event.locals.user) return fail(401, { message: 'Unauthorized' })
+		const data = await event.request.formData()
+		const profileVisibility = data.get('visibility') as string
+
+		if (!profileVisibility || !['public', 'private'].includes(profileVisibility)) {
+			throw fail(400, { message: 'Profile visibility is required' })
+		}
+
+		try {
+			await db
+				.update(schema.user)
+				.set({ profileVisibility })
+				.where(eq(schema.user.id, event.locals.user.id))
+			return { success: true }
+		} catch (error) {
+			console.error('Error updating profile visibility:', error)
+			return fail(500, { message: 'Failed to update profile visibility' })
 		}
 	}
 }

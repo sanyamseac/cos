@@ -203,7 +203,7 @@
 		return (basePrice + variantPrice + addonsPrice) * item.orderItem.quantity
 	}
 
-	const timelineSteps = $derived(getTimelineSteps(data.order.status, data.order))
+	const timelineSteps = $derived(getTimelineSteps(order.status, data.order))
 	const StatusIcon = getStatusIcon(data.order.status)
 </script>
 

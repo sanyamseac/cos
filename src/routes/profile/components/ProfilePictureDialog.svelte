@@ -1,13 +1,14 @@
 <script lang="ts">
+	import { enhance } from '$app/forms'
+	import { invalidateAll } from '$app/navigation'
 	import { Button, Dialog } from 'bits-ui'
-	import { User, Save, X } from 'lucide-svelte'
+	import { User, X } from 'lucide-svelte'
 
 	interface Props {
 		open: boolean
 		currentProfilePic?: string | null
 		userName?: string
 		userEmail?: string
-		onSave: (profilePicUrl: string) => void
 	}
 
 	let {
@@ -15,14 +16,12 @@
 		currentProfilePic,
 		userName = 'User',
 		userEmail = '',
-		onSave,
 	}: Props = $props()
 
 	let selectedAvatarIndex = $state(-1)
 	let uploadedImage = $state<string | null>(null)
-	let fileInput: HTMLInputElement
+	let fileInput: HTMLInputElement 
 
-	// Available SVG avatars
 	const avatarUrls = Array.from({ length: 8 }, (_, i) => `/avatars/avatar-${i + 1}.svg`)
 
 	function handleFileUpload(event: Event) {
@@ -32,7 +31,7 @@
 			const reader = new FileReader()
 			reader.onload = (e) => {
 				uploadedImage = e.target?.result as string
-				selectedAvatarIndex = -1 // Reset avatar selection when file is uploaded
+				selectedAvatarIndex = -1
 			}
 			reader.readAsDataURL(file)
 		}
@@ -40,37 +39,25 @@
 
 	function selectAvatar(index: number) {
 		selectedAvatarIndex = index
-		uploadedImage = null // Reset uploaded image when avatar is selected
+		uploadedImage = null
 		if (fileInput) {
-			fileInput.value = '' // Clear file input
+			fileInput.value = ''
 		}
 	}
 
 	function handleSave() {
-		let profilePicUrl: string
-
-		if (uploadedImage) {
-			profilePicUrl = uploadedImage
-		} else if (selectedAvatarIndex >= 0) {
-			profilePicUrl = avatarUrls[selectedAvatarIndex]
-		} else {
-			profilePicUrl = currentProfilePic || '/content/avatars/avatar-1.svg'
-		}
-
-		onSave(profilePicUrl)
 		open = false
 	}
 
 	function handleClose() {
 		open = false
-		// Reset state when closing
 		selectedAvatarIndex = -1
 		uploadedImage = null
 		if (fileInput) {
 			fileInput.value = ''
 		}
 	}
-	// Compute the preview image
+
 	const previewImage = $derived(() => {
 		if (uploadedImage) return uploadedImage
 		if (selectedAvatarIndex >= 0) return avatarUrls[selectedAvatarIndex]
@@ -214,13 +201,15 @@
 				>
 					Cancel
 				</Button.Root>
-				<Button.Root
-					onclick={handleSave}
-					class="rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2 font-semibold text-white shadow-lg transition-all duration-300 hover:from-indigo-600 hover:to-purple-700 hover:shadow-xl"
-				>
-					<Save class="mr-2 h-4 w-4" />
-					Save Changes
-				</Button.Root>
+				<form method="post" action="?/updateProfilePicture" use:enhance>
+					<input type="hidden" name="profilePictureUrl" value={previewImage()} />
+					<Button.Root
+						onclick={handleSave}
+						class="rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2 font-semibold text-white shadow-lg transition-all duration-300 hover:from-indigo-600 hover:to-purple-700 hover:shadow-xl"
+					>
+						Save
+					</Button.Root>
+				</form>
 			</div>
 
 			<!-- Close Button -->

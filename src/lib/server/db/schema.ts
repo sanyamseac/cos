@@ -8,6 +8,8 @@ export const user = pgTable('user', {
 	role: text('role').notNull().default('consumer'),
 	profilePicture: text('profile_picture'),
 	emailPreference: text('email_preference').notNull().default('important'),
+	profileVisibility: text('profile_visibility').notNull().default('private'),
+	OrderingAllowed: boolean('ordering_allowed').notNull().default(true),
 })
 
 export const session = pgTable('session', {
