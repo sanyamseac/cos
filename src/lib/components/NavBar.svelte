@@ -11,6 +11,11 @@
 					href: '/canteen/dashboard',
 					img: Utensils,
 				},
+				{
+					title: 'Manage',
+					href: '/canteen/items',
+					img: CookingPot,
+				}
 			]
 		}
 
