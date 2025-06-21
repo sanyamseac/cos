@@ -1,13 +1,10 @@
 <script lang="ts">
-	import Greeting from './components/Greeting.svelte'
 	import StatsCard from './components/StatsCard.svelte'
 	import QuickOrdersCard from './components/QuickOrdersCard.svelte'
 	import CanteenStatsCard from './components/CanteenStatsCard.svelte'
 	import { formatPrice } from '$lib/utils'
 	import Elements from '$lib/components/Elements.svelte'
-	import { Button } from 'bits-ui'
-	import { ChartNoAxesColumn } from 'lucide-svelte'
-	import { goto } from '$app/navigation'
+	import Header from './components/Header.svelte'
 
 	let { data } = $props()
 
@@ -26,36 +23,11 @@
 >
 	<Elements />
 
-	<div class="relative z-10 space-y-8 px-4 py-6">
-		<div class="flex-row">
-			<div class="flex items-center justify-between pb-4">
-				<div>
-					<h1
-						class="text-4xl font-sensation text-gray-800 dark:text-white sm:text-5xl md:text-6xl"
-					>
-						dashboard
-					</h1>
-				</div>
-				<div>
-					<Button.Root
-						class="px-2"
-						onclick={() => goto('/leaderboard')}
-					>
-						<ChartNoAxesColumn class="ml-3 mt-0.5 h-7 w-7" />
-					</Button.Root>
-				</div>
-			</div>
-			<Greeting
-					userName={data.user.name}
-					class="text-lg text-gray-700 dark:text-gray-500"
-				/>
-		</div>
-
-	</div>
-
 	<div class="relative z-10 space-y-4 px-4 py-6 md:px-8 md:py-10">
 
-		<div class="lg:col-span-2">
+		<Header user={data.user} />
+
+		<div class="lg:col-span-2 mt-12">
 			<QuickOrdersCard {quickOrders} />
 		</div>
 		<hr class="mt-6 mb-7 border-gray-400 dark:border-gray-500" />
