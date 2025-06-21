@@ -30,17 +30,9 @@
 		<Dialog.Content
 			class="fixed top-1/2 left-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-800"
 		>
-			<div class="mb-4 flex items-center justify-between">
-				<Dialog.Title class="text-lg font-semibold text-gray-900 dark:text-white">
-					Join Basket
-				</Dialog.Title>
-				<Dialog.Close
-					class="rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-					onclick={handleClose}
-				>
-					<X size={20} class="text-gray-500" />
-				</Dialog.Close>
-			</div>
+			<Dialog.Title class="text-xl mb-10 text-center font-semibold text-gray-900 dark:text-white">
+				Join Basket
+			</Dialog.Title>
 
 			<form
 				method="POST"
@@ -57,9 +49,6 @@
 					}
 				}}
 			>
-				<p class="text-sm text-gray-600 dark:text-gray-300">
-					Enter the 8-character access code to join someone's basket and order together.
-				</p>
 
 				<div>
 					<label
@@ -75,7 +64,7 @@
 						bind:value={accessCode}
 						maxlength="8"
 						pattern="[A-Z0-9]&#123;8&#125;"
-						class="w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-lg tracking-wider uppercase focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+						class="w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-lg tracking-wider uppercase focus:border-transparent focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 						placeholder="XXXXXXXX"
 						disabled={loading}
 						required
@@ -110,21 +99,21 @@
 					</Button.Root>
 					<Button.Root
 						type="submit"
-						class="flex-1 rounded-lg bg-indigo-600 px-4 py-3 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+						class="flex-1 rounded-lg bg-green-600 px-4 py-3 text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
 						disabled={loading || !accessCode.trim()}
 					>
 						{loading ? 'Joining...' : 'Join Basket'}
 					</Button.Root>
 				</div>
 
-				<div
-					class="rounded-lg bg-gray-50 p-3 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400"
-				>
+				<hr class="my-10 border-gray-500" />
+
+				<div>
 					<p class="mb-1 font-medium">What happens when you join:</p>
 					<ul class="list-inside list-disc space-y-1">
-						<li>You can add items to the shared basket</li>
-						<li>You can only edit items you add yourself</li>
-						<li>Each person pays for their own items (unless owner uses wallet)</li>
+						<li>Your basket will be visible to others</li>
+						<li>You can see others baskets</li>
+						<li>Anyone can pay for all baskets via their wallet or orders can be paid at canteens individually</li>
 					</ul>
 				</div>
 			</form>

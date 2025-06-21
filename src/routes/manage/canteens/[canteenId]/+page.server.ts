@@ -96,7 +96,7 @@ export const actions: Actions = {
 			}
 
 			let filename = ''
-			if (image) {
+			if (path.extname(image?.name || '')) {
 				filename = name + path.extname(image.name)
 				const savePath = path.join('static', 'content', 'MenuItemImages', filename)
 				await fs.mkdir(path.dirname(savePath), { recursive: true })
@@ -130,7 +130,7 @@ export const actions: Actions = {
 					type,
 					active,
 					description: description,
-					image: filename
+					image: path.extname(image?.name || '')
 						? `/content/MenuItemImages/${filename}`
 						: '/defaultMenuItem.png',
 				})
@@ -165,7 +165,7 @@ export const actions: Actions = {
 			}
 
 			let filename = ''
-			if (image) {
+			if (image && path.extname(image.name)) {
 				filename = name + path.extname(image.name)
 				const savePath = path.join('static', 'content', 'MenuItemImages', filename)
 				await fs.mkdir(path.dirname(savePath), { recursive: true })
@@ -182,7 +182,7 @@ export const actions: Actions = {
 			if (type) updateData.type = type
 			if (active !== null) updateData.active = active === 'true'
 			if (description) updateData.description = description
-			if (filename) updateData.image = `/content/MenuItemImages/${filename}`
+			if (path.extname(image?.name || '')) updateData.image = `/content/MenuItemImages/${filename}`
 
 			const [updatedItem] = await db
 				.update(schema.menuItems)

@@ -79,11 +79,13 @@ export const load: PageServerLoad = async (event) => {
 							category: schema.menuItems.category,
 							type: schema.menuItems.type,
 							image: schema.menuItems.image,
+							available: schema.menuItems.available,
 						},
 						variant: {
 							id: schema.variants.id,
 							name: schema.variants.name,
 							price: schema.variants.price,
+							available: schema.variants.available,
 						},
 					})
 					.from(schema.basketItems)
@@ -103,6 +105,7 @@ export const load: PageServerLoad = async (event) => {
 								name: schema.addons.name,
 								price: schema.addons.price,
 								type: schema.addons.type,
+								available: schema.addons.available,
 							})
 							.from(schema.basketAddons)
 							.leftJoin(
@@ -161,11 +164,11 @@ export const load: PageServerLoad = async (event) => {
 
 		const wallets = await db
 			.select({
-				wallet: schema.wallets,
-				canteen: schema.canteens,
+				id: schema.wallets.id,
+				balance: schema.wallets.balance,
+				canteenId: schema.wallets.canteenId,
 			})
 			.from(schema.wallets)
-			.leftJoin(schema.canteens, eq(schema.wallets.canteenId, schema.canteens.id))
 			.where(eq(schema.wallets.userId, event.locals.user.id))
 
 		return {

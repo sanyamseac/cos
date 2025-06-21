@@ -8,13 +8,11 @@
 	let {
 		item = $bindable(),
 		addingToCart,
-		getFoodTypeIcon,
 		onClose,
 		showCartMessage = $bindable(false),
 	}: {
 		item: any
 		addingToCart?: boolean
-		getFoodTypeIcon: (type: string) => string
 		onClose: () => void
 		showCartMessage?: boolean
 	} = $props()
@@ -81,8 +79,8 @@
 	</Dialog.Close>
 
 	<Dialog.Title class="pr-8 text-2xl font-bold text-gray-900 dark:text-white">
-		<span class="mr-1">{getFoodTypeIcon(item.type)}</span>
 		{item.name}
+		<FoodType type={item.type} size={24} class="ml-2 inline-block" />
 	</Dialog.Title>
 
 	{#if item.description}

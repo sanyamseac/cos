@@ -2,7 +2,6 @@
 	import { Button } from 'bits-ui'
 	import { Minus, Plus, Trash2, User } from 'lucide-svelte'
 	import { enhance } from '$app/forms'
-	import { getFoodTypeIcon } from '$lib/utils/foodTypeUtils'
 	import { calculateBasketItemTotal, formatPrice } from '$lib/utils/priceUtils'
 	import FoodType from '$lib/components/FoodType.svelte'
 
@@ -15,11 +14,11 @@
 	} = $props()
 
 	const itemTotal = $derived(calculateBasketItemTotal(item))
-	const canEdit = $derived(item.canEdit !== false) // Default to true for backward compatibility
+	const canEdit = $derived(item.canEdit !== false)
 </script>
 
 <div
-	class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+	class="border-b border-gray-500 p-4"
 >
 	<div class="mb-3 flex items-start justify-between gap-4">
 		<div class="flex items-start gap-2">
@@ -34,8 +33,11 @@
 						class="ml-1 truncate text-base font-semibold text-gray-900 sm:text-lg dark:text-white"
 					>
 						{item.menuItem?.name || 'Unknown Item'}
+						{#if item.menuItem?.available === false}
+							<span class="text-xs text-red-500 dark:text-red-400">Unavailable</span>
+						{/if}
 					</h3>
-					<FoodType type={item.menuItem.type} size={20} />
+					<FoodType type={item.menuItem.type} size={16} />
 				</div>
 
 				{#if showAddedBy && item.addedByUser}
@@ -44,7 +46,7 @@
 					>
 						<User size={10} class="text-blue-600 dark:text-blue-400" />
 						<span class="text-xs text-blue-700 dark:text-blue-300"
-							>{item.addedByUser.name}</span
+							>{item.addedByUser?.name || 'Unknown User'}</span
 						>
 					</div>
 				{/if}
@@ -64,7 +66,12 @@
 	<div class="mb-4 space-y-2">
 		{#if item.variant}
 			<div class="flex items-center justify-between text-sm">
+				<div class="flex items-center gap-2">
 				<span class="text-gray-600 dark:text-gray-300">{item.variant.name}</span>
+				{#if item.variant.available === false}
+					<span class="text-xs text-red-500 dark:text-red-400">Unavailable</span>
+				{/if}
+				</div>
 				<span class="font-medium text-gray-900 dark:text-white">
 					{formatPrice(Number(item.menuItem.price) + Number(item.variant.price))}
 				</span>
@@ -79,7 +86,10 @@
 						<div class="flex items-center justify-between">
 							<div>
 								<span class="text-gray-700 dark:text-gray-300">{addon.name}</span>
-								<FoodType type={addon.type} size={14} class="inline" />
+								{#if addon.available === false}
+									<span class="text-xs text-red-500 dark:text-red-400">Unavailable</span>
+								{/if}
+								<FoodType type={addon.type} size={10} class="inline" />
 							</div>
 							<span class="font-medium text-gray-900 dark:text-white">
 								{formatPrice(addon.price)}
@@ -92,7 +102,7 @@
 	</div>
 
 	<div
-		class="flex items-center justify-between gap-4 border-t border-gray-100 pt-3 dark:border-gray-700"
+		class="flex items-center justify-between gap-4 pt-3"
 	>
 		<div class="flex items-center gap-3">
 			<span class="text-sm text-gray-600 dark:text-gray-300">Quantity:</span>
@@ -102,7 +112,7 @@
 					<input type="hidden" name="quantity" value={item.quantity - 1} />
 					<Button.Root
 						type="submit"
-						class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-all hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+						class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-gray-700 transition-all hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
 						disabled={item.quantity <= 1 || !canEdit}
 					>
 						<Minus size={14} />
@@ -118,7 +128,7 @@
 					<input type="hidden" name="quantity" value={item.quantity + 1} />
 					<Button.Root
 						type="submit"
-						class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-all hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+						class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-gray-700 transition-all hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
 						disabled={item.quantity >= 10 || !canEdit}
 					>
 						<Plus size={14} />

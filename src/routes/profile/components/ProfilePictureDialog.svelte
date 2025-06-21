@@ -76,13 +76,10 @@
 			<Elements num={1}/>
 			<div class="relative z-10">
 				<Dialog.Title
-					class="mb-2 flex w-full items-center justify-center text-xl font-semibold tracking-tight text-gray-800 dark:text-white"
+					class="mb-8 flex w-full items-center justify-center text-xl font-semibold tracking-tight text-gray-800 dark:text-white"
 				>
 					Update Profile Picture
 				</Dialog.Title>
-				<Dialog.Description class="mb-6 text-center text-sm text-gray-600 dark:text-gray-400">
-					Upload a new profile picture or choose from the options below.
-				</Dialog.Description>
 
 				<div class="flex flex-col items-center gap-6 py-4">
 					<div class="grid w-full grid-cols-2 gap-6">

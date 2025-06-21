@@ -7,7 +7,6 @@
 	import MenuCategorySection from './components/MenuCategorySection.svelte'
 	import CartNotification from './components/CartNotification.svelte'
 	import Elements from '$lib/components/Elements.svelte'
-	import { getFoodTypeIcon } from '$lib/utils/foodTypeUtils'
 
 	let { data }: { data: PageData } = $props()
 
@@ -128,7 +127,6 @@
 						bind:item={selectedItem}
 						bind:showCartMessage
 						{addingToCart}
-						{getFoodTypeIcon}
 						onClose={closeDialog}
 					/>
 				{/if}
