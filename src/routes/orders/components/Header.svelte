@@ -9,7 +9,7 @@
 		<h1
 			class="text-4xl font-sensation text-gray-800 dark:text-white sm:text-5xl md:text-6xl"
 		>
-			basket
+			orders
 		</h1>
 	</div>
 	<div>

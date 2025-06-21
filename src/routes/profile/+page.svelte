@@ -1,8 +1,5 @@
 <script lang="ts">
-	import { enhance } from '$app/forms'
 	import type { PageServerData } from './$types'
-	import { Button } from 'bits-ui'
-	import { LogOut } from 'lucide-svelte'
 	import ProfilePictureDialog from './components/ProfilePictureDialog.svelte'
 	import Elements from '$lib/components/Elements.svelte'
 	import Wallets from './components/Wallets.svelte'
