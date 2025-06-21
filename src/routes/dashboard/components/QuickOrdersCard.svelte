@@ -37,7 +37,7 @@
 		{#each quickOrders as order, index}
 			<div class="group relative">
 				<div
-					class="flex flex-col items-center p-4 transition-all duration-3000 hover:scale-105 hover:shadow-lg hover:rounded-lg transform"
+					class="flex flex-col items-center p-4 transition-all duration-3000 transform"
 				>
 					<div class="mb-2 text-3xl">
 						<img src={order.image} alt={order.name} class="h-20 w-20 rounded cursor-pointer" 

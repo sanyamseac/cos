@@ -216,7 +216,7 @@
 >
 	<Elements />
 
-	<div class="relative z-10 space-y-8 p-6">
+	<div class="relative z-10 space-y-4 p-6 md:px-8 md:py-10">
 		<div class="mb-6">
 			<Button.Root
 				class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -227,12 +227,12 @@
 			</Button.Root>
 		</div>
 
-		<div class="mx-auto max-w-6xl space-y-6">
+		<div class="mx-auto max-w-6xl space-y-4 md:gap-8">
 			<div
-				class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+				class="rounded-xl border shadow-lg transition-all duration-300 dark:border-gray-700"
 				in:fly={{ y: 20, duration: 300 }}
 			>
-				<div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+				<div class="flex flex-col gap-4 p-6 md:flex-row md:items-start md:justify-between">
 					<div>
 						<div class="mb-3 flex flex-wrap items-center gap-3">
 							<h1
@@ -293,7 +293,7 @@
 
 					<!-- PIN Section -->
 					<div
-						class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700"
+						class="rounded-lg border bg-white/80 p-4 backdrop-blur-sm dark:border-gray-600 dark:bg-gray-800/80"
 					>
 						<div class="flex items-center justify-between gap-3">
 							<div>
@@ -324,58 +324,60 @@
 				</div>
 			</div>
 
-			<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+			<div class="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-3">
 				<!-- Order Timeline -->
 				<div class="lg:col-span-1">
 					<div
-						class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+						class="rounded-xl border shadow-lg transition-all duration-300 dark:border-gray-700"
 						in:fly={{ y: 20, delay: 100, duration: 300 }}
 					>
-						<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
-							Order Timeline
-						</h2>
+						<div class="p-6">
+							<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
+								Order Timeline
+							</h2>
 
-						<div class="space-y-4">
-							{#each timelineSteps as step, index}
-								{@const StatusIcon = getStatusIcon(step.status)}
-								<div class="flex gap-3">
-									<div class="flex flex-col items-center">
-										<div
-											class="flex h-8 w-8 items-center justify-center rounded-full {step.completed
-												? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300'
-												: 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'}"
-										>
-											<StatusIcon size={14} />
-										</div>
-										{#if index < timelineSteps.length - 1}
+							<div class="space-y-4">
+								{#each timelineSteps as step, index}
+									{@const StatusIcon = getStatusIcon(step.status)}
+									<div class="flex gap-3">
+										<div class="flex flex-col items-center">
 											<div
-												class="mt-1 h-8 w-px {step.completed
-													? 'bg-green-200 dark:bg-green-800'
-													: 'bg-gray-200 dark:bg-gray-600'}"
-											></div>
-										{/if}
-									</div>
-									<div class="min-w-0 flex-1 pb-4">
-										<h4
-											class="text-sm font-medium {step.completed
-												? 'text-gray-900 dark:text-white'
-												: 'text-gray-500 dark:text-gray-400'}"
-										>
-											{step.label}
-										</h4>
-										<p class="text-xs text-gray-500 dark:text-gray-400">
-											{step.description}
-										</p>
-										{#if step.timestamp}
-											<p
-												class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+												class="flex h-8 w-8 items-center justify-center rounded-full {step.completed
+													? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300'
+													: 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'}"
 											>
-												{formatDate(step.timestamp)}
+												<StatusIcon size={14} />
+											</div>
+											{#if index < timelineSteps.length - 1}
+												<div
+													class="mt-1 h-8 w-px {step.completed
+														? 'bg-green-200 dark:bg-green-800'
+														: 'bg-gray-200 dark:bg-gray-600'}"
+												></div>
+											{/if}
+										</div>
+										<div class="min-w-0 flex-1 pb-4">
+											<h4
+												class="text-sm font-medium {step.completed
+													? 'text-gray-900 dark:text-white'
+													: 'text-gray-500 dark:text-gray-400'}"
+											>
+												{step.label}
+											</h4>
+											<p class="text-xs text-gray-500 dark:text-gray-400">
+												{step.description}
 											</p>
-										{/if}
+											{#if step.timestamp}
+												<p
+													class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+												>
+													{formatDate(step.timestamp)}
+												</p>
+											{/if}
+										</div>
 									</div>
-								</div>
-							{/each}
+								{/each}
+							</div>
 						</div>
 					</div>
 				</div>
@@ -383,117 +385,128 @@
 				<!-- Order Items -->
 				<div class="lg:col-span-2">
 					<div
-						class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+						class="rounded-xl border shadow-lg transition-all duration-300 dark:border-gray-700"
 						in:fly={{ y: 20, delay: 200, duration: 300 }}
 					>
-						<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
-							Order Items
-						</h2>
-						<div class="space-y-4">
-							{#each data.orderItems || [] as item, index}
-								<div
-									class=" rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-								>
-									<div class="mb-3 flex items-start justify-between gap-4">
-										<div class="flex items-center items-start gap-2">
-											<img
-												src={item.menuItem?.image || '/default-item.png'}
-												alt={item.menuItem?.name || 'Unknown Item'}
-												class="h-12 w-12 rounded"
-											/>
-											<div class="min-w-0 flex-1">
-												<div class="mt-3 mb-1 flex items-center gap-2">
-													<h3
-														class="ml-1 truncate text-base font-semibold text-gray-900 sm:text-lg dark:text-white"
-													>
-														{item.menuItem?.name || 'Unknown Item'}
-													</h3>
-													<FoodType
-														type={item.menuItem?.type}
-														size={20}
-													/>
-												</div>
-											</div>
-										</div>
-
-										<div class="flex-shrink-0 text-right">
-											<div
-												class="text-lg font-bold text-gray-900 dark:text-white"
-											>
-												{formatPrice(item.orderItem.subtotal)}
-											</div>
-											<div class="text-xs text-gray-500 dark:text-gray-400">
-												{item.orderItem.quantity} × {formatPrice(
-													Number(item.orderItem.subtotal) /
-														item.orderItem.quantity,
-												)}
-											</div>
-										</div>
-									</div>
-
-									<div class="mb-4 space-y-2">
-										{#if item.variant}
-											<div class="flex items-center justify-between text-sm">
-												<span class="text-gray-600 dark:text-gray-300"
-													>{item.variant.name}</span
-												>
-												<span
-													class="font-medium text-gray-900 dark:text-white"
-												>
-													{formatPrice(
-														Number(item.menuItem?.price) +
-															Number(item.variant.price),
-													)}
-												</span>
-											</div>
-										{/if}
-
-										{#if item.addons.length > 0}
-											<div class="text-sm">
-												<span
-													class="mb-1 block text-gray-600 dark:text-gray-300"
-													>Add-ons:</span
-												>
-												<div
-													class="space-y-1 border-l-2 border-gray-200 pl-2 dark:border-gray-600"
-												>
-													{#each item.addons as addon}
-														<div
-															class="flex items-center justify-between"
+						<div class="p-6">
+							<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
+								Order Items
+							</h2>
+							<div class="space-y-4">
+								{#each data.orderItems || [] as item, index}
+									<div
+										class="rounded-lg border border-gray-200 shadow-sm dark:border-gray-700"
+									>
+										<div
+											class="mb-3 flex items-start justify-between gap-4 p-4"
+										>
+											<div class="flex items-center items-start gap-2">
+												<img
+													src={item.menuItem?.image ||
+														'/default-item.png'}
+													alt={item.menuItem?.name || 'Unknown Item'}
+													class="h-12 w-12 rounded"
+												/>
+												<div class="min-w-0 flex-1">
+													<div class="mt-3 mb-1 flex items-center gap-2">
+														<h3
+															class="ml-1 truncate text-base font-semibold text-gray-900 sm:text-lg dark:text-white"
 														>
-															<div>
-																<span
-																	class="text-gray-700 dark:text-gray-300"
-																	>{addon.addon?.name}</span
-																>
-																<FoodType
-																	type={addon.addon?.type}
-																	size={14}
-																	class="inline"
-																/>
-															</div>
-															<span
-																class="font-medium text-gray-900 dark:text-white"
-															>
-																{formatPrice(addon.addon?.price)}
-															</span>
-														</div>
-													{/each}
+															{item.menuItem?.name || 'Unknown Item'}
+														</h3>
+														<FoodType
+															type={item.menuItem?.type}
+															size={20}
+														/>
+													</div>
 												</div>
 											</div>
-										{/if}
-									</div>
-								</div>
-							{/each}
-						</div>
 
-						<!-- Order Total -->
-						<div class="mt-6 border-t border-gray-200 pt-4 dark:border-gray-600">
-							<div
-								class="flex justify-between text-lg font-bold text-gray-900 dark:text-white"
-							>
-								<span>Total Amount</span>
-								<span>{formatPrice(data.order.totalAmount)}</span>
+											<div class="flex-shrink-0 text-right">
+												<div
+													class="text-lg font-bold text-gray-900 dark:text-white"
+												>
+													{formatPrice(item.orderItem.subtotal)}
+												</div>
+												<div
+													class="text-xs text-gray-500 dark:text-gray-400"
+												>
+													{item.orderItem.quantity} × {formatPrice(
+														Number(item.orderItem.subtotal) /
+															item.orderItem.quantity,
+													)}
+												</div>
+											</div>
+										</div>
+
+										<div class="mb-4 space-y-2 px-4">
+											{#if item.variant}
+												<div
+													class="flex items-center justify-between text-sm"
+												>
+													<span class="text-gray-600 dark:text-gray-300"
+														>{item.variant.name}</span
+													>
+													<span
+														class="font-medium text-gray-900 dark:text-white"
+													>
+														{formatPrice(
+															Number(item.menuItem?.price) +
+																Number(item.variant.price),
+														)}
+													</span>
+												</div>
+											{/if}
+
+											{#if item.addons.length > 0}
+												<div class="text-sm">
+													<span
+														class="mb-1 block text-gray-600 dark:text-gray-300"
+														>Add-ons:</span
+													>
+													<div
+														class="space-y-1 border-l-2 border-gray-200 pl-2 dark:border-gray-600"
+													>
+														{#each item.addons as addon}
+															<div
+																class="flex items-center justify-between"
+															>
+																<div>
+																	<span
+																		class="text-gray-700 dark:text-gray-300"
+																		>{addon.addon?.name}</span
+																	>
+																	<FoodType
+																		type={addon.addon?.type}
+																		size={14}
+																		class="inline"
+																	/>
+																</div>
+																<span
+																	class="font-medium text-gray-900 dark:text-white"
+																>
+																	{formatPrice(
+																		addon.addon?.price,
+																	)}
+																</span>
+															</div>
+														{/each}
+													</div>
+												</div>
+											{/if}
+										</div>
+									</div>
+								{/each}
+							</div>
+
+							<!-- Order Total -->
+							<div class="mt-6 border-t border-gray-200 pt-4 dark:border-gray-600">
+								<div
+									class="flex justify-between text-lg font-bold text-gray-900 dark:text-white"
+								>
+									<span>Total Amount</span>
+									<span>{formatPrice(data.order.totalAmount)}</span>
+								</div>
 							</div>
 						</div>
 					</div>

@@ -106,7 +106,7 @@
 						{#each item.variants as variant}
 							{@const id = useId()}
 							<div
-								class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+								class="flex items-center justify-between rounded-lg border bg-white/80 p-3 backdrop-blur-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800/80 dark:hover:bg-gray-700"
 							>
 								<div class="flex items-center">
 									<RadioGroup.Item
@@ -152,7 +152,7 @@
 				<div class="space-y-2">
 					{#each item.addons as addon}
 						<div
-							class="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700 {addon.available
+							class="flex cursor-pointer items-center justify-between rounded-lg border bg-white/80 p-3 backdrop-blur-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800/80 dark:hover:bg-gray-700 {addon.available
 								? ''
 								: 'cursor-not-allowed opacity-50'}"
 						>
@@ -252,7 +252,7 @@
 
 				<Button.Root
 					type="submit"
-					class="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 font-medium text-white shadow-sm transition-all hover:bg-indigo-700 disabled:opacity-70"
+					class="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3 font-medium text-white shadow-sm transition-all hover:bg-green-700 disabled:opacity-70"
 					disabled={submitting || addingToCart}
 				>
 					{#if submitting || addingToCart}

@@ -11,9 +11,8 @@
 		Eye,
 		Lock,
 	} from 'lucide-svelte'
-	import { enhance } from '$app/forms'
 	import Elements from '$lib/components/Elements.svelte'
-	import { invalidate, invalidateAll } from '$app/navigation'
+	import { invalidateAll } from '$app/navigation'
 	import { source } from 'sveltekit-sse'
 	import { onMount, onDestroy } from 'svelte'
 
@@ -183,22 +182,25 @@
 >
 	<Elements />
 
-	<div class="relative z-10 space-y-8 px-4 py-6 md:px-8 md:py-10">
+	<div class="relative z-10 space-y-4 px-4 py-6 md:px-8 md:py-10">
 		<!-- Header -->
-		<div class="flex items-center justify-between">
-			<div>
-				<h1
-					class="mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent"
-				>
-					{data.canteen.name} Dashboard
-				</h1>
-				<p class="text-lg text-gray-700 dark:text-gray-300">Today's operations overview</p>
+		<div class="flex-row">
+			<div class="flex items-center justify-between pb-4">
+				<div>
+					<h1
+						class="font-sensation text-4xl text-gray-800 sm:text-5xl md:text-6xl dark:text-white"
+					>
+						{data.canteen.name}
+					</h1>
+				</div>
 			</div>
 		</div>
 
 		<!-- Revenue Stats -->
-		<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-			<div class="rounded-xl bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
+			<div
+				class="min-h-[100px] transform rounded-xl border p-4 shadow-lg transition-all duration-300"
+			>
 				<div class="flex items-center">
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30"
@@ -206,17 +208,19 @@
 						<DollarSign class="h-6 w-6 text-green-600 dark:text-green-400" />
 					</div>
 					<div class="ml-4">
-						<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+						<p class="text-sm font-medium opacity-90 dark:text-white">
 							Today's Revenue
 						</p>
-						<p class="text-2xl font-bold text-gray-900 dark:text-white">
+						<p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
 							{formatPrice(data.revenue.total)}
 						</p>
 					</div>
 				</div>
 			</div>
 
-			<div class="rounded-xl bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
+			<div
+				class="min-h-[100px] transform rounded-xl border p-4 shadow-lg transition-all duration-300"
+			>
 				<div class="flex items-center">
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30"
@@ -224,10 +228,8 @@
 						<Package class="h-6 w-6 text-blue-600 dark:text-blue-400" />
 					</div>
 					<div class="ml-4">
-						<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-							Orders Today
-						</p>
-						<p class="text-2xl font-bold text-gray-900 dark:text-white">
+						<p class="text-sm font-medium opacity-90 dark:text-white">Orders Today</p>
+						<p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
 							{data.revenue.orderCount}
 						</p>
 					</div>
@@ -235,8 +237,10 @@
 			</div>
 		</div>
 
+		<hr class="mt-6 mb-7 border-gray-400 dark:border-gray-500" />
+
 		<!-- Orders List -->
-		<div class="rounded-xl bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
+		<div class="transform rounded-xl border p-6 shadow-lg transition-all duration-300">
 			<h2 class="mb-6 text-2xl font-bold text-gray-900 dark:text-white">Today's Orders</h2>
 
 			{#if data.orders.length === 0}
@@ -248,7 +252,7 @@
 				<div class="space-y-4">
 					{#each data.orders as order}
 						<div
-							class="cursor-pointer rounded-lg border bg-white p-4 transition-all hover:shadow-md dark:border-gray-600 dark:bg-gray-700"
+							class="cursor-pointer rounded-lg border bg-white/80 p-4 backdrop-blur-sm transition-all hover:shadow-md dark:border-gray-600 dark:bg-gray-800/80"
 							onclick={() => handleOrderCardClick(order)}
 						>
 							<div class="flex items-center justify-between">

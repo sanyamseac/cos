@@ -37,7 +37,7 @@
 </script>
 
 <div
-	class="transform rounded-xl shadow-lg transition-all duration-300 hover:scale-95 hover:shadow-xl border {sizeClasses[size]}"
+	class="transform rounded-xl shadow-lg transition-all duration-300 border {sizeClasses[size]}"
 >
 	<div class="flex-1">
 		<p class="text-sm font-medium opacity-90 dark:text-white">{title}</p>

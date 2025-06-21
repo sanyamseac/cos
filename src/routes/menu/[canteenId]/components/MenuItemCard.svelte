@@ -17,9 +17,9 @@
 </script>
 
 <div
-	class="group overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+	class="group overflow-hidden rounded-xl border shadow-lg transition-all duration-300 hover:shadow-xl dark:border-gray-700"
 >
-	<div class="flex items-center justify-between gap-3 p-3 sm:p-4">
+	<div class="flex items-center justify-between gap-3 p-4">
 		<img src={item.image} alt={item.name} class="h-12 w-12 rounded md:h-10 md:w-10" />
 		<div class="min-w-0 flex-1">
 			<div class="mb-1 flex items-center gap-2 sm:mb-2">

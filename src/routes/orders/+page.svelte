@@ -79,8 +79,6 @@
 		}
 	})
 
-	// ...existing code...
-
 	// Helper functions
 	function formatCurrency(amount: string | number) {
 		return `₹${Number(amount).toFixed(2)}`
@@ -150,24 +148,29 @@
 >
 	<Elements />
 
-	<div class="relative z-10 space-y-8 px-4 py-6">
-		<h1
-			class="mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent"
-		>
-			Orders
-		</h1>
+	<div class="relative z-10 space-y-4 px-4 py-6 md:px-8 md:py-10">
+		<div class="flex items-center justify-between pb-4">
+			<div>
+				<h1
+					class="font-sensation text-4xl text-gray-800 sm:text-5xl md:text-6xl dark:text-white"
+				>
+					orders
+				</h1>
+			</div>
+		</div>
 
-		<div class="mx-auto mt-10 max-w-4xl">
+		<div class="mx-auto max-w-6xl">
 			{#if data.orders && data.orders.length > 0}
-				<div class="space-y-4">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
 					{#each data.orders as { order, canteen }, index}
 						{@const StatusIcon = getStatusIcon(order.status)}
 						<div
-							class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+							class="cursor-pointer rounded-xl border shadow-lg transition-all duration-300 hover:shadow-xl dark:border-gray-700"
 							in:fly={{ y: 20, delay: index * 100, duration: 300 }}
+							onclick={() => goto(`/orders/${order.id}`)}
 						>
 							<div
-								class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+								class="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between"
 							>
 								<div class="flex-1">
 									<div class="mb-2 flex flex-wrap items-center gap-2">
@@ -211,16 +214,6 @@
 											{formatDate(order.createdAt.toString())}
 										</p>
 									</div>
-								</div>
-
-								<div class="flex flex-col gap-2 md:flex-row">
-									<Button.Root
-										class="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700"
-										onclick={() => goto(`/orders/${order.id}`)}
-									>
-										<Eye size={16} />
-										View Details
-									</Button.Root>
 								</div>
 							</div>
 						</div>

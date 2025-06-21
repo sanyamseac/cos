@@ -33,11 +33,19 @@
 >
 	<Elements />
 	<div class="relative z-10 space-y-8 px-4 py-6 md:px-8 md:py-10">
-		<h1
-			class="mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent"
-		>
-			Manage Canteen Items
-		</h1>
+		<!-- Header -->
+		<div class="flex-row">
+			<div class="flex items-center justify-between pb-4">
+				<div>
+					<h1
+						class="font-sensation text-4xl text-gray-800 sm:text-5xl md:text-6xl dark:text-white"
+					>
+						items
+					</h1>
+				</div>
+			</div>
+		</div>
+
 		<div class="space-y-6">
 			{#each items as item, i}
 				<div
