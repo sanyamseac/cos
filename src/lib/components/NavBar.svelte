@@ -44,7 +44,7 @@
 		]
 	}
 
-	$: components = getNavigationComponents(page.data.user?.role)
+	let components = $derived(getNavigationComponents(page.data.user?.role))
 </script>
 
 <nav
@@ -74,9 +74,9 @@
 					{#each components as component}
 						<NavigationMenu.Item>
 							<NavigationMenu.Link
-								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-muted dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] bg-transparent px-4 py-2 py-6 font-medium transition-colors hover:bg-white focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
+								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-green-900 dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] bg-transparent px-4 py-2 py-6 font-medium transition-colors hover:bg-white focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
 									.url.pathname === component.href
-									? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+									? 'bg-green-600 shadow-sm dark:bg-green-700'
 									: ''}"
 								href={component.href}
 								active={page.url.pathname === component.href}
@@ -91,9 +91,9 @@
 					{#if !page.data.user}
 						<NavigationMenu.Item>
 							<NavigationMenu.Link
-								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-muted dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] bg-transparent px-4 py-2 py-6 font-medium transition-colors hover:bg-white focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
+								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-green-900 dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] bg-transparent px-4 py-2 py-6 font-medium transition-colors hover:bg-white focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
 									.url.pathname === '/login'
-									? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+									? 'bg-green-600 shadow-sm dark:bg-green-700'
 									: ''}"
 								href="/login"
 							>
@@ -106,9 +106,9 @@
 					{:else}
 						<NavigationMenu.Item>
 							<NavigationMenu.Link
-								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-muted dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] bg-transparent px-4 py-2 py-6 font-medium transition-colors hover:bg-white focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
+								class="hover:text-accent-foreground focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-green-900 dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] bg-transparent px-4 py-2 py-6 font-medium transition-colors hover:bg-white focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
 									.url.pathname === '/profile'
-									? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+									? 'bg-green-600 shadow-sm dark:bg-green-700'
 									: ''}"
 								href="/profile"
 							>

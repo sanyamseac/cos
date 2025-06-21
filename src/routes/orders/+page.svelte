@@ -1,244 +1,42 @@
 <script lang="ts">
-	import { Button } from 'bits-ui'
-	import { Clock, Receipt, Package, CheckCircle, XCircle, ArrowLeft, Eye } from 'lucide-svelte'
+	import { ChevronRight, Search, X } from 'lucide-svelte'
 	import type { PageData } from './$types'
-	import { goto } from '$app/navigation'
-	import { fly, fade } from 'svelte/transition'
+	import { goto, invalidate, invalidateAll } from '$app/navigation'
 	import Elements from '$lib/components/Elements.svelte'
-	import { source } from 'sveltekit-sse'
-	import { onMount, onDestroy } from 'svelte'
+	import { formatPrice } from '$lib/utils'
+	import NoOrders from './components/NoOrders.svelte'
+	import Header from './components/Header.svelte'
+	import OrderItem from './components/OrderItem.svelte'
+	import SearchBar from './components/SearchBar.svelte'
 
 	let { data }: { data: PageData } = $props()
-
-	// SSE connection for real-time updates
-	let sseConnection: any = null
 	let orders = $state(data.orders || [])
-
-	// Initialize SSE connection
-	onMount(() => {
-		console.log('Initializing SSE connection for orders page')
-
-		sseConnection = source('/api/sse/orders', {
-			close({ connect }) {
-				console.log('SSE connection closed, attempting to reconnect...')
-				setTimeout(() => connect(), 3000) // Reconnect after 3 seconds
-			},
-		})
-
-		// Listen for order updates
-		const orderUpdates = sseConnection.select('order_update')
-		orderUpdates.subscribe((updateData: string) => {
-			console.log('Raw SSE data received:', updateData)
-			if (updateData && updateData.trim()) {
-				try {
-					const update = JSON.parse(updateData)
-					console.log('Received order update:', update)
-
-					// Update the orders array with the new status
-					orders = orders.map((orderData) => {
-						if (orderData.order.id.toString() === update.orderId.toString()) {
-							console.log(
-								`Updating order ${update.orderId} from ${orderData.order.status} to ${update.status}`,
-							)
-							return {
-								...orderData,
-								order: {
-									...orderData.order,
-									status: update.status,
-									updatedAt: new Date(update.timestamp),
-								},
-							}
-						}
-						return orderData
-					})
-				} catch (error) {
-					console.error('Error parsing order update:', error, 'Raw data:', updateData)
-				}
-			}
-		})
-
-		// Listen for connection confirmations
-		const connected = sseConnection.select('connected')
-		connected.subscribe((data: string) => {
-			if (data) {
-				console.log('SSE connected:', data)
-				try {
-					const connectionInfo = JSON.parse(data)
-					console.log('Connection info:', connectionInfo)
-				} catch (e) {
-					console.log('Connection confirmation received:', data)
-				}
-			}
-		})
-	})
-
-	// Cleanup SSE connection
-	onDestroy(() => {
-		if (sseConnection) {
-			sseConnection.close()
-		}
-	})
-
-	// Helper functions
-	function formatCurrency(amount: string | number) {
-		return `₹${Number(amount).toFixed(2)}`
-	}
-
-	function formatDate(dateString: string) {
-		return new Date(dateString).toLocaleDateString('en-IN', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-		})
-	}
-
-	function getStatusColor(status: string) {
-		switch (status) {
-			case 'pending':
-				return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-			case 'confirmed':
-				return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-			case 'preparing':
-				return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-			case 'ready':
-				return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-			case 'completed':
-				return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
-			case 'cancelled':
-				return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-			default:
-				return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-		}
-	}
-
-	function getStatusIcon(status: string) {
-		switch (status) {
-			case 'pending':
-				return Clock
-			case 'confirmed':
-			case 'preparing':
-				return Package
-			case 'ready':
-			case 'completed':
-				return CheckCircle
-			case 'cancelled':
-				return XCircle
-			default:
-				return Receipt
-		}
-	}
-
-	function getPaymentMethodText(prepaid: boolean) {
-		return prepaid ? 'Prepaid (Wallet)' : 'Pay on Delivery'
-	}
-
-	function getPaymentMethodColor(prepaid: boolean) {
-		return prepaid ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'
-	}
+	let filteredOrders = $state(data.orders || [])
 </script>
 
 <svelte:head>
-	<title>My Orders - Canteen Ordering System</title>
+	<title>orders</title>
+	<meta name="description" content="View and manage your orders from various canteens." />
 </svelte:head>
 
 <div
 	class="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pb-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
 >
-	<Elements />
+	<Elements num={Math.floor(orders.length / 5) || 3}/>
 
 	<div class="relative z-10 space-y-4 px-4 py-6 md:px-8 md:py-10">
-		<div class="flex items-center justify-between pb-4">
-			<div>
-				<h1
-					class="font-sensation text-4xl text-gray-800 sm:text-5xl md:text-6xl dark:text-white"
-				>
-					orders
-				</h1>
-			</div>
-		</div>
-
+		<Header />
 		<div class="mx-auto max-w-6xl">
 			{#if data.orders && data.orders.length > 0}
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
-					{#each data.orders as { order, canteen }, index}
-						{@const StatusIcon = getStatusIcon(order.status)}
-						<div
-							class="cursor-pointer rounded-xl border shadow-lg transition-all duration-300 hover:shadow-xl dark:border-gray-700"
-							in:fly={{ y: 20, delay: index * 100, duration: 300 }}
-							onclick={() => goto(`/orders/${order.id}`)}
-						>
-							<div
-								class="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between"
-							>
-								<div class="flex-1">
-									<div class="mb-2 flex flex-wrap items-center gap-2">
-										<h3
-											class="text-lg font-semibold text-gray-900 dark:text-white"
-										>
-											Order #{order.orderNumber}
-										</h3>
-										<span
-											class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium {getStatusColor(
-												order.status,
-											)}"
-										>
-											<StatusIcon size={12} />
-											{order.status.charAt(0).toUpperCase() +
-												order.status.slice(1)}
-										</span>
-									</div>
-
-									<div class="space-y-1 text-sm text-gray-600 dark:text-gray-300">
-										<p class="flex items-center gap-2">
-											<span class="font-medium">Canteen:</span>
-											{canteen?.name || 'Unknown Canteen'}
-										</p>
-										<p class="flex items-center gap-2">
-											<span class="font-medium">Amount:</span>
-											<span
-												class="font-semibold text-gray-900 dark:text-white"
-											>
-												{formatCurrency(order.totalAmount)}
-											</span>
-										</p>
-										<p class="flex items-center gap-2">
-											<span class="font-medium">Payment:</span>
-											<span class={getPaymentMethodColor(order.prepaid)}>
-												{getPaymentMethodText(order.prepaid)}
-											</span>
-										</p>
-										<p class="flex items-center gap-2">
-											<span class="font-medium">Ordered:</span>
-											{formatDate(order.createdAt.toString())}
-										</p>
-									</div>
-								</div>
-							</div>
-						</div>
+					{#each filteredOrders as { order, canteen }}
+						<OrderItem {order} />
 					{/each}
 				</div>
+
+				<SearchBar {orders} bind:filteredOrders />
 			{:else}
-				<div class="py-16 text-center" in:fade={{ duration: 300 }}>
-					<div
-						class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800"
-					>
-						<Receipt size={32} class="text-gray-400" />
-					</div>
-					<h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-						No orders yet
-					</h3>
-					<p class="mb-6 text-gray-600 dark:text-gray-300">
-						Start ordering from our canteens to see your orders here.
-					</p>
-					<Button.Root
-						class="rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition-all hover:bg-indigo-700"
-						onclick={() => goto('/menu')}
-					>
-						Browse Menu
-					</Button.Root>
-				</div>
+				<NoOrders />
 			{/if}
 		</div>
 	</div>

@@ -339,7 +339,6 @@
 		{/each}
 	</div>
 
-	<!-- Floating Search Button/Bar -->
     <div class="fixed right-3 bottom-20 z-50">
         <div class="flex items-center">
             {#if isSearchOpen}

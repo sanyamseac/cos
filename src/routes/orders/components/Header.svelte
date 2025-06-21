@@ -1,11 +1,9 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation'
 	import { Button } from 'bits-ui'
-	import { UserPlus } from 'lucide-svelte'
-	import JoinBasket from './JoinBasket.svelte';
-
-	let open = $state(false)
+	import { RefreshCcw } from 'lucide-svelte'
 </script>
-<JoinBasket bind:open />
+
 <div class="flex items-center justify-between pb-4">
 	<div>
 		<h1
@@ -17,9 +15,9 @@
 	<div>
 		<Button.Root
 			class="px-2 cursor-pointer"
-			onclick={()=>{open = true}}
+			onclick={() => invalidateAll()}
 		>
-			<UserPlus class="ml-3 mt-0.5 h-7 w-7" />
+			<RefreshCcw class="ml-3 mt-0.5 h-7 w-7" />
 		</Button.Root>
 	</div>
 </div>

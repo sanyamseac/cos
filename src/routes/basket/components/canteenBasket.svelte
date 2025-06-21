@@ -253,7 +253,7 @@
         }}}
     >
     <input type="hidden" name="canteenId" value={canteenGroup.canteen.id} />
-    <input type="hidden" name="paymentMethod" value={paymentMethod ? 'wallet' : 'pay_later'} />
+    <input type="hidden" name="paymentMethod" value={paymentMethod ? 'wallet' : 'postpaid'} />
     <input type="hidden" name="accessCode" value={canteenGroup.accessCode} />
 </form>
 

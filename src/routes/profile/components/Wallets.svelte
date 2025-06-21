@@ -127,23 +127,13 @@
 				</div>
 			{/if}
 		</div>
-	 </div>	
+	</div>	
 {:else}
-	<div
-		class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-	>
-		<div class="py-8 text-center">
-			<div
-				class="mx-auto mb-4 w-fit rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-3"
-			>
-				<div class="h-6 w-6 font-bold text-white">₹</div>
-			</div>
-			<h3 class="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
-				No Wallet Found
-			</h3>
-			<p class="text-gray-600 dark:text-gray-400">
-				Your wallet will be created when you make your first transaction.
-			</p>
-		</div>
+	<div class="text-center">
+		<ReceiptIndianRupee size={50} class="text-gray-400 mx-auto mt-16 mb-8" />
+		<h3 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Your wallets found</h3>
+		<p class="text-gray-600 dark:text-gray-300">
+			Wallet will be created when you make your first transaction.
+		</p>
 	</div>
 {/if}
