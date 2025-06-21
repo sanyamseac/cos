@@ -2,10 +2,12 @@
 	function randomInt(max = 100) {
 		return Math.floor(Math.random() * max)
 	}
+
+	let { num = 3 } = $props()
 </script>
 
 <div class="absolute inset-0 overflow-hidden opacity-30">
-	{#each Array(3) as _, i}
+	{#each Array(num) as _, i}
 		{@const colors = [
 			'from-blue-400 to-purple-500',
 			'from-emerald-400 to-teal-500',

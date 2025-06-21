@@ -10,6 +10,7 @@
 	import Notifications from './components/Notifications.svelte'
 	import Preferences from './components/Preferences.svelte'
 	import Profile from './components/Profile.svelte'
+	import Header from './components/Header.svelte'
 
 	let { data }: { data: PageServerData } = $props()
 	let isEditingPic = $state(false)
@@ -31,24 +32,7 @@
 	<Elements />
 
 	<div class="relative z-10 space-y-8 px-4 py-6">
-		<div class="flex items-center justify-between pb-4">
-			<div>
-				<h1
-					class="text-4xl font-sensation text-gray-800 dark:text-white sm:text-5xl md:text-6xl"
-				>
-					profile
-				</h1>
-			</div>
-			<div>
-				<form method="post" action="login?/logout" use:enhance>
-					<Button.Root
-						class="px-2"
-					>
-						<LogOut class="ml-3 mt-0.5 h-7 w-7" />
-					</Button.Root>
-				</form>
-			</div>
-		</div>
+		<Header />
 
 		<Profile {data} bind:isEditingPic />
 		<hr class="mt-6 mb-7 border-gray-400 dark:border-gray-500" />
