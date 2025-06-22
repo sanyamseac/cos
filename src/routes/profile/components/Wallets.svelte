@@ -37,12 +37,12 @@
 						</div>
 					</div>
 				{/each}
-				<div class="mt-4 rounded-lg bg-green-100 p-3 dark:bg-green-700">
+				<div class="mt-4 rounded-lg bg-green-100 p-3 dark:bg-green-600">
 					<div class="flex items-center justify-between">
-						<span class="font-medium text-blue-800 dark:text-blue-200"
+						<span class="font-medium"
 							>Total Balance</span
 						>
-						<span class="text-xl font-bold text-blue-800 dark:text-blue-200">
+						<span class="text-xl font-bold">
 							{formatPrice(
 								data.wallets.reduce(
 									(sum: any, w: any) => sum + parseFloat(w.wallet.balance),

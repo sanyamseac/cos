@@ -3,7 +3,7 @@
 	import { formatPrice } from '$lib/utils'
 	import { Button } from 'bits-ui'
 	import type { PageData } from './$types'
-	import { ArrowLeft, ChevronLeft, Search, X } from 'lucide-svelte'
+	import { ArrowLeft, ChevronLeft, ChevronRight, Search, X } from 'lucide-svelte'
 	import { goto } from '$app/navigation'
 
 	let { data }: { data: PageData } = $props()
@@ -294,13 +294,19 @@
 	<Elements />
 
 	<div class="relative z-10 space-y-8 px-4 py-6">
-        <div>
+        <div class="flex items-center justify-between pb-4">
             <h1
                 class="text-4xl font-sensation text-gray-800 dark:text-white sm:text-5xl md:text-6xl"
             >
                 transactions
             </h1>
-        </div>
+			<Button.Root
+				class="px-2"
+				onclick={() => goto('/profile')}
+			>
+				<ChevronLeft class="ml-3 mb-0.5 h-9 w-9" />
+			</Button.Root>
+		</div>
 
 		{#each filteredTransactions as { transaction, canteen }, index (transaction.id)}
 			<div

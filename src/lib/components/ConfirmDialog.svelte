@@ -37,7 +37,7 @@
 		>
 			<Elements num={1}/>
 			<div class="relative z-10">
-				<Dialog.Title class="text-center text-xl font-semibold text-white">
+				<Dialog.Title class="text-center text-xl font-semibold">
 					{title}
 				</Dialog.Title>
 

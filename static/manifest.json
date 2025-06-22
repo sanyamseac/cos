@@ -1,0 +1,31 @@
+{
+    "name": "Carrot",
+    "short_name": "Carrot",
+    "description": "An app to order",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#1fd14c",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "favicon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "favicon.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "label": "Main Screen"
+        },
+        {
+            "src": "favicon.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "label": "Order Screen"
+        }
+    ]
+}

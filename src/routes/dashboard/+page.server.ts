@@ -2,7 +2,7 @@ import { redirect, error } from '@sveltejs/kit'
 import * as auth from '$lib/server/session'
 import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
-import { eq, desc, sum, count, and, gte, lt, sql } from 'drizzle-orm'
+import { eq, desc, sum, count, and, gte, lt, or, isNull } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async (event) => {
@@ -93,7 +93,10 @@ export const load: PageServerLoad = async (event) => {
 						eq(schema.orders.userId, userId),
 						eq(schema.menuItems.available, true),
 						eq(schema.canteens.active, true),
-						eq(schema.variants.available, true),
+						or(
+							isNull(schema.variants.id),
+							eq(schema.variants.available, true)
+						),
 					),
 				)
 				.groupBy(schema.menuItems.id, schema.canteens.id, schema.variants.id)
@@ -152,7 +155,7 @@ export const load: PageServerLoad = async (event) => {
 				.filter((item) => item.menuItem && item.canteen)
 				.map((item) => ({
 					id: item.menuItem!.id,
-					variantId: item.variant!.id || null,
+					variantId: null,
 					name: item.menuItem!.name,
 					price: parseFloat(item.menuItem!.price),
 					canteen: item.canteen!.name,

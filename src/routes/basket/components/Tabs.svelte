@@ -100,7 +100,7 @@
             style="transform: translateX(-{$slideProgress * 100}%)"
         >
             {#each allItemsGroupedByCanteen() as canteenGroup, index}
-                <div class="w-full flex-shrink-0">
+				<div class="w-full min-h-[70vh] flex-shrink-0">
                     <CanteenBasket
                         {canteenGroup}
                         wallet={wallets.find(
