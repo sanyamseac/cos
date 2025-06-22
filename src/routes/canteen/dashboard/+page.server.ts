@@ -29,8 +29,8 @@ export const load: PageServerLoad = async (event) => {
 
 		// Get today's date range
 		const today = new Date()
-		const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-		const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+		const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1, 6, 0, 0, 0)
+		const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 5, 0, 0, 0)
 
 		// Fetch today's orders for this canteen
 		const ordersResult = await db

@@ -1,87 +1,84 @@
 import { db } from '$lib/server/db'
 import { menuItems, variants, addons, canteens } from '$lib/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and, desc, asc } from 'drizzle-orm'
 import { error, fail, redirect } from '@sveltejs/kit'
 import * as auth from '$lib/server/session'
 import type { PageServerLoad, Actions } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
-    // Check if user is authenticated and is a canteen
-    if (!locals.user) {
-        throw redirect(302, '/login')
-    }
-
-    if (!auth.CANTEENS.includes(locals.user.role)) {
-        throw error(403, 'Access denied')
-    }
+    if (!locals.user) throw redirect(302, '/login')
+    if (!auth.CANTEENS.includes(locals.user.role)) throw error(403, 'Access denied')
 
     try {
-        // Get canteen ID from user email (same pattern as dashboard)
         const canteenAcronym = locals.user.email.split('@')[0]
         const canteenResult = await db
             .select()
             .from(canteens)
-            .where(eq(canteens.acronym, canteenAcronym))
+            .where(and(
+                eq(canteens.acronym, canteenAcronym),
+                eq(canteens.active, true)
+            ))
             .limit(1)
 
-        if (!canteenResult.length) {
-            throw error(404, 'Canteen not found')
-        }
+        if (!canteenResult.length) throw error(404, 'Canteen not found')
 
         const canteen = canteenResult[0]
         const canteenId = canteen.id
 
-        // Fetch menu items for this canteen
-        const items = await db
-            .select()
-            .from(menuItems)
-            .where(eq(menuItems.canteenId, canteenId))
+        const [menuItemsList, variantsList, addonsList] = await Promise.all([
+            db
+                .select()
+                .from(menuItems)
+                .where(
+                    and(
+                        eq(menuItems.canteenId, canteenId),
+                        eq(menuItems.active, true),
+                    ),
+                )
+                .orderBy(asc(menuItems.name)),
+            db
+                .select()
+                .from(variants)
+                .where(eq(variants.active, true))
+                .orderBy(asc(variants.name)),
+            db
+                .select()
+                .from(addons)
+                .where(eq(addons.active, true))
+                .orderBy(asc(addons.name)),
+        ])
 
-        if (items.length === 0) {
-            return { items: [] }
+        const variantsByItem: Record<number, any[]> = {}
+        for (const v of variantsList) {
+            if (!variantsByItem[v.itemId]) variantsByItem[v.itemId] = []
+            variantsByItem[v.itemId].push(v)
+        }
+        const addonsByItem: Record<number, any[]> = {}
+        for (const a of addonsList) {
+            if (!addonsByItem[a.itemId]) addonsByItem[a.itemId] = []
+            addonsByItem[a.itemId].push(a)
         }
 
-        // Get all item IDs
-        const itemIds = items.map(item => item.id)
-
-        // Fetch all variants for these items
-        const allVariants = await db
-            .select()
-            .from(variants)
-            .where(eq(variants.active, true))
-
-        // Fetch all addons for these items  
-        const allAddons = await db
-            .select()
-            .from(addons)
-            .where(eq(addons.active, true))
-
-        // Filter variants and addons that belong to our items
-        const relevantVariants = allVariants.filter(variant => itemIds.includes(variant.itemId))
-        const relevantAddons = allAddons.filter(addon => itemIds.includes(addon.itemId))
-
-        // Group variants and addons by itemId
-        const variantsByItem = relevantVariants.reduce((acc, variant) => {
-            if (!acc[variant.itemId]) acc[variant.itemId] = []
-            acc[variant.itemId].push(variant)
-            return acc
-        }, {} as Record<number, typeof relevantVariants>)
-
-        const addonsByItem = relevantAddons.reduce((acc, addon) => {
-            if (!acc[addon.itemId]) acc[addon.itemId] = []
-            acc[addon.itemId].push(addon)
-            return acc
-        }, {} as Record<number, typeof relevantAddons>)
-
-        // Combine the data
-        const itemsWithDetails = items.map(item => ({
+        const menuItemsWithDetails = menuItemsList.map((item) => ({
             ...item,
             variants: variantsByItem[item.id] || [],
-            addons: addonsByItem[item.id] || []
+            addons: addonsByItem[item.id] || [],
         }))
 
+        const menuCategories = menuItemsWithDetails.reduce(
+            (acc: Record<string, typeof menuItemsWithDetails>, item) => {
+                if (!acc[item.category]) {
+                    acc[item.category] = []
+                }
+                acc[item.category].push(item)
+                return acc
+            },
+            {},
+        )
+
         return {
-            items: itemsWithDetails
+            canteen,
+            menuCategories
         }
     } catch (err) {
         console.error('Error fetching canteen items:', err)
@@ -90,32 +87,72 @@ export const load: PageServerLoad = async ({ locals }) => {
 }
 
 export const actions: Actions = {
-    updateItemAvailability: async ({ request, locals }) => {
+    updateCanteenStatus: async ({ request, locals }) => {
         if (!locals.user) {
             return fail(401, { error: 'Unauthorized' })
         }
+
+        const formData = await request.formData()
+        const open = formData.get('open') === 'true'
+
+        try {
+            await db
+                .update(canteens)
+                .set({ open })
+                .where(eq(canteens.acronym, locals.user.name))
+            
+            return { success: true }
+        }
+        catch (err) {
+            console.error('Error updating canteen status:', err)
+            return fail(500, { error: 'Failed to update canteen status' })
+        }
+    },
+
+    updateItemAvailability: async ({ request, locals }) => {
+        if (!locals.user)
+            return fail(401, { error: 'Unauthorized' })
 
         const formData = await request.formData()
         const itemId = Number(formData.get('itemId'))
         const available = formData.get('available') === 'true'
 
         try {
-            // Update the menu item
-            await db
-                .update(menuItems)
-                .set({ available })
-                .where(eq(menuItems.id, itemId))
+            const canteen = await db
+                .select({
+                    id: canteens.id,
+                    acronym: canteens.acronym,
+                })
+                .from(canteens)
+                .leftJoin(menuItems, eq(canteens.id, menuItems.canteenId))
+                .where(and(
+                    eq(menuItems.id, itemId),
+                    eq(canteens.active, true),
+                    eq(menuItems.active, true)
+                ))
 
-            // Also update all variants and addons for this item
-            await db
-                .update(variants)
-                .set({ available })
-                .where(eq(variants.itemId, itemId))
+            if (!canteen.length)
+                return fail(404, { error: 'Canteen or item not found' })
 
-            await db
-                .update(addons)
-                .set({ available })
-                .where(eq(addons.itemId, itemId))
+            if (canteen[0].acronym !== locals.user.name)
+                return fail(403, { error: 'Access denied' })
+
+            await Promise.all([
+                db
+                    .update(menuItems)
+                    .set({ available })
+                    .where(eq(menuItems.id, itemId)),
+
+                db
+                    .update(variants)
+                    .set({ available })
+                    .where(eq(variants.itemId, itemId)),
+
+                db
+                    .update(addons)
+                    .set({ available })
+                    .where(eq(addons.itemId, itemId))
+            ])
 
             return { success: true }
         } catch (err) {
@@ -134,6 +171,27 @@ export const actions: Actions = {
         const available = formData.get('available') === 'true'
 
         try {
+            const canteen = await db
+                .select({
+                    id: canteens.id,
+                    acronym: canteens.acronym,
+                })
+                .from(canteens)
+                .leftJoin(menuItems, eq(canteens.id, menuItems.canteenId))
+                .leftJoin(variants, eq(variants.itemId, menuItems.id))
+                .where(and(
+                    eq(variants.id, variantId),
+                    eq(canteens.active, true),
+                    eq(menuItems.active, true),
+                    eq(variants.active, true)
+                ))
+
+            if (!canteen.length)
+                return fail(404, { error: 'Canteen or item not found' })
+
+            if (canteen[0].acronym !== locals.user.name)
+                return fail(403, { error: 'Access denied' })
+
             await db
                 .update(variants)
                 .set({ available })
@@ -156,6 +214,27 @@ export const actions: Actions = {
         const available = formData.get('available') === 'true'
 
         try {
+            const canteen = await db
+                .select({
+                    id: canteens.id,
+                    acronym: canteens.acronym,
+                })
+                .from(canteens)
+                .leftJoin(menuItems, eq(canteens.id, menuItems.canteenId))
+                .leftJoin(addons, eq(addons.itemId, menuItems.id))
+                .where(and(
+                    eq(addons.id, addonId),
+                    eq(canteens.active, true),
+                    eq(menuItems.active, true),
+                    eq(addons.active, true)
+                ))
+
+            if (!canteen.length)
+                return fail(404, { error: 'Canteen or item not found' })
+
+            if (canteen[0].acronym !== locals.user.name)
+                return fail(403, { error: 'Access denied' })
+
             await db
                 .update(addons)
                 .set({ available })

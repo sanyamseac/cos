@@ -10,6 +10,7 @@
 		PlayCircle,
 		Eye,
 		Lock,
+		IndianRupee,
 	} from 'lucide-svelte'
 	import Elements from '$lib/components/Elements.svelte'
 	import { invalidateAll } from '$app/navigation'
@@ -197,18 +198,18 @@
 		</div>
 
 		<!-- Revenue Stats -->
-		<div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
+		<div class="grid grid-cols-1 gap-1 md:grid-cols-2 md:gap-2">
 			<div
-				class="min-h-[100px] transform rounded-xl border p-4 shadow-lg transition-all duration-300"
+				class="px-4 py-2"
 			>
 				<div class="flex items-center">
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30"
 					>
-						<DollarSign class="h-6 w-6 text-green-600 dark:text-green-400" />
+						<IndianRupee class="h-6 w-6 text-green-600 dark:text-green-400" />
 					</div>
 					<div class="ml-4">
-						<p class="text-sm font-medium opacity-90 dark:text-white">
+						<p class="text-sm font-medium">
 							Today's Revenue
 						</p>
 						<p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
@@ -219,7 +220,7 @@
 			</div>
 
 			<div
-				class="min-h-[100px] transform rounded-xl border p-4 shadow-lg transition-all duration-300"
+				class="px-4 py-2"
 			>
 				<div class="flex items-center">
 					<div
@@ -240,7 +241,7 @@
 		<hr class="mt-6 mb-7 border-gray-400 dark:border-gray-500" />
 
 		<!-- Orders List -->
-		<div class="transform rounded-xl border p-6 shadow-lg transition-all duration-300">
+		<div class="md:p-6">
 			<h2 class="mb-6 text-2xl font-bold text-gray-900 dark:text-white">Today's Orders</h2>
 
 			{#if data.orders.length === 0}
@@ -259,7 +260,7 @@
 								<div class="flex-1">
 									<div class="mb-2 flex items-center gap-3">
 										<span class="text-lg font-semibold"
-											>#{order.orderNumber}</span
+											>{order.orderNumber}</span
 										>
 										<span
 											class={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusColor(order.status)}`}
@@ -325,7 +326,7 @@
 										}}
 									>
 										<Eye class="mr-1 h-4 w-4" />
-										View Details
+										<span class="hidden md:block">View Details</span>
 									</button>
 								</div>
 							</div>
@@ -345,7 +346,7 @@
 			class="fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white p-6 shadow-lg duration-200 sm:rounded-lg dark:bg-gray-800"
 		>
 			<Dialog.Title class="text-lg font-semibold"
-				>Complete Order #{selectedOrder?.orderNumber}</Dialog.Title
+				>Complete Order {selectedOrder?.orderNumber}</Dialog.Title
 			>
 			<Dialog.Description class="text-sm text-gray-600 dark:text-gray-400">
 				Enter the order PIN to mark this order as completed.
