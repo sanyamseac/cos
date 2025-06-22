@@ -79,8 +79,8 @@
 	</Dialog.Close>
 
 	<Dialog.Title class="pr-8 text-2xl font-bold text-gray-900 dark:text-white">
-		{item.name}
-		<FoodType type={item.type} size={24} class="ml-2 inline-block" />
+		{item.name} 
+		<FoodType type={item.type} size={20} class="ml-2 inline-block" />
 	</Dialog.Title>
 
 	{#if item.description}
@@ -104,18 +104,18 @@
 						{#each item.variants as variant}
 							{@const id = useId()}
 							<div
-								class="flex items-center justify-between rounded-lg border bg-white/80 p-3 backdrop-blur-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800/80 dark:hover:bg-gray-700"
+								class="flex items-center justify-between py-1"
 							>
 								<div class="flex items-center">
 									<RadioGroup.Item
 										{id}
 										value={variant.id.toString()}
 										disabled={!variant.available}
-										class="flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
+										class="flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600 dark:data-[state=checked]:bg-green-600 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
 									>
 										{#snippet children({ checked })}
 											{#if checked}
-												<div class="h-3 w-3 rounded-full bg-white" />
+												<div class="h-2.5 w-2.5 rounded-full bg-white dark:bg-gray-800" />
 											{/if}
 										{/snippet}
 									</RadioGroup.Item>
@@ -150,8 +150,8 @@
 				<div class="space-y-2">
 					{#each item.addons as addon}
 						<div
-							class="flex cursor-pointer items-center justify-between rounded-lg border bg-white/80 p-3 backdrop-blur-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800/80 dark:hover:bg-gray-700 {addon.available
-								? ''
+							class="flex items-center justify-between py-1 {addon.available
+								? 'cursor-pointer'
 								: 'cursor-not-allowed opacity-50'}"
 						>
 							<Checkbox.Root
@@ -163,16 +163,16 @@
 							>
 								{#snippet children({ checked })}
 									<div
-										class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
+										class="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
 									>
 										{#if checked}
-											<Check size={12} class="text-foreground" />
+											<Check size={12} strokeWidth={5} class="text-green-600" />
 										{/if}
 									</div>
 									<span class="text-gray-900 dark:text-white">
 										{addon.name}
 									</span>
-									<FoodType type={addon.type} size={16} />
+									<FoodType type={addon.type} size={12} />
 								{/snippet}
 							</Checkbox.Root>
 							<span class="font-medium text-gray-900 dark:text-white">
@@ -190,7 +190,10 @@
 				<span class="text-lg font-medium text-gray-900 dark:text-white">Quantity</span>
 				<div class="flex items-center gap-3">
 					<Button.Root
-						class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-all hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+						class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-700 transition-all hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 {item.quantity <= 1
+							? 'cursor-not-allowed opacity-50'
+							: 'cursor-pointer'
+						}"
 						onclick={decreaseQuantity}
 						disabled={item.quantity <= 1}
 					>
@@ -202,9 +205,8 @@
 					>
 
 					<Button.Root
-						class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-all hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+						class="flex cursor-pointer h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-700 transition-all hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
 						onclick={increaseQuantity}
-						disabled={item.quantity >= 10}
 					>
 						<Plus size={14} />
 					</Button.Root>

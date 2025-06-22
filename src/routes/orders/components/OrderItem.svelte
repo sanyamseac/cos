@@ -19,7 +19,7 @@
     onclick={() => goto(`/orders/${order.id}`)}
 >
     <div
-        class="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between"
+        class="flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between"
     >
         <div class="flex-1">
             <div class="mb-2 flex flex-wrap items-center justify-between gap-2">

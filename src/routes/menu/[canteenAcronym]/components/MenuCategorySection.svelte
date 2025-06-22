@@ -13,7 +13,7 @@
 </script>
 
 {#if items.length > 0}
-	<div>
+	<div class="border-b border-gray-300 dark:border-gray-600 pb-6">
 		<div class="mb-4">
 			<h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
 				{category}

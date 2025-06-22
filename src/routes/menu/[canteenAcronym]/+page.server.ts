@@ -12,7 +12,7 @@ export const load: PageServerLoad = async (event) => {
 		return redirect(302, `/login?redirect=${encodeURIComponent(event.url.href)}`)
 	if (!auth.CONSUMER.includes(event.locals.user.role)) throw error(403, 'Access denied')
 
-	const canteenAcronym = event.params.canteenId
+	const canteenAcronym = event.params.canteenAcronym
 	try {
 		const canteen = await db
 			.select()
@@ -108,7 +108,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			const canteenAcronym = params.canteenId
+			const canteenAcronym = params.canteenAcronym
 			if (!canteenAcronym) {
 				throw fail(400, { error: 'Invalid canteen ID' })
 			}

@@ -226,7 +226,7 @@
                         !canteenGroup.canteen.open ||
                         !allItemsAvailable
                         }
-                    class="w-full rounded-lg bg-green-500 dark:bg-green-700 px-4 mt-4 py-2 font-medium transition-all hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    class="w-full rounded-lg text-white bg-green-500 dark:bg-green-700 px-4 mt-4 py-2 font-medium transition-all hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                     {canteenGroup.canteen.open
                         ? allItemsAvailable
