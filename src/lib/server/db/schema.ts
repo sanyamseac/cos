@@ -142,6 +142,7 @@ export const orders = pgTable('orders', {
 	totalAmount: numeric('total_amount', { precision: 10, scale: 2 }).notNull(),
 	notes: text('notes'),
 	prepaid: boolean('prepaid').notNull().default(false),
+	scheduledTime: timestamp('scheduled_time'),
 	linked: boolean('linked').notNull().default(false),
 	linkingNumber: text('linking_number'),
 	otp: text('otp').notNull(),

@@ -1,6 +1,6 @@
 <script lang="ts">
     import BasketItem from './BasketItem.svelte'
-	import { Trash2, UserMinus, Users, Share, CreditCard, Wallet, Share2, Ellipsis } from 'lucide-svelte'
+	import { Trash2, UserMinus, Users, Share, CreditCard, Wallet, Share2, Ellipsis, Clock10, ClockAlertIcon } from 'lucide-svelte'
 	import { goto, invalidateAll } from '$app/navigation'
 	import { enhance } from '$app/forms'
     import { formatPrice, calculateBasketTotal } from '$lib/utils/priceUtils'
@@ -8,6 +8,7 @@
 	import { Switch } from 'bits-ui'
 	import ShareBasket from './ShareBasket.svelte'
     import { DropdownMenu } from "bits-ui";
+	import Schedule from './Schedule.svelte'
 
     let { canteenGroup, wallet, form }: { canteenGroup: any, wallet: any, form:any} = $props() 
 
@@ -23,12 +24,17 @@
     let clearBasket: HTMLFormElement
     let shareBasket: HTMLFormElement
     let unShareBasket: HTMLFormElement
+    let showSchedule = $state(false)
+    let scheduleTime = $state(-1)
+    let loading = $state(false)
 
     function openOrderConfirm(canteenGroup: any) {
 		showOrderConfirm = true
 	}
 
     function orderConfirm() {
+        if (loading) return
+        loading = true
         if (formRef) {
             formRef.requestSubmit()
         }
@@ -39,6 +45,12 @@
             || item.variant?.available === false
             || item.addons?.filter((addon:any) => addon.available === false).length > 0).length === 0
     )
+
+    $effect(() => {
+        if (scheduleTime > 0) {
+            paymentMethod = true
+        }
+    })
 </script>
 <div>
     <div
@@ -81,7 +93,7 @@
         <div class="flex items-center gap-2">
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger
-                    class="text-foreground hover:bg-gray-700 inline-flex h-10 w-10 select-none items-center justify-center rounded-lg text-sm font-medium active:scale-[0.98]"
+                    class="text-foreground hover:bg-gray-200 inline-flex h-10 w-10 select-none items-center justify-center rounded-lg text-sm font-medium active:scale-[0.98]"
                 >
                     <Ellipsis class="text-foreground h-6 w-6" />
                 </DropdownMenu.Trigger>
@@ -90,9 +102,30 @@
                     class="z-40 bg-gray-100 dark:bg-gray-700 shadow-popover outline-hidden focus-visible:outline-hidden w-max rounded-xl border px-1 mr-4 py-1.5"
                     sideOffset={8}
                     >
+                    <DropdownMenu.Item
+                        class="rounded-button data-highlighted:bg-gray-200 ring-0! ring-transparent! flex h-10 select-none items-center py-3 px-3 text-sm font-medium focus-visible:outline-none hover:bg-gray-200 dark:hover:bg-gray-800"
+                    >
+                        {#if scheduleTime > 0}
+                            <button
+                                onclick={() => {scheduleTime = -1}}
+                                class="flex items-center text-base gap-3 outline-none"
+                            >
+                                <ClockAlertIcon size={20} />
+                                Unschedule
+                            </button>
+                        {:else}
+                            <button
+                                onclick={() => {scheduleTime = Date.now(); showSchedule = true}}
+                                class="flex items-center text-base gap-3 outline-none"
+                            >
+                                <Clock10 size={20} />
+                                Schedule Order
+                            </button>
+                        {/if}
+                    </DropdownMenu.Item>
                     {#if canteenGroup.isShared}
                         <DropdownMenu.Item
-                            class="rounded-button outline-none data-highlighted:bg-gray-800 ring-0! ring-transparent! flex h-10 select-none items-center py-3 px-3 text-sm font-medium focus-visible:outline-none hover:bg-gray-400 dark:hover:bg-gray-800"
+                            class="rounded-button data-highlighted:bg-gray-200 ring-0! ring-transparent! flex h-10 select-none items-center py-3 px-3 text-sm font-medium focus-visible:outline-none hover:bg-gray-200 dark:hover:bg-gray-800"
                         >
                             <button
                                 onclick={() => unShareBasket?.requestSubmit()}
@@ -104,7 +137,7 @@
                         </DropdownMenu.Item>
                     {/if}
                     <DropdownMenu.Item
-                        class="rounded-button data-highlighted:bg-gray-800 ring-0! ring-transparent! flex h-10 select-none items-center py-3 px-3 text-sm font-medium focus-visible:outline-none hover:bg-gray-400 dark:hover:bg-gray-800"
+                        class="rounded-button data-highlighted:bg-gray-200 ring-0! ring-transparent! flex h-10 select-none items-center py-3 px-3 text-sm font-medium focus-visible:outline-none hover:bg-gray-200 dark:hover:bg-gray-800"
                     >
                         <button
                             onclick={() => canteenGroup.isShared
@@ -117,7 +150,7 @@
                         </button>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
-                        class="rounded-button data-highlighted:bg-gray-800 ring-0! ring-transparent! flex h-10 select-none items-center py-3 px-3 text-sm font-medium focus-visible:outline-none hover:bg-gray-400 dark:hover:bg-gray-800"
+                        class="rounded-button data-highlighted:bg-gray-200 ring-0! ring-transparent! flex h-10 select-none items-center py-3 px-3 text-sm font-medium focus-visible:outline-none hover:bg-gray-200 dark:hover:bg-gray-800"
                     >
                         <button
                             onclick={() => clearBasket?.requestSubmit()}
@@ -232,7 +265,9 @@
                         ? allItemsAvailable
                             ? paymentMethod
                                 ? wallet.balance >= calculateBasketTotal(canteenGroup.allItems)
-                                    ? 'Place Order (Wallet)'
+                                    ? scheduleTime > 0
+                                        ? 'Schedule Order (Wallet)'
+                                        : 'Place Order (Wallet)'
                                     : 'Insufficient Balance'
                                 : 'Place Order (Pay Later)'
                             : 'Some items are unavailable'
@@ -250,11 +285,13 @@
             } else if (result.type === 'failure' && result.data) {
                 Error= result.data.error || 'Failed to place order'
             }
+            loading=false
         }}}
     >
     <input type="hidden" name="canteenId" value={canteenGroup.canteen.id} />
     <input type="hidden" name="paymentMethod" value={paymentMethod ? 'wallet' : 'postpaid'} />
     <input type="hidden" name="accessCode" value={canteenGroup.accessCode} />
+    <input type="hidden" name="scheduleTime" value={scheduleTime} />
 </form>
 
 {#if Error}
@@ -271,7 +308,7 @@
 		: ''}
 	onConfirm={() => orderConfirm()}
 	onClose={() => (showOrderConfirm = false)}
-	confirmText="Place Order"
+	confirmText={loading ? 'Placing Order...' : 'Place Order'}
 	variant="primary"
 />
 
@@ -280,4 +317,9 @@
 	canteenName={canteenGroup.canteen.name}
 	accessCode={canteenGroup.accessCode}
 	error={form?.error || ''}
+/>
+
+<Schedule 
+    bind:open={showSchedule} 
+    bind:value={scheduleTime}
 />

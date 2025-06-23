@@ -305,6 +305,29 @@ export const actions: Actions = {
 		const canteenId = Number(formData.get('canteenId'))
 		const paymentMethod = formData.get('paymentMethod') as 'wallet' | 'postpaid'
 		const accessCode = formData.get('accessCode') as string
+		const scheduleTime = Number(formData.get('scheduleTime') as string)
+
+		if (scheduleTime != -1){
+			if (isNaN(scheduleTime) || scheduleTime < Date.now()) {
+				return fail(400, { error: 'Invalid schedule time' })
+			}
+			if (scheduleTime < Date.now() + 1 * 60 * 60 * 1000) {
+				return fail(400, { error: 'Schedule time must be at least an hour in the future' })
+			}
+			const now = new Date()
+			const nextFiveAM = new Date(now)
+			nextFiveAM.setHours(5, 0, 0, 0)
+			if (now.getHours() >= 5) {
+				nextFiveAM.setDate(nextFiveAM.getDate() + 1)
+			}
+			if (scheduleTime > nextFiveAM.getTime()) {
+				return fail(400, { error: 'Orders must be scheduled before the upcoming 5 AM' })
+			}
+			const hours = new Date(scheduleTime).getHours()
+			if (hours > 5 && hours < 6) {
+				return fail(400, { error: 'Orders cannot be scheduled during maintenance hours (5AM - 6AM)' })
+			}
+		}
 
 		if (!['wallet', 'postpaid'].includes(paymentMethod)) {
 			return fail(400, { error: 'Invalid payment method' })
@@ -487,6 +510,7 @@ export const actions: Actions = {
 							otp,
 							linked: isSharedBasket,
 							linkingNumber,
+							scheduledTime: scheduleTime > 0 ? new Date(scheduleTime) : null,
 						})
 						.returning()
 
