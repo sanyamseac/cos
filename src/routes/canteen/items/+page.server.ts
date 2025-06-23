@@ -99,8 +99,8 @@ export const actions: Actions = {
             await db
                 .update(canteens)
                 .set({ open })
-                .where(eq(canteens.acronym, locals.user.name))
-            
+                .where(eq(canteens.acronym, locals.user.email.split('@')[0]))
+
             return { success: true }
         }
         catch (err) {
@@ -134,7 +134,7 @@ export const actions: Actions = {
             if (!canteen.length)
                 return fail(404, { error: 'Canteen or item not found' })
 
-            if (canteen[0].acronym !== locals.user.name)
+            if (canteen[0].acronym !== locals.user.email.split('@')[0])
                 return fail(403, { error: 'Access denied' })
 
             await Promise.all([
@@ -189,7 +189,7 @@ export const actions: Actions = {
             if (!canteen.length)
                 return fail(404, { error: 'Canteen or item not found' })
 
-            if (canteen[0].acronym !== locals.user.name)
+            if (canteen[0].acronym !== locals.user.email.split('@')[0])
                 return fail(403, { error: 'Access denied' })
 
             await db
@@ -232,7 +232,7 @@ export const actions: Actions = {
             if (!canteen.length)
                 return fail(404, { error: 'Canteen or item not found' })
 
-            if (canteen[0].acronym !== locals.user.name)
+            if (canteen[0].acronym !== locals.user.email.split('@')[0])
                 return fail(403, { error: 'Access denied' })
 
             await db

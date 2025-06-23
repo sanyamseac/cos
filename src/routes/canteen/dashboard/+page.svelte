@@ -56,6 +56,9 @@
 				console.log('Canteen SSE connected:', connectionData)
 			}
 		})
+
+		const stored = localStorage.getItem('canteen-direct-preparing')
+		directPreparing = stored === 'true' ? true : false
 	})
 
 	// Cleanup SSE connection
@@ -69,6 +72,7 @@
 	let orderDetailsOpen = $state(false)
 	let statusUpdateLoading = $state(false)
 	let cancelDialogOpen = $state(false)
+	let directPreparing = $state(false)
 
 	function getStatusColor(status: string) {
 		switch (status) {
@@ -107,23 +111,41 @@
 	}
 
 	function canUpdateStatus(currentStatus: string, newStatus: string) {
-		const statusFlow: Record<string, string[]> = {
-			pending: ['preparing'],
-			confirmed: ['preparing'],
-			preparing: ['ready'],
-			ready: ['completed'],
+		if (directPreparing) {
+			const statusFlow: Record<string, string[]> = {
+				pending: ['preparing'],
+				preparing: ['ready'],
+				ready: ['completed'],
+			}
+			return statusFlow[currentStatus]?.includes(newStatus) || false
+		} else {
+			const statusFlow: Record<string, string[]> = {
+				pending: ['confirmed'],
+				confirmed: ['preparing'],
+				preparing: ['ready'],
+				ready: ['completed'],
+			}
+			return statusFlow[currentStatus]?.includes(newStatus) || false
 		}
-		return statusFlow[currentStatus]?.includes(newStatus) || false
 	}
 
 	function getNextStatus(currentStatus: string) {
-		const nextStatus: Record<string, string> = {
-			pending: 'preparing',
-			confirmed: 'preparing',
-			preparing: 'ready',
-			ready: 'completed',
+		if (directPreparing) {
+			const nextStatus: Record<string, string> = {
+				pending: 'preparing',
+				preparing: 'ready',
+				ready: 'completed',
+			}
+			return nextStatus[currentStatus]
+		} else {
+			const nextStatus: Record<string, string> = {
+				pending: 'confirmed',
+				confirmed: 'preparing',
+				preparing: 'ready',
+				ready: 'completed',
+			}
+			return nextStatus[currentStatus]
 		}
-		return nextStatus[currentStatus]
 	}
 
 	function handleOrderCardClick(order: any) {
