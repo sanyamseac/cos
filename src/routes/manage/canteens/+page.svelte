@@ -57,6 +57,13 @@
 			required: true,
 			placeholder: 'Describe the canteen and its specialties',
 		},
+		{
+			name: 'averageCookingTime',
+			label: 'Average Cooking Time',
+			type: 'number' as const,
+			required: true,
+			placeholder: 'Enter average cooking time in seconds',
+		},
 		{ name: 'open', label: 'Currently Open', type: 'switch' as const },
 		{ name: 'active', label: 'Active', type: 'switch' as const },
 		{

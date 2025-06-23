@@ -98,7 +98,10 @@ export const actions: Actions = {
         try {
             await db
                 .update(canteens)
-                .set({ open })
+                .set({ open,
+                    orderCounter: 0,
+                    waitingTime: 0
+                })
                 .where(eq(canteens.acronym, locals.user.email.split('@')[0]))
 
             return { success: true }

@@ -89,6 +89,7 @@ export const actions: Actions = {
 			const type = body.get('type')?.toString() || 'veg'
 			const activeValue = body.get('active')?.toString()
 			const image = body.get('image') as File | null
+			const time = Number(body.get('cookingTime') as string)
 
 			if (image && !(image instanceof File)) {
 				console.error('Invalid image file:', image)
@@ -96,7 +97,7 @@ export const actions: Actions = {
 			}
 
 			let filename = ''
-			if (path.extname(image?.name || '')) {
+			if (image && path.extname(image?.name || '')) {
 				filename = name + path.extname(image.name)
 				const savePath = path.join('static', 'content', 'MenuItemImages', filename)
 				await fs.mkdir(path.dirname(savePath), { recursive: true })
@@ -104,7 +105,7 @@ export const actions: Actions = {
 				await fs.writeFile(savePath, Buffer.from(arrayBuffer))
 			}
 
-			if (!canteenIdStr || isNaN(canteenId) || !category || !name || !price) {
+			if (!canteenIdStr || isNaN(canteenId) || !category || !name || !price || isNaN(time)) {
 				console.log('Validation failed:', {
 					hasCanteenIdStr: !!canteenIdStr,
 					isCanteenIdNaN: isNaN(canteenId),
@@ -133,6 +134,7 @@ export const actions: Actions = {
 					image: path.extname(image?.name || '')
 						? `/content/MenuItemImages/${filename}`
 						: '/defaultMenuItem.png',
+					cookingTime: time,
 				})
 				.returning()
 
@@ -159,6 +161,7 @@ export const actions: Actions = {
 			const type = body.get('type')?.toString()
 			const active = body.get('active')
 			const image = body.get('image') as File | null
+			const time = Number(body.get('cookingTime') as string)
 
 			if (!id) {
 				throw fail(400, { error: 'Menu item ID is required' })
@@ -183,6 +186,7 @@ export const actions: Actions = {
 			if (active !== null) updateData.active = active === 'true'
 			if (description) updateData.description = description
 			if (path.extname(image?.name || '')) updateData.image = `/content/MenuItemImages/${filename}`
+			if (!isNaN(time)) updateData.cookingTime = time
 
 			const [updatedItem] = await db
 				.update(schema.menuItems)

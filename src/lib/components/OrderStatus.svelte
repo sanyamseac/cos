@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Clock, CheckCircle, XCircle, Package, Receipt } from "lucide-svelte"
+	import { Clock, CheckCircle, XCircle, Package, Receipt, ReceiptIndianRupee } from "lucide-svelte"
 	import { ShoppingBag } from "phosphor-svelte"
 
     let { status, size = 16, class: className }: { status: string; size?:number; class?: string } = $props();
@@ -14,7 +14,7 @@
     {:else if status === 'ready'}
         <ShoppingBag {size}/>
     {:else if status === 'completed'}
-        <Receipt {size}/>
+        <ReceiptIndianRupee {size}/>
     {:else if status === 'cancelled'}
         <XCircle {size}/>
     {/if}

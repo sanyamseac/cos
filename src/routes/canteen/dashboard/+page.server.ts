@@ -222,24 +222,27 @@ export const actions: Actions = {
 				.update(schema.orders)
 				.set(updateData)
 				.where(eq(schema.orders.id, Number(orderId)))
-
-			// Emit SSE event for order status update
-			try {
-				emitOrderStatusUpdate(
-					{
-						id: orderId.toString(),
-						orderNumber: order.orderNumber,
-						status: newStatus.toString(),
-						canteenId: order.canteenId.toString(),
-						userId: order.userId.toString(),
-					},
-					previousStatus,
-				)
-				console.log(`SSE event emitted for order ${orderId} to user ${order.userId}`)
-			} catch (sseError) {
-				console.error('Failed to emit order status update SSE event:', sseError)
+			
+			if (newStatus === 'completed') {
+				await db
+					.update(schema.canteens)
+					.set({
+						waitingTime: sql`${schema.canteens.waitingTime} - ${orderResult[0].waitingTime}`
+					})
+					.where(eq(schema.canteens.id, order.canteenId))
 			}
 
+			emitOrderStatusUpdate(
+				{
+					id: orderId.toString(),
+					orderNumber: order.orderNumber,
+					status: newStatus.toString(),
+					canteenId: order.canteenId.toString(),
+					userId: order.userId.toString(),
+				},
+				previousStatus,
+			)
+			console.log(`SSE event emitted for order ${orderId} to user ${order.userId}`)
 			return { success: true, message: `Order ${newStatus} successfully` }
 		} catch (err) {
 			console.error('Error updating order status:', err)

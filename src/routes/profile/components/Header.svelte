@@ -19,10 +19,10 @@
         <form bind:this={formRef} method="post" action="login?/logout" use:enhance>
         </form>
         <Button.Root
-                type="normal"
-                onclick={() => showConfirm = true}
-                class="px-2"
-            >
+            type="button"
+            onclick={() => showConfirm = true}
+            class="px-2"
+        >
             <LogOut class="ml-3 mt-0.5 h-7 w-7" />
         </Button.Root>
     </div>

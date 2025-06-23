@@ -40,6 +40,8 @@ export const canteens = pgTable('canteens', {
 	open: boolean('is_open').notNull().default(true),
 	active: boolean('active').notNull().default(true),
 	orderCounter: integer('order_counter').notNull().default(0),
+	waitingTime: integer('waiting_time').notNull().default(0), // in seconds
+	averageCookingTime: integer('average_cooking_time').notNull().default(10), // in seconds
 })
 
 export const canteenAuth = pgTable('canteen_auth', {
@@ -65,6 +67,7 @@ export const menuItems = pgTable('menu_items', {
 	type: text('type').notNull().default('veg'),
 	active: boolean('active').notNull().default(true),
 	image: text('image'),
+	cookingTime: integer('cooking_time').notNull(), // in seconds
 })
 
 export const variants = pgTable('variants', {
@@ -143,11 +146,14 @@ export const orders = pgTable('orders', {
 	notes: text('notes'),
 	prepaid: boolean('prepaid').notNull().default(false),
 	scheduledTime: timestamp('scheduled_time'),
+	waitingTime: integer('waiting_time').notNull().default(0), // in seconds
+	totalWaitingTime: numeric('total_waiting_time', { precision: 5, scale: 2 }).notNull().default('0.00'), // in seconds
 	linked: boolean('linked').notNull().default(false),
 	linkingNumber: text('linking_number'),
 	otp: text('otp').notNull(),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	confirmedAt: timestamp('confirmed_at'),
+	preparingAt: timestamp('preparing_at'),
 	preparedAt: timestamp('prepared_at'),
 	readyAt: timestamp('ready_at'),
 	completedAt: timestamp('completed_at'),

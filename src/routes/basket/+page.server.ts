@@ -383,6 +383,7 @@ export const actions: Actions = {
 								id: schema.menuItems.id,
 								name: schema.menuItems.name,
 								price: schema.menuItems.price,
+								cookingTime: schema.menuItems.cookingTime,
 							},
 							variant: {
 								id: schema.variants.id,
@@ -485,9 +486,25 @@ export const actions: Actions = {
 						userTotal += (basePrice + variantPrice + addonsPrice) * item.quantity
 					}
 
-					const [canteen] = await tx
+					let totalCookingTime = 0
+					for (const item of userItems as any[]) {
+						const itemCookingTime = Number(item.menuItem!.cookingTime) || 0
+						const totalItemTime = itemCookingTime * item.quantity
+						totalCookingTime += totalItemTime
+					}
+
+					const [currentCanteen] = await tx
+						.select({ waitingTime: schema.canteens.waitingTime })
+						.from(schema.canteens)
+						.where(eq(schema.canteens.id, canteenId))
+
+					const totalWaitingTime = (currentCanteen?.waitingTime || 0) + totalCookingTime
+					const [canteenWithUpdatedWaitingTime] = await tx
 						.update(schema.canteens)
-						.set({ orderCounter: sql`${schema.canteens.orderCounter} + 1` })
+						.set({
+							orderCounter: sql`${schema.canteens.orderCounter} + 1`,
+							waitingTime: sql`${schema.canteens.waitingTime} + ${totalCookingTime}`
+						})
 						.where(eq(schema.canteens.id, canteenId))
 						.returning({
 							orderCounter: schema.canteens.orderCounter,
@@ -495,7 +512,7 @@ export const actions: Actions = {
 						})
 
 					const orderNumber =
-						canteen.acronym.toUpperCase() + '-' + canteen.orderCounter.toString()
+						canteenWithUpdatedWaitingTime.acronym.toUpperCase() + '-' + canteenWithUpdatedWaitingTime.orderCounter.toString()
 					const otp = generateId(4)
 
 					const [order] = await tx
@@ -511,6 +528,8 @@ export const actions: Actions = {
 							linked: isSharedBasket,
 							linkingNumber,
 							scheduledTime: scheduleTime > 0 ? new Date(scheduleTime) : null,
+							waitingTime: totalCookingTime,
+							totalWaitingTime,
 						})
 						.returning()
 

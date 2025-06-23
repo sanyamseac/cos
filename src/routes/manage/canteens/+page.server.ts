@@ -40,9 +40,10 @@ export const actions: Actions = {
 			const description = body.get('description')?.toString()
 			const active = body.get('active') === 'true'
 			const image = body.get('image') as File
+			const averageCookingTime = Number(body.get('averageCookingTime') as string)
 
-			if (!name || !timings || !acronym || !description || !image) {
-				throw fail(400, { error: 'Name, timings, acronym, and description are required' })
+			if (!name || !timings || !acronym || !description || !image || !averageCookingTime) {
+				throw fail(400, { error: 'Name, timings, acronym, description, image and average cooking time are required' })
 			}
 
 			const filename = acronym + path.extname(image.name)
@@ -63,6 +64,7 @@ export const actions: Actions = {
 					description,
 					active: active ?? true,
 					image: `/content/canteenImages/${filename}`,
+					averageCookingTime,
 				})
 				.returning()
 
@@ -101,6 +103,7 @@ export const actions: Actions = {
 			const acronym = body.get('acronym')?.toString()
 			const active = body.get('active') === 'true'
 			const image = body.get('image') as File
+			const averageCookingTime = Number(body.get('averageCookingTime') as string)
 
 			if (!id) {
 				throw fail(400, { error: 'Canteen ID is required' })
@@ -124,6 +127,7 @@ export const actions: Actions = {
 			if (acronym) updateData.acronym = acronym
 			if (active !== undefined) updateData.active = active
 			if (path.extname(image.name)) updateData.image = `/content/canteenImages/${filename}`
+			if (averageCookingTime) updateData.averageCookingTime = averageCookingTime
 
 			const [updatedCanteen] = await db
 				.update(schema.canteens)

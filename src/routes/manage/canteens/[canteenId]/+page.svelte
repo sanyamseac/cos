@@ -7,6 +7,7 @@
 	import Addon from './components/addon.svelte'
 	import Variant from './components/variant.svelte'
 	import FoodType from '$lib/components/FoodType.svelte'
+	import { formatPrice } from '$lib/utils'
 
 	let { data }: { data: PageData } = $props()
 	$effect(() => {
@@ -19,13 +20,6 @@
 		editing: false,
 		item: null as any,
 	})
-
-	function getFoodTypeIcon(type: string) {
-		if (type === 'veg') return '🟢'
-		if (type === 'non-veg') return '🔴'
-		if (type === 'egg') return '🟠'
-		return ''
-	}
 
 	function openCrudModal(entity: string, editing = true, item: any = null) {
 		crudModalValues.entity = entity
@@ -95,6 +89,14 @@
 				{ value: 'non-veg', label: 'Non-Vegetarian' },
 				{ value: 'egg', label: 'Contains Egg' },
 			],
+		},
+		{
+			name: 'cookingTime',
+			label: 'Cooking Time',
+			type: 'number' as const,
+			placeholder: 'cooking time in seconds',
+			required: true,
+			step: '0.25',
 		},
 		{
 			name: 'available',
@@ -179,6 +181,12 @@
 					<p class="mt-3 text-gray-600 dark:text-gray-300">
 						{data.canteen.description}
 					</p>
+					<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+						Average Time: {(data.canteen.averageCookingTime / 60).toFixed(2)} mins
+					</p>
+					<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+						Current Waiting Time: {(data.canteen.waitingTime / 60).toFixed(2)} mins
+					</p>
 				</div>
 			</div>
 		</div>
@@ -235,8 +243,10 @@
 													{item.name}
 												</h3>
 												<span class="text-lg font-semibold text-green-600"
-													>₹{item.price}</span
+													>{formatPrice(item.price)}</span
 												>
+												<span class="text-sm text-gray-500 dark:text-gray-400"
+													>({(item.cookingTime / 60).toFixed(2)} min)</span>
 											</div>
 
 											<div class="mb-2 flex flex-wrap gap-2">
@@ -258,7 +268,7 @@
 
 											{#if item.description}
 												<p
-													class="mb-3 text-sm text-gray-600 dark:text-gray-300"
+													class="mb-3 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap"
 												>
 													{item.description}
 												</p>
