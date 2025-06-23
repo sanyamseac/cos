@@ -27,10 +27,19 @@ export const load: PageServerLoad = async (event) => {
 		const canteen = canteenResult[0]
 		const canteenId = canteen.id
 
-		// Get today's date range
-		const today = new Date()
-		const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1, 6, 0, 0, 0)
-		const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 5, 0, 0, 0)
+		// Get today's date range in UTC for IST 5am (previous day) to 6am (current day)
+		const now = new Date()
+		// Calculate the current time in IST
+		const nowIST = new Date(now.getTime() + 5.5 * 60 * 60 * 1000)
+		// Get the current date in IST
+		const istYear = nowIST.getUTCFullYear()
+		const istMonth = nowIST.getUTCMonth()
+		const istDate = nowIST.getUTCDate()
+
+		// Start: current day 6am IST (which is current day 00:30 UTC)
+		const startOfDay = new Date(Date.UTC(istYear, istMonth, istDate, 0, 30, 0, 0))
+		// End: next day 5am IST (which is next day 23:30 UTC)
+		const endOfDay = new Date(Date.UTC(istYear, istMonth, istDate + 1, 23, 30, 0, 0))
 
 		// Fetch today's orders for this canteen
 		const ordersResult = await db
@@ -48,7 +57,7 @@ export const load: PageServerLoad = async (event) => {
 				and(
 					eq(schema.orders.canteenId, canteenId),
 					gte(schema.orders.createdAt, startOfDay),
-					lt(schema.orders.createdAt, endOfDay),
+					lt(schema.orders.createdAt, endOfDay)
 				),
 			)
 			.orderBy(desc(schema.orders.createdAt))
@@ -58,21 +67,21 @@ export const load: PageServerLoad = async (event) => {
 		const orderItemsResult =
 			orderIds.length > 0
 				? await db
-						.select({
-							orderItem: schema.orderItems,
-							menuItem: schema.menuItems,
-							variant: schema.variants,
-						})
-						.from(schema.orderItems)
-						.leftJoin(
-							schema.menuItems,
-							eq(schema.orderItems.menuItemId, schema.menuItems.id),
-						)
-						.leftJoin(
-							schema.variants,
-							eq(schema.orderItems.variantId, schema.variants.id),
-						)
-						.where(inArray(schema.orderItems.orderId, orderIds))
+					.select({
+						orderItem: schema.orderItems,
+						menuItem: schema.menuItems,
+						variant: schema.variants,
+					})
+					.from(schema.orderItems)
+					.leftJoin(
+						schema.menuItems,
+						eq(schema.orderItems.menuItemId, schema.menuItems.id),
+					)
+					.leftJoin(
+						schema.variants,
+						eq(schema.orderItems.variantId, schema.variants.id),
+					)
+					.where(inArray(schema.orderItems.orderId, orderIds))
 				: []
 
 		// Get addons for order items
@@ -80,13 +89,13 @@ export const load: PageServerLoad = async (event) => {
 		const addonsResult =
 			orderItemIds.length > 0
 				? await db
-						.select({
-							orderItemId: schema.orderAddons.orderItemId,
-							addonName: schema.addons.name,
-						})
-						.from(schema.orderAddons)
-						.leftJoin(schema.addons, eq(schema.orderAddons.addonId, schema.addons.id))
-						.where(inArray(schema.orderAddons.orderItemId, orderItemIds))
+					.select({
+						orderItemId: schema.orderAddons.orderItemId,
+						addonName: schema.addons.name,
+					})
+					.from(schema.orderAddons)
+					.leftJoin(schema.addons, eq(schema.orderAddons.addonId, schema.addons.id))
+					.where(inArray(schema.orderAddons.orderItemId, orderItemIds))
 				: []
 
 		// Calculate today's revenue

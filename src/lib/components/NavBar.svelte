@@ -15,7 +15,7 @@
 					title: 'Manage',
 					href: '/canteen/items',
 					img: CookingPot,
-				}
+				},
 			]
 		}
 
@@ -56,12 +56,12 @@
 			<div class="flex hidden items-center md:inline">
 				<a href="/" class="flex items-center space-x-2">
 					<div
-						class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400"
+						class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-cyan-400"
 					>
 						<span class="text-md font-bold text-white">C</span>
 					</div>
 					<span class="text-xl font-bold text-gray-900 dark:text-white"
-						>Canteen Ordering System</span
+						>Carrot — Canteen Ordering System</span
 					>
 				</a>
 			</div>
@@ -74,10 +74,8 @@
 					{#each components as component}
 						<NavigationMenu.Item>
 							<NavigationMenu.Link
-								class="focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-green-900 dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] px-4 py-2 py-6 font-medium transition-colors hover:bg-green-400 focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
-									.url.pathname === component.href
-									? 'bg-green-500 shadow-sm dark:bg-green-700'
-									: ''}"
+								class={`focus:text-accent-foreground data-[state=open]:shadow-mini group text-md inline-flex h-8 w-[18vw] items-center justify-center px-4 py-2 py-6 font-medium transition-colors hover:text-green-600 focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 md:w-max ` +
+									(page.url.pathname === component.href ? 'shadow-sm' : '')}
 								href={component.href}
 								active={page.url.pathname === component.href}
 							>
@@ -91,10 +89,8 @@
 					{#if !page.data.user}
 						<NavigationMenu.Item>
 							<NavigationMenu.Link
-								class="focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-green-900 dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] px-4 py-2 py-6 font-medium transition-colors hover:bg-green-400 focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
-									.url.pathname === '/login'
-									? 'bg-green-500 shadow-sm dark:bg-green-700'
-									: ''}"
+								class={`focus:text-accent-foreground data-[state=open]:shadow-mini group text-md inline-flex h-8 w-[18vw] items-center justify-center px-4 py-2 py-6 font-medium transition-colors hover:text-green-600 focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 md:w-max ` +
+									(page.url.pathname === '/login' ? 'shadow-sm' : '')}
 								href="/login"
 							>
 								<div class="flex flex-col items-center justify-center">
@@ -106,10 +102,8 @@
 					{:else}
 						<NavigationMenu.Item>
 							<NavigationMenu.Link
-								class="focus:bg-muted focus:text-accent-foreground data-[state=open]:shadow-mini dark:hover:bg-green-900 dark:data-[state=open]:bg-muted group text-md inline-flex h-8 w-[18vw] items-center justify-center rounded-[7px] px-4 py-2 py-6 font-medium transition-colors hover:bg-green-400 focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-white md:w-max {page
-									.url.pathname === '/profile'
-									? 'bg-green-500 shadow-sm dark:bg-green-700'
-									: ''}"
+								class={`focus:text-accent-foreground data-[state=open]:shadow-mini group text-md inline-flex h-8 w-[18vw] items-center justify-center px-4 py-2 py-6 font-medium transition-colors hover:text-green-600 focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 md:w-max ` +
+									(page.url.pathname === '/profile' ? 'shadow-sm' : '')}
 								href="/profile"
 							>
 								<div class="flex flex-col items-center justify-center">
