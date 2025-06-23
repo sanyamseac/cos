@@ -213,6 +213,9 @@ export const actions: Actions = {
 				updateData.readyAt = new Date()
 			} else if (newStatus === 'completed') {
 				updateData.completedAt = new Date()
+			} else if (newStatus === 'cancelled') {
+				updateData.cancelledAt = new Date()
+				updateData.cancelledBy = event.locals.user.id
 			}
 
 			await db

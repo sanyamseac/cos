@@ -13,7 +13,7 @@
         <Package {size}/>
     {:else if status === 'ready'}
         <ShoppingBag {size}/>
-    {:else if status === 'delivered'}
+    {:else if status === 'completed'}
         <Receipt {size}/>
     {:else if status === 'cancelled'}
         <XCircle {size}/>

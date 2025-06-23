@@ -68,6 +68,7 @@
 	let pinInput = $state('')
 	let orderDetailsOpen = $state(false)
 	let statusUpdateLoading = $state(false)
+	let cancelDialogOpen = $state(false)
 
 	function getStatusColor(status: string) {
 		switch (status) {
@@ -176,6 +177,13 @@
 			month: 'short',
 		})
 	}
+
+	function handleCancelOrder() {
+		if (!selectedOrder) return
+		updateOrderStatus(selectedOrder.id, 'cancelled', '')
+		cancelDialogOpen = false
+		orderDetailsOpen = false
+	}
 </script>
 
 <div
@@ -199,9 +207,7 @@
 
 		<!-- Revenue Stats -->
 		<div class="grid grid-cols-1 gap-1 md:grid-cols-2 md:gap-2">
-			<div
-				class="px-4 py-2"
-			>
+			<div class="px-4 py-2">
 				<div class="flex items-center">
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30"
@@ -209,9 +215,7 @@
 						<IndianRupee class="h-6 w-6 text-green-600 dark:text-green-400" />
 					</div>
 					<div class="ml-4">
-						<p class="text-sm font-medium">
-							Today's Revenue
-						</p>
+						<p class="text-sm font-medium">Today's Revenue</p>
 						<p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
 							{formatPrice(data.revenue.total)}
 						</p>
@@ -219,9 +223,7 @@
 				</div>
 			</div>
 
-			<div
-				class="px-4 py-2"
-			>
+			<div class="px-4 py-2">
 				<div class="flex items-center">
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30"
@@ -275,7 +277,7 @@
 									</div>
 
 									<p class="mb-1 text-sm text-gray-600 dark:text-gray-300">
-										Customer: {order.user?.name || 'Unknown'}
+										{order.user?.name || 'Unknown'}
 									</p>
 
 									<p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
@@ -473,12 +475,49 @@
 				</div>
 			{/if}
 
-			<div class="flex justify-end">
+			<div class="flex justify-end gap-2">
 				<button
 					class="ring-offset-background focus-visible:ring-ring border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
 					onclick={() => (orderDetailsOpen = false)}
 				>
 					Close
+				</button>
+				{#if selectedOrder && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'completed'}
+					<button
+						class="ring-offset-background focus-visible:ring-ring inline-flex h-10 items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium whitespace-nowrap text-white transition-colors hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+						onclick={() => (cancelDialogOpen = true)}
+					>
+						Cancel Order
+					</button>
+				{/if}
+			</div>
+		</Dialog.Content>
+	</Dialog.Portal>
+</Dialog.Root>
+
+<!-- Cancel Confirmation Dialog -->
+<Dialog.Root bind:open={cancelDialogOpen}>
+	<Dialog.Portal>
+		<Dialog.Overlay class="fixed inset-0 z-50 bg-black/80" />
+		<Dialog.Content
+			class="fixed top-[50%] left-[50%] z-50 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white p-6 shadow-lg duration-200 sm:rounded-lg dark:bg-gray-800"
+		>
+			<Dialog.Title class="text-lg font-semibold text-red-600">Cancel Order?</Dialog.Title>
+			<Dialog.Description class="text-sm text-gray-600 dark:text-gray-400">
+				Are you sure you want to cancel this order? This action cannot be undone.
+			</Dialog.Description>
+			<div class="mt-4 flex justify-end gap-2">
+				<button
+					class="ring-offset-background focus-visible:ring-ring border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+					onclick={() => (cancelDialogOpen = false)}
+				>
+					No, go back
+				</button>
+				<button
+					class="ring-offset-background focus-visible:ring-ring inline-flex h-10 items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium whitespace-nowrap text-white transition-colors hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+					onclick={handleCancelOrder}
+				>
+					Yes, cancel order
 				</button>
 			</div>
 		</Dialog.Content>

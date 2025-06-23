@@ -4,6 +4,7 @@ import { db } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { eq, and } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
+import { emitOrderStatusUpdate } from '$lib/server/sse-events'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -76,4 +77,67 @@ export const load: PageServerLoad = async (event) => {
 		}
 		throw error(500, 'Failed to load order details')
 	}
+}
+
+export const actions = {
+	cancelOrder: async (event) => {
+		if (!event.locals.user) return fail(401, { message: 'Unauthorized' })
+		if (!auth.CONSUMER.includes(event.locals.user.role)) return fail(403, { message: 'Access denied' })
+
+		const orderId = Number(event.params.orderId)
+		if (!orderId || isNaN(orderId)) {
+			return fail(400, { message: 'Invalid order ID' })
+		}
+
+		try {
+			const orderResult = await db
+				.select()
+				.from(schema.orders)
+				.where(
+					and(
+						eq(schema.orders.id, orderId),
+						eq(schema.orders.userId, event.locals.user.id)
+					)
+				)
+				.limit(1)
+
+			if (!orderResult.length) {
+				return fail(404, { message: 'Order not found' })
+			}
+
+			const order = orderResult[0]
+			if (order.status === 'completed' || order.status === 'cancelled') {
+				return fail(400, { message: 'Order cannot be cancelled' })
+			}
+
+			await db
+				.update(schema.orders)
+				.set({
+					status: 'cancelled',
+					cancelledAt: new Date(),
+					cancelledBy: event.locals.user.id,
+				})
+				.where(eq(schema.orders.id, orderId))
+
+			try {
+				emitOrderStatusUpdate(
+					{
+						id: orderId.toString(),
+						orderNumber: order.orderNumber,
+						status: 'cancelled',
+						canteenId: order.canteenId.toString(),
+						userId: order.userId.toString(),
+					},
+					order.status,
+				)
+			} catch (e) {
+				console.error('Failed to emit order status update SSE event:', e)
+			}
+
+			return { success: true, message: 'Order cancelled successfully' }
+		} catch (err) {
+			console.error('Error cancelling order:', err)
+			return fail(500, { message: 'Failed to cancel order' })
+		}
+	},
 }
