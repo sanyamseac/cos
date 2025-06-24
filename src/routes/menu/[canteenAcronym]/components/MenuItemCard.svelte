@@ -13,9 +13,7 @@
 	} = $props()
 </script>
 
-<div
-	class="group overflow-hidden"
->
+<div class="group overflow-hidden">
 	<div class="flex items-center justify-between gap-3 py-2">
 		<img src={item.image} alt={item.name} class="h-12 w-12 rounded md:h-10 md:w-10" />
 		<div class="min-w-0 flex-1">
@@ -32,7 +30,15 @@
 			{/if}
 
 			<div class="flex text-base font-medium text-gray-700 sm:text-lg dark:text-gray-300">
-				{formatPrice(item.price)} | <FoodType type={item.type} size={16} class="ml-2 mt-1" />
+				{formatPrice(item.price)} | <FoodType
+					type={item.type}
+					size={16}
+					class="mt-1 ml-2"
+				/>
+			</div>
+			<!-- Per-item making time -->
+			<div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+				{item.cookingTime ? Math.round(item.cookingTime / 60) : 0} min
 			</div>
 		</div>
 
