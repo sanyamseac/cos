@@ -5,6 +5,7 @@ import * as schema from '$lib/server/db/schema'
 import { eq, desc, sum, and, gte, lt, sql, inArray } from 'drizzle-orm'
 import type { PageServerLoad, Actions } from './$types'
 import { emitOrderStatusUpdate } from '$lib/server/sse-events'
+import { sendToUser, type NotificationPayload } from '$lib/server/notificationService'
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user)
@@ -222,7 +223,7 @@ export const actions: Actions = {
 				.update(schema.orders)
 				.set(updateData)
 				.where(eq(schema.orders.id, Number(orderId)))
-			
+
 			if (newStatus === 'completed') {
 				await db
 					.update(schema.canteens)
@@ -230,6 +231,56 @@ export const actions: Actions = {
 						waitingTime: sql`${schema.canteens.waitingTime} - ${orderResult[0].waitingTime}`
 					})
 					.where(eq(schema.canteens.id, order.canteenId))
+			}
+
+			// Send push notification to user about order status change
+			let notifTitle = ''
+			let notifBody = ''
+			switch (newStatus) {
+				case 'confirmed':
+					notifTitle = 'Order Confirmed'
+					notifBody = `Your order ${order.orderNumber} has been confirmed.`
+					break
+				case 'preparing':
+					notifTitle = 'Order Preparing'
+					notifBody = `Your order ${order.orderNumber} is being prepared.`
+					break
+				case 'ready':
+					notifTitle = 'Order Ready for Pickup'
+					notifBody = `Your order ${order.orderNumber} is ready for pickup!`
+					break
+				case 'completed':
+					notifTitle = 'Order Completed'
+					notifBody = `Your order ${order.orderNumber} has been completed. Enjoy your meal!`
+					break
+				case 'cancelled':
+					notifTitle = 'Order Cancelled'
+					notifBody = `Your order ${order.orderNumber} has been cancelled.`
+					break
+				default:
+					notifTitle = 'Order Update'
+					notifBody = `Your order ${order.orderNumber} status changed to ${newStatus}.`
+			}
+			const notificationPayload: NotificationPayload = {
+				title: notifTitle,
+				body: notifBody,
+				tag: 'order-status',
+				data: {
+					orderId: order.id,
+					orderNumber: order.orderNumber,
+					status: newStatus,
+					url: `/orders/${order.id}`
+				},
+				requireInteraction: newStatus === 'ready',
+				actions: [
+					{ action: 'view', title: 'View Order', icon: '/favicon.png' },
+					{ action: 'dismiss', title: 'Dismiss' }
+				]
+			}
+			try {
+				await sendToUser(order.userId, notificationPayload)
+			} catch (notifError) {
+				console.error('Failed to send push notification for order status change:', notifError)
 			}
 
 			emitOrderStatusUpdate(
