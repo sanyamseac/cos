@@ -21,6 +21,8 @@ services:
         image: cos-image
         container_name: cos
         restart: always
+        volumes:
+            - ./static:/app/static
         depends_on:
             - db
         ports:

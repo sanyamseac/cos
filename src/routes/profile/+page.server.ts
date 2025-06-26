@@ -76,7 +76,7 @@ export const actions: Actions = {
 					await fs.mkdir(path.dirname(savePath), { recursive: true })
 					await fs.writeFile(savePath, buffer)
 
-					profilePictureUrl = `/content/UserImages/${fileName}`
+					profilePictureUrl = `/content/userImages/${fileName}`
 				} catch (error) {
 					console.error('Error saving profile picture:', error)
 					return fail(500, { message: 'Failed to save profile picture' })
