@@ -52,7 +52,6 @@ src/
 
 - Node.js (v20+ recommended)
 - Docker & Docker Compose
-- pnpm (optional, but recommended)
 
 ### Installation
 
@@ -67,8 +66,6 @@ src/
 
     ```bash
     npm install
-    # or
-    pnpm install
     ```
 
 3.  **Environment Setup:**
