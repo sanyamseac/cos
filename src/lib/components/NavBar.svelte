@@ -1,9 +1,35 @@
 <script lang="ts">
 	import { NavigationMenu } from 'bits-ui'
 	import { page } from '$app/state'
-	import { Utensils, History, ShoppingBasket, User, LogIn, CookingPot } from 'lucide-svelte'
+	import { Utensils, History, ShoppingBasket, User, LogIn, CookingPot, Settings, Users } from 'lucide-svelte'
 
 	const getNavigationComponents = (userRole: string | undefined) => {
+		console.log('Current user role:', userRole)
+		if (userRole === 'admin') {
+			return [
+				{
+					title: 'Dashboard',
+					href: '/dashboard',
+					img: Utensils,
+				},
+				{
+					title: 'Canteens',
+					href: '/manage/canteens',
+					img: Settings,
+				},
+				{
+					title: 'Consumers',
+					href: '/manage/consumers',
+					img: Users,
+				},
+				{
+					title: 'Orders',
+					href: '/orders',
+					img: History,
+				},
+			]
+		}
+
 		if (userRole === 'canteen') {
 			return [
 				{
