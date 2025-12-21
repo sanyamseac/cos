@@ -1,44 +1,78 @@
 services:
     db:
-        image: postgres
+        image: postgres:16-alpine
         restart: always
-        container_name: db
+        container_name: cos-db
         ports:
-            - 5432:5432
+            - "5432:5432"
         environment:
-            POSTGRES_USER: root
-            POSTGRES_PASSWORD: mysecretpassword
-            POSTGRES_DB: local
+            POSTGRES_USER: ${POSTGRES_USER:-root}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
+            POSTGRES_DB: ${POSTGRES_DB:-local}
         volumes:
-            - pgdata:/var/lib/postgresql
+            - pgdata:/var/lib/postgresql/data
         networks:
             - app-network
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-root}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+    
     cos:
-        env_file: .env
-        build:
-            context: .
-            dockerfile: dockerfile
-        image: cos-image
-        container_name: cos
+        # Pull pre-built image from Docker Hub or GitHub Container Registry
+        # Replace with your published image:
+        #   Docker Hub: username/cos:latest
+        #   GHCR: ghcr.io/username/cos:latest
+        image: ${DOCKER_IMAGE:-arihanttr/cos:latest}
+        container_name: cos-app
         restart: always
-        volumes:
-            - ./static:/app/static
         depends_on:
-            - db
+            db:
+                condition: service_healthy
         ports:
-            - 3000:3000
+            - "3000:3000"
+        environment:
+            # Required: Database connection
+            DATABASE_URL: ${DATABASE_URL:-postgres://root:mysecretpassword@db:5432/local}
+            
+            # Required: Application URL
+            ORIGIN: ${ORIGIN:-http://localhost:3000}
+            
+            # Required: Your institution's CAS server
+            # IMPORTANT: Change this to your CAS URL!
+            CAS_URL: ${CAS_URL:-https://login.iiit.ac.in/cas}
+            
+            # Optional: Email notifications (Azure Communication Services)
+            EMAIL_STRING: ${EMAIL_STRING:-null}
+            
+            # Optional: Web Push notifications
+            VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-null}
+            VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-null}
+        volumes:
+            # Mount for user-uploaded content
+            - ./static/content:/app/static/content
         networks:
             - app-network
+        healthcheck:
+            test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+            interval: 30s
+            timeout: 10s
+            start_period: 40s
+            retries: 3
+    
     server:
         image: nginx:mainline-alpine
-        container_name: server
+        container_name: cos-nginx
         restart: unless-stopped
         ports:
-            - '80:80' # HTTP
-            - '443:443' # HTTPS
+            - "80:80"    # HTTP
+            - "443:443"  # HTTPS
         volumes:
-            - /etc/ssl:/etc/ssl:ro # Mount SSL certificates
-            - ./deploy/nginx:/etc/nginx/conf.d # Mount Nginx config
+            # SSL certificates (optional, for HTTPS)
+            - /etc/ssl:/etc/ssl:ro
+            # Nginx configuration
+            - ./deploy/nginx:/etc/nginx/conf.d
         depends_on:
             - cos
         networks:

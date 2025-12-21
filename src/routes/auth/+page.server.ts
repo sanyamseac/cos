@@ -1,6 +1,6 @@
 import { fail, error, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
-import { ORIGIN } from '$env/static/private'
+import { ORIGIN, CAS_URL } from '$env/static/private'
 import { dev } from '$app/environment'
 import * as auth from '$lib/server/session'
 import { db } from '$lib/server/db'
@@ -8,7 +8,7 @@ import * as schema from '$lib/server/db/schema'
 import type { Actions, PageServerLoad } from './$types'
 import { generateId, getRandomDefaultAvatar } from '$lib/helper'
 
-const cas = 'https://login.iiit.ac.in/cas'
+const cas = CAS_URL || 'https://login.iiit.ac.in/cas'
 
 export const load: PageServerLoad = async (event) => {
 	const destination = event.url.searchParams.get('redirect') ?? '/'

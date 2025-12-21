@@ -1,0 +1,30 @@
+# Docker Compose file for building and publishing the image
+# Maintainers use this file to build and tag images for Docker Hub/GHCR
+
+services:
+  cos:
+    build:
+      context: .
+      dockerfile: dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    # Replace with your Docker Hub username or GitHub Container Registry path
+    # Examples:
+    #   Docker Hub: username/cos:latest
+    #   GHCR: ghcr.io/username/cos:latest
+    image: ${DOCKER_REGISTRY:-yourusername}/cos:${VERSION:-latest}
+    
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-local}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:

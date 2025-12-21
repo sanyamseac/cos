@@ -4,20 +4,22 @@ import { pushSubscriptionsTable, type PushSubscription as DbPushSubscription } f
 import { eq, and } from 'drizzle-orm'
 import { env } from '$env/dynamic/private'
 
-if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
-	throw new Error('VAPID keys are not set in environment variables')
-}
 const VAPID_KEYS = {
-	publicKey: env.VAPID_PUBLIC_KEY,
-	privateKey: env.VAPID_PRIVATE_KEY,
+	publicKey: env.VAPID_PUBLIC_KEY || 'null',
+	privateKey: env.VAPID_PRIVATE_KEY || 'null',
 }
 
-// Configure web-push with VAPID details
-webpush.setVapidDetails(
-	'mailto:admin@canteen-system.com',
-	VAPID_KEYS.publicKey,
-	VAPID_KEYS.privateKey,
-)
+const vapidEnabled = env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY &&
+	env.VAPID_PUBLIC_KEY !== 'null' && env.VAPID_PRIVATE_KEY !== 'null'
+
+// Configure web-push with VAPID details only if keys are provided
+if (vapidEnabled) {
+	webpush.setVapidDetails(
+		'mailto:admin@canteen-system.com',
+		VAPID_KEYS.publicKey,
+		VAPID_KEYS.privateKey,
+	)
+}
 
 export async function storeSubscription(
 	endpoint: string,
